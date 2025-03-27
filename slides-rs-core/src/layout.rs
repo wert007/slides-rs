@@ -1,4 +1,4 @@
-use crate::Result;
+use std::ops::Add;
 
 #[derive(Debug)]
 pub struct Positioning {
@@ -24,6 +24,22 @@ impl Positioning {
         self
     }
 
+    pub fn top(&self) -> StyleUnit {
+        self.margin.top + self.padding.top
+    }
+
+    pub fn bottom(&self) -> StyleUnit {
+        self.margin.bottom + self.padding.bottom
+    }
+
+    pub fn left(&self) -> StyleUnit {
+        self.margin.left + self.padding.left
+    }
+
+    pub fn right(&self) -> StyleUnit {
+        self.margin.right + self.padding.right
+    }
+
     pub(crate) fn to_css_style(&self) -> Option<String> {
         use std::fmt::Write;
         let mut result = String::new();
@@ -31,33 +47,45 @@ impl Positioning {
 
         match self.vertical_alignment {
             VerticalAlignment::Top => {
-                writeln!(result, "top: 0px;").expect("infallible");
+                writeln!(result, "top: {};", self.top()).expect("infallible");
             }
             VerticalAlignment::Center => {
                 writeln!(result, "top: 50%;").expect("infallible");
                 translate.1 = -50.0;
             }
             VerticalAlignment::Bottom => {
-                writeln!(result, "bottom: 0px;").expect("infallible");
+                writeln!(result, "bottom: {};", self.bottom()).expect("infallible");
             }
             VerticalAlignment::Stretch => {
-                writeln!(result, "top: 0px;\nbottom: 0px;\nheight: 100%;").expect("infallible");
+                writeln!(
+                    result,
+                    "top: {};\nbottom: {};\nheight: 100%;",
+                    self.top(),
+                    self.bottom()
+                )
+                .expect("infallible");
             }
         }
 
         match self.horizontal_alignment {
             HorizontalAlignment::Left => {
-                writeln!(result, "left: 0px;").expect("infallible");
+                writeln!(result, "left: {};", self.left()).expect("infallible");
             }
             HorizontalAlignment::Center => {
                 writeln!(result, "left: 50%;").expect("infallible");
                 translate.0 = -50.0;
             }
             HorizontalAlignment::Right => {
-                writeln!(result, "right: 0px;").expect("infallible");
+                writeln!(result, "right: {};", self.right()).expect("infallible");
             }
             HorizontalAlignment::Stretch => {
-                writeln!(result, "left: 0px;\nbottom: 0px;\nwidth: 100%;").expect("infallible");
+                writeln!(
+                    result,
+                    "left: {};\nbottom: {};\nwidth: 100%;",
+                    self.left(),
+                    self.right()
+                )
+                .expect("infallible");
             }
         }
 
@@ -117,8 +145,30 @@ impl Thickness {
     };
 }
 
-#[derive(Debug)]
+#[derive(Debug, strum::Display, Clone, Copy)]
 pub enum StyleUnit {
+    #[strum(to_string = "unset")]
     Unspecified,
+    #[strum(to_string = "{0}px")]
     Pixel(f64),
+}
+
+impl StyleUnit {
+    fn add_pixel(&self, px: f64) -> StyleUnit {
+        match self {
+            StyleUnit::Unspecified => StyleUnit::Pixel(px),
+            StyleUnit::Pixel(spx) => StyleUnit::Pixel(spx + px),
+        }
+    }
+}
+
+impl Add for StyleUnit {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match rhs {
+            StyleUnit::Unspecified => self,
+            StyleUnit::Pixel(px) => self.add_pixel(px),
+        }
+    }
 }
