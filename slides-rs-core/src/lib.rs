@@ -3,6 +3,7 @@ use std::{io::Write, marker::PhantomData, path::PathBuf};
 pub type Result<T> = std::result::Result<T, error::SlidesError>;
 
 const BASE_STYLE: &str = include_str!("../assets/style.css");
+const NAVIGATION_JS: &str = include_str!("../assets/navigation.js");
 
 mod error;
 mod layout;
@@ -47,7 +48,12 @@ impl Presentation {
         let mut emitter = PresentationEmitter::new(directory)?;
         writeln!(
             emitter.raw_html(),
-            "<html><head><link href=\"style.css\" rel=\"stylesheet\" /></head><body>"
+            r#"<html>
+            <head>
+            <link href="style.css" rel="stylesheet"/>
+            <script src="navigation.js"></script>
+            </head>
+            <body onload="init()" onkeydown="keydown(event)">"#
         )?;
         for (index, mut slide) in self.slides.into_iter().enumerate() {
             slide.set_fallback_id(format!("slide-{index}"));

@@ -8,6 +8,11 @@ body {
     width: 100dvw;
     padding: 0;
     margin: 0;
+    display: none;
+}
+
+.slide.active {
+    display: block;
 }
 
 .label,

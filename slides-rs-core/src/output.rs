@@ -1,11 +1,12 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
-use crate::BASE_STYLE;
+use crate::{BASE_STYLE, NAVIGATION_JS};
 
 pub struct PresentationEmitter<W: Write> {
     directory: PathBuf,
     html: W,
     css: W,
+    js: W,
     referenced_files: Vec<PathBuf>,
 }
 
@@ -15,11 +16,14 @@ impl PresentationEmitter<File> {
         let html = File::create(directory.join("index.html"))?;
         let mut css = File::create(directory.join("style.css"))?;
         writeln!(css, "{BASE_STYLE}")?;
+        let mut js = File::create(directory.join("navigation.js"))?;
+        writeln!(js, "{NAVIGATION_JS}")?;
 
         Ok(Self {
             directory,
             html,
             css,
+            js,
             referenced_files: Vec::new(),
         })
     }
@@ -45,6 +49,10 @@ impl<W: Write> PresentationEmitter<W> {
 
     pub fn raw_css(&mut self) -> &mut W {
         &mut self.css
+    }
+
+    pub fn raw_js(&mut self) -> &mut W {
+        &mut self.js
     }
 
     pub fn add_file(&mut self, path: impl Into<PathBuf>) -> std::io::Result<()> {

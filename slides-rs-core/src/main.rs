@@ -51,5 +51,14 @@ fn main() -> slides_rs_core::Result<()> {
             ),
     );
 
+    presentation.add_slide(Slide::new().add_label(Label::new(
+        r#"# This could be a title
+
+    - With a list
+    - of elements
+    - to have a nice markdown support
+    - which should be all that's needed for text. probably!"#,
+    )));
+
     presentation.output_to_directory("out_presentation")
 }

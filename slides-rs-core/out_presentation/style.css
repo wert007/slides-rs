@@ -8,6 +8,11 @@ body {
     width: 100dvw;
     padding: 0;
     margin: 0;
+    display: none;
+}
+
+.slide.active {
+    display: block;
 }
 
 .label,
@@ -59,5 +64,10 @@ top: 0px;
 left: 0px;
 
 background: rgb(127, 127, 255, 1);
+
+}
+#slide-1-element-0 {
+top: 0px;
+left: 0px;
 
 }
