@@ -23,6 +23,10 @@ fn main() -> slides_rs_core::Result<()> {
     //
     //
 
+    let blue_bg_lbl = presentation.add_styling(
+        LabelStyling::new().with_background(Background::Color(Color::from_rgb(20, 60, 180))),
+    );
+
     presentation.add_slide(
         Slide::new()
             .with_styling(
@@ -32,20 +36,20 @@ fn main() -> slides_rs_core::Result<()> {
             .add_image(
                 Image::new(ImageSource::path("assets/mountain.jpg"))
                     .with_positioning(Positioning::new().with_alignment_stretch())
-                    .with_styling(ImageStyling::default().with_object_fit(ObjectFit::Cover)),
+                    .with_element_styling(ImageStyling::new().with_object_fit(ObjectFit::Cover)),
             )
             .add_label(
                 Label::new("Hello World!")
                     .with_positioning(Positioning::new().with_alignment_center())
-                    .with_styling(
-                        LabelStyling::default()
-                            .with_text_color(Color::WHITE)
-                            .with_background(Background::Color(Color::from_rgb(51, 51, 51))),
+                    .with_element_styling(
+                        LabelStyling::new()
+                            .with_background(Background::Color(Color::from_rgb(51, 51, 51)))
+                            .with_text_color(Color::WHITE),
                     ),
             )
             .add_label(
-                Label::new("Hiiiiii World!").with_styling(
-                    LabelStyling::default()
+                Label::new("Hiiiiii World!").with_element_styling(
+                    LabelStyling::new()
                         .with_background(Background::Color(Color::from_rgb(127, 127, 255))),
                 ),
             ),

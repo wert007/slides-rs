@@ -1,6 +1,8 @@
 use std::{fmt::Display, path::PathBuf};
 
-use crate::{ImageStyling, Positioning, Result, output::PresentationEmitter};
+use crate::{
+    ElementStyling, ImageStyling, Positioning, Result, ToCss, output::PresentationEmitter,
+};
 
 use super::WebRenderable;
 
@@ -9,7 +11,7 @@ pub struct Image {
     id: Option<String>,
     source: ImageSource,
     positioning: Positioning,
-    styling: ImageStyling,
+    styling: ElementStyling<ImageStyling>,
 }
 
 #[derive(Debug)]
@@ -44,7 +46,7 @@ impl Image {
             id: None,
             source,
             positioning: Positioning::new(),
-            styling: ImageStyling::default(),
+            styling: ImageStyling::new(),
         }
     }
 
@@ -53,7 +55,7 @@ impl Image {
         self
     }
 
-    pub fn with_styling(mut self, styling: ImageStyling) -> Self {
+    pub fn with_element_styling(mut self, styling: ElementStyling<ImageStyling>) -> Self {
         self.styling = styling;
         self
     }

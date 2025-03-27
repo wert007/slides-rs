@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
-use crate::{LabelStyling, Positioning, Result, output::PresentationEmitter};
+use crate::{
+    ElementStyling, LabelStyling, Positioning, Result, ToCss, output::PresentationEmitter,
+};
 
 use super::WebRenderable;
 
@@ -32,7 +34,7 @@ pub struct Label {
     id: Option<String>,
     text: FormattedText,
     positioning: Positioning,
-    styling: LabelStyling,
+    styling: ElementStyling<LabelStyling>,
 }
 
 impl WebRenderable for Label {
@@ -73,7 +75,7 @@ impl Label {
             id: None,
             text: text.into(),
             positioning: Positioning::new(),
-            styling: LabelStyling::default(),
+            styling: LabelStyling::new(),
         }
     }
 
@@ -82,7 +84,7 @@ impl Label {
         self
     }
 
-    pub fn with_styling(mut self, styling: LabelStyling) -> Self {
+    pub fn with_element_styling(mut self, styling: ElementStyling<LabelStyling>) -> Self {
         self.styling = styling;
         self
     }

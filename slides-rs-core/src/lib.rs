@@ -30,11 +30,15 @@ impl<T> Index<T> {
 
 pub struct Presentation {
     slides: Vec<Slide>,
+    stylings: Vec<DynamicElementStyling>,
 }
 
 impl Presentation {
     pub fn new() -> Self {
-        Self { slides: Vec::new() }
+        Self {
+            slides: Vec::new(),
+            stylings: Vec::new(),
+        }
     }
 
     pub fn add_slide(&mut self, slide: Slide) -> Index<Slide> {
@@ -62,6 +66,15 @@ impl Presentation {
         emitter.copy_referenced_files()?;
         writeln!(emitter.raw_html(), "</body></html>")?;
         Ok(())
+    }
+
+    pub fn add_styling<S: ToCss + 'static>(
+        &mut self,
+        styling: ElementStyling<S>,
+    ) -> Index<ElementStyling<S>> {
+        let index = self.stylings.len();
+        self.stylings.push(styling.to_dynamic());
+        unsafe { Index::new(index) }
     }
 }
 
