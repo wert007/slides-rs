@@ -1,8 +1,6 @@
-use std::{borrow::Cow, fmt::Display, path::PathBuf};
-
 use enum_dispatch::enum_dispatch;
 
-use crate::{ImageStyling, LabelStyling, Positioning, Result, output::PresentationEmitter};
+use crate::{Result, output::PresentationEmitter};
 
 mod image;
 pub use image::*;

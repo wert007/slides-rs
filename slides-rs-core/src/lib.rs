@@ -15,6 +15,7 @@ mod elements;
 pub use elements::*;
 mod output;
 
+#[allow(dead_code)]
 pub struct Index<T> {
     marker: PhantomData<T>,
     value: usize,
