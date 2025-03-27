@@ -14,8 +14,7 @@ impl SlideStyling {
         use std::fmt::Write;
         let mut result = String::new();
         if self.background != Background::Unspecified {
-            writeln!(result, "background: {};", self.background)
-                .expect("Writing to string is infallible");
+            writeln!(result, "background: {};", self.background).expect("infallible");
         }
         if result.is_empty() {
             None
@@ -28,6 +27,7 @@ impl SlideStyling {
 #[derive(Debug, Default)]
 pub struct LabelStyling {
     background: Background,
+    text_color: Option<Color>,
 }
 impl LabelStyling {
     pub fn with_background(mut self, background: Background) -> LabelStyling {
@@ -35,12 +35,19 @@ impl LabelStyling {
         self
     }
 
+    pub fn with_text_color(mut self, text_color: Color) -> LabelStyling {
+        self.text_color = Some(text_color);
+        self
+    }
+
     pub(crate) fn to_css_style(&self) -> Option<String> {
         use std::fmt::Write;
         let mut result = String::new();
         if self.background != Background::Unspecified {
-            writeln!(result, "background: {};", self.background)
-                .expect("Writing to string is infallible");
+            writeln!(result, "background: {};", self.background).expect("infallible");
+        }
+        if let Some(text_color) = self.text_color {
+            writeln!(result, "color: {text_color};").expect("infallible");
         }
         if result.is_empty() {
             None
@@ -113,7 +120,7 @@ impl Display for Background {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub struct Color {
     r: u8,
     g: u8,
@@ -122,7 +129,9 @@ pub struct Color {
 }
 
 impl Color {
-    pub fn from_rgb(r: u8, g: u8, b: u8) -> Self {
+    pub const WHITE: Color = Self::from_rgb(0xff, 0xff, 0xff);
+
+    pub const fn from_rgb(r: u8, g: u8, b: u8) -> Self {
         Self {
             r,
             g,

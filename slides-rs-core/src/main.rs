@@ -6,6 +6,23 @@ use slides_rs_core::{
 fn main() -> slides_rs_core::Result<()> {
     let mut presentation = Presentation::new();
 
+    // slide intro:
+    //  slide.styling.background(rgb(255, 127, 127));
+    //  // Creation of anonymous image
+    //  image(p"assets/mountain") {
+    //      positioning: { alignment: center, }
+    //      styling: {
+    //          object-fit: cover,
+    //      }
+    //  };
+    //  let lbl = l"Hello World";
+    //  lbl.position.align_center();
+    //  lbl.styling.text_color = c"white";
+    //  lbl.styling.background = c"#616161";
+    //
+    //
+    //
+
     presentation.add_slide(
         Slide::new()
             .with_styling(
@@ -19,7 +36,12 @@ fn main() -> slides_rs_core::Result<()> {
             )
             .add_label(
                 Label::new("Hello World!")
-                    .with_positioning(Positioning::new().with_alignment_center()),
+                    .with_positioning(Positioning::new().with_alignment_center())
+                    .with_styling(
+                        LabelStyling::default()
+                            .with_text_color(Color::WHITE)
+                            .with_background(Background::Color(Color::from_rgb(51, 51, 51))),
+                    ),
             )
             .add_label(
                 Label::new("Hiiiiii World!").with_styling(
