@@ -2,6 +2,8 @@ use crate::Result;
 use std::{fmt::Display, ops::Deref};
 
 pub trait ToCss {
+    fn class_name(&self) -> String;
+
     fn to_css_style(&self) -> Option<String>;
 
     fn collect_google_font_references(
@@ -57,6 +59,10 @@ impl ToCss for DynamicElementStyling {
     ) -> Result<()> {
         self.specific.collect_google_font_references(fonts)
     }
+
+    fn class_name(&self) -> String {
+        self.specific.class_name()
+    }
 }
 
 #[derive(Debug, Default)]
@@ -83,6 +89,10 @@ impl ToCss for BaseElementStyling {
         _: &mut std::collections::HashSet<String>,
     ) -> Result<()> {
         Ok(())
+    }
+
+    fn class_name(&self) -> String {
+        unreachable!("This can only be called on element stylings!")
     }
 }
 
@@ -140,37 +150,34 @@ impl<S: ToCss> ToCss for ElementStyling<S> {
     ) -> Result<()> {
         self.specific.collect_google_font_references(fonts)
     }
+
+    fn class_name(&self) -> String {
+        self.specific.class_name()
+    }
 }
 
 #[derive(Debug, Default)]
-pub struct SlideStyling {
-    background: Background,
-}
+pub struct SlideStyling {}
+
 impl SlideStyling {
-    pub fn with_background(mut self, background: Background) -> SlideStyling {
-        self.background = background;
-        self
+    pub fn new() -> ElementStyling<SlideStyling> {
+        ElementStyling::new(Self {})
     }
 }
 
 impl ToCss for SlideStyling {
     fn to_css_style(&self) -> Option<String> {
-        use std::fmt::Write;
-        let mut result = String::new();
-        if self.background != Background::Unspecified {
-            writeln!(result, "background: {};", self.background).expect("infallible");
-        }
-        if result.is_empty() {
-            None
-        } else {
-            Some(result)
-        }
+        None
     }
     fn collect_google_font_references(
         &self,
         _: &mut std::collections::HashSet<String>,
     ) -> Result<()> {
         Ok(())
+    }
+
+    fn class_name(&self) -> String {
+        "slide".into()
     }
 }
 
@@ -219,16 +226,6 @@ impl ElementStyling<LabelStyling> {
         self.specific.font = font;
         self
     }
-
-    pub fn header_data(&self) -> Option<String> {
-        match &self.font {
-            Font::Unspecified => None,
-            Font::GoogleFont(name) => Some(format!(
-                r#"<link href="https://fonts.googleapis.com/css2?family={name}" rel="stylesheet">"#
-            )),
-            Font::System(_) => None,
-        }
-    }
 }
 
 impl ToCss for LabelStyling {
@@ -259,6 +256,10 @@ impl ToCss for LabelStyling {
             _ => {}
         }
         Ok(())
+    }
+
+    fn class_name(&self) -> String {
+        "label".into()
     }
 }
 
@@ -313,6 +314,10 @@ impl ToCss for ImageStyling {
     ) -> Result<()> {
         Ok(())
     }
+
+    fn class_name(&self) -> String {
+        "image".into()
+    }
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -340,15 +345,19 @@ pub struct Color {
 }
 
 impl Color {
-    pub const WHITE: Color = Self::from_rgb(0xff, 0xff, 0xff);
+    pub const WHITE: Color = Self::rgb(0xff, 0xff, 0xff);
 
-    pub const fn from_rgb(r: u8, g: u8, b: u8) -> Self {
+    pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
         Self {
             r,
             g,
             b,
             alpha: 0xff,
         }
+    }
+
+    pub const fn argb(r: u8, g: u8, b: u8, alpha: u8) -> Self {
+        Self { r, g, b, alpha }
     }
 }
 

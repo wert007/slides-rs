@@ -113,12 +113,17 @@ impl Presentation {
         self.stylings.push(styling.to_dynamic(name.clone()));
         unsafe { StylingReference::from_raw(name) }
     }
+
+    pub fn set_default_style<S: ToCss + 'static>(&mut self, styling: ElementStyling<S>) {
+        let name = styling.class_name();
+        self.stylings.push(styling.to_dynamic(name));
+    }
 }
 
 pub struct Slide {
     id: Option<String>,
     elements: Vec<Element>,
-    styling: SlideStyling,
+    styling: ElementStyling<SlideStyling>,
 }
 
 impl Slide {
@@ -126,11 +131,11 @@ impl Slide {
         Self {
             id: None,
             elements: Vec::new(),
-            styling: SlideStyling::default(),
+            styling: SlideStyling::new(),
         }
     }
 
-    pub fn with_styling(mut self, styling: SlideStyling) -> Self {
+    pub fn with_styling(mut self, styling: ElementStyling<SlideStyling>) -> Self {
         self.styling = styling;
         self
     }

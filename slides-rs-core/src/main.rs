@@ -25,16 +25,20 @@ fn main() -> slides_rs_core::Result<()> {
 
     let blue_bg_lbl = presentation.add_styling(
         LabelStyling::new()
-            .with_background(Background::Color(Color::from_rgb(20, 60, 180)))
+            .with_background(Background::Color(Color::rgb(20, 60, 180)))
             .with_text_color(Color::WHITE),
         "blue-background",
+    );
+
+    presentation.set_default_style(LabelStyling::new().with_font(Font::gfont("Quicksand")));
+    presentation.set_default_style(
+        SlideStyling::new().with_background(Background::Color(Color::rgb(96, 96, 96))),
     );
 
     presentation.add_slide(
         Slide::new()
             .with_styling(
-                SlideStyling::default()
-                    .with_background(Background::Color(Color::from_rgb(255, 127, 127))),
+                SlideStyling::new().with_background(Background::Color(Color::rgb(255, 127, 127))),
             )
             .add_image(
                 Image::new(ImageSource::path("assets/mountain.jpg"))
@@ -50,7 +54,7 @@ fn main() -> slides_rs_core::Result<()> {
                     )
                     .with_element_styling(
                         LabelStyling::new()
-                            .with_background(Background::Color(Color::from_rgb(51, 51, 51)))
+                            .with_background(Background::Color(Color::argb(51, 51, 51, 180)))
                             .with_text_color(Color::WHITE)
                             .with_font(Font::gfont("Roboto")),
                     ),
@@ -59,7 +63,7 @@ fn main() -> slides_rs_core::Result<()> {
                 Label::new("Hiiiiii World!")
                     .with_element_styling(
                         LabelStyling::new()
-                            .with_background(Background::Color(Color::from_rgb(127, 127, 255)))
+                            .with_background(Background::Color(Color::rgb(127, 127, 255)))
                             .with_font(Font::system("Arial")),
                     )
                     .with_positioning(

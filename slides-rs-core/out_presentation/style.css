@@ -68,7 +68,7 @@ left: 50%;
 transform: translate(-50%, -50%);
 padding: 50px 50px 50px 50px;
 
-background: rgb(51, 51, 51, 1);
+background: rgb(51, 51, 51, 0.7058823529411765);
 
 color: rgb(255, 255, 255, 1);
 font-family: "Roboto";
@@ -94,5 +94,13 @@ transform: translate(-50%, -50%);
 background: rgb(20, 60, 180, 1);
 
 color: rgb(255, 255, 255, 1);
+
+}
+.label {
+font-family: "Quicksand";
+
+}
+.slide {
+background: rgb(96, 96, 96, 1);
 
 }
