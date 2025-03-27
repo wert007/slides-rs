@@ -1,7 +1,8 @@
 use std::fmt::Display;
 
 use crate::{
-    ElementStyling, LabelStyling, Positioning, Result, ToCss, output::PresentationEmitter,
+    ElementStyling, LabelStyling, Positioning, Result, StylingReference, ToCss,
+    output::PresentationEmitter,
 };
 
 use super::WebRenderable;
@@ -35,6 +36,7 @@ pub struct Label {
     text: FormattedText,
     positioning: Positioning,
     styling: ElementStyling<LabelStyling>,
+    stylings: Vec<StylingReference>,
 }
 
 impl WebRenderable for Label {
@@ -51,7 +53,14 @@ impl WebRenderable for Label {
         if let Some(style) = style {
             writeln!(emitter.raw_css(), "#{id} {{\n{style}\n}}")?;
         }
-        writeln!(emitter.raw_html(), "<div id=\"{id}\" class=\"label\">")?;
+        writeln!(
+            emitter.raw_html(),
+            "<div id=\"{id}\" class=\"label{}\">",
+            self.stylings
+                .into_iter()
+                .map(|s| format!(" {s}"))
+                .collect::<String>()
+        )?;
         self.text.render_to_html(emitter.raw_html())?;
         writeln!(emitter.raw_html(), "</div>")?;
         Ok(())
@@ -76,6 +85,7 @@ impl Label {
             text: text.into(),
             positioning: Positioning::new(),
             styling: LabelStyling::new(),
+            stylings: Vec::new(),
         }
     }
 
@@ -86,6 +96,11 @@ impl Label {
 
     pub fn with_element_styling(mut self, styling: ElementStyling<LabelStyling>) -> Self {
         self.styling = styling;
+        self
+    }
+
+    pub fn with_styling(mut self, styling: StylingReference) -> Label {
+        self.stylings.push(styling);
         self
     }
 }

@@ -24,7 +24,9 @@ fn main() -> slides_rs_core::Result<()> {
     //
 
     let blue_bg_lbl = presentation.add_styling(
-        LabelStyling::new().with_background(Background::Color(Color::from_rgb(20, 60, 180))),
+        LabelStyling::new()
+            .with_background(Background::Color(Color::from_rgb(20, 60, 180)))
+            .with_text_color(Color::WHITE),
         "blue-background",
     );
 
@@ -66,7 +68,8 @@ fn main() -> slides_rs_core::Result<()> {
 - to have a nice markdown support
 - which should be all that's needed for text. probably!"#,
             )
-            .with_positioning(Positioning::new().with_alignment_center()),
+            .with_positioning(Positioning::new().with_alignment_center())
+            .with_styling(blue_bg_lbl),
         ),
     );
 

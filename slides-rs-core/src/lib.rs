@@ -82,10 +82,10 @@ impl Presentation {
         &mut self,
         styling: ElementStyling<S>,
         name: impl Into<String>,
-    ) -> Index<ElementStyling<S>> {
-        let index = self.stylings.len();
-        self.stylings.push(styling.to_dynamic(name.into()));
-        unsafe { Index::new(index) }
+    ) -> StylingReference {
+        let name = name.into();
+        self.stylings.push(styling.to_dynamic(name.clone()));
+        unsafe { StylingReference::from_raw(name) }
     }
 }
 

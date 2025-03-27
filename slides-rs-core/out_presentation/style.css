@@ -76,4 +76,6 @@ transform: translate(-50%, -50%);
 .blue-background {
 background: rgb(20, 60, 180, 1);
 
+color: rgb(255, 255, 255, 1);
+
 }

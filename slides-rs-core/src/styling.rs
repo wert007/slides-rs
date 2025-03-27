@@ -4,6 +4,23 @@ pub trait ToCss {
     fn to_css_style(&self) -> Option<String>;
 }
 
+#[derive(Debug)]
+pub struct StylingReference {
+    name: String,
+}
+
+impl StylingReference {
+    pub unsafe fn from_raw(name: String) -> StylingReference {
+        Self { name }
+    }
+}
+
+impl Display for StylingReference {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
 pub struct DynamicElementStyling {
     name: String,
     base: BaseElementStyling,
