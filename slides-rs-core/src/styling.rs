@@ -5,8 +5,28 @@ pub trait ToCss {
 }
 
 pub struct DynamicElementStyling {
+    name: String,
     base: BaseElementStyling,
     specific: Box<dyn ToCss>,
+}
+
+impl DynamicElementStyling {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+}
+
+impl ToCss for DynamicElementStyling {
+    fn to_css_style(&self) -> Option<String> {
+        let base = self.base.to_css_style();
+        let specific = self.specific.to_css_style();
+        match (base, specific) {
+            (None, None) => None,
+            (None, it) => it,
+            (it, None) => it,
+            (Some(a), Some(b)) => Some(format!("{a}\n{b}")),
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -56,8 +76,9 @@ impl<S: ToCss + 'static> ElementStyling<S> {
         }
     }
 
-    pub fn to_dynamic(self) -> DynamicElementStyling {
+    pub fn to_dynamic(self, name: String) -> DynamicElementStyling {
         DynamicElementStyling {
+            name,
             base: self.base,
             specific: Box::new(self.specific),
         }

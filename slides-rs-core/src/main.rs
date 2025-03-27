@@ -25,6 +25,7 @@ fn main() -> slides_rs_core::Result<()> {
 
     let blue_bg_lbl = presentation.add_styling(
         LabelStyling::new().with_background(Background::Color(Color::from_rgb(20, 60, 180))),
+        "blue-background",
     );
 
     presentation.add_slide(

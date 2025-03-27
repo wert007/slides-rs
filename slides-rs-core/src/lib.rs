@@ -63,6 +63,16 @@ impl Presentation {
             slide.set_fallback_id(format!("slide-{index}"));
             slide.output_to_html(&mut emitter)?
         }
+
+        for styling in self.stylings {
+            writeln!(emitter.raw_css(), ".{} {{", styling.name())?;
+            writeln!(
+                emitter.raw_css(),
+                "{}",
+                styling.to_css_style().expect("should not be empty!")
+            )?;
+            writeln!(emitter.raw_css(), "}}")?;
+        }
         emitter.copy_referenced_files()?;
         writeln!(emitter.raw_html(), "</body></html>")?;
         Ok(())
@@ -71,9 +81,10 @@ impl Presentation {
     pub fn add_styling<S: ToCss + 'static>(
         &mut self,
         styling: ElementStyling<S>,
+        name: impl Into<String>,
     ) -> Index<ElementStyling<S>> {
         let index = self.stylings.len();
-        self.stylings.push(styling.to_dynamic());
+        self.stylings.push(styling.to_dynamic(name.into()));
         unsafe { Index::new(index) }
     }
 }
