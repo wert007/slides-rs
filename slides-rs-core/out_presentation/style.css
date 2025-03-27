@@ -1,0 +1,41 @@
+body {
+    padding: 0;
+    margin: 0;
+}
+
+.slide {
+    height: 100dvh;
+    width: 100dvw;
+    padding: 0;
+    margin: 0;
+}
+
+.label {
+    position: absolute;
+}
+
+.flex {
+    display: flex;
+}
+
+.horizontal-center {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+#slide-0 { background: rgb(255, 127, 127, 1);
+ }
+#slide-0-element-0 {
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+
+}
+#slide-0-element-1 {
+top: 0px;
+left: 0px;
+
+background: rgb(127, 127, 255, 1);
+
+}
