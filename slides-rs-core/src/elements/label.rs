@@ -8,6 +8,12 @@ use super::WebRenderable;
 pub struct FormattedText {
     text: String,
 }
+impl FormattedText {
+    fn render_to_html<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+        writeln!(w, "{}", markdown::to_html(&self.text))?;
+        Ok(())
+    }
+}
 
 impl<T: Into<String>> From<T> for FormattedText {
     fn from(value: T) -> Self {
@@ -43,11 +49,9 @@ impl WebRenderable for Label {
         if let Some(style) = style {
             writeln!(emitter.raw_css(), "#{id} {{\n{style}\n}}")?;
         }
-        writeln!(
-            emitter.raw_html(),
-            "<div id=\"{id}\" class=\"label\">{}</div>",
-            self.text
-        )?;
+        writeln!(emitter.raw_html(), "<div id=\"{id}\" class=\"label\">")?;
+        self.text.render_to_html(emitter.raw_html())?;
+        writeln!(emitter.raw_html(), "</div>")?;
         Ok(())
     }
 

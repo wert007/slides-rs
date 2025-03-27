@@ -5,5 +5,6 @@ edition = "2024"
 
 [dependencies]
 enum_dispatch = "0.3.13"
+markdown = "0.3.0"
 strum = { version = "0.27.1", features = ["derive"] }
 thiserror = "2.0.12"
