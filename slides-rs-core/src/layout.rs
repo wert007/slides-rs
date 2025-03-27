@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::{fmt::Display, ops::Add};
 
 #[derive(Debug)]
 pub struct Positioning {
@@ -21,6 +21,11 @@ impl Positioning {
     pub fn with_alignment_center(mut self) -> Self {
         self.vertical_alignment = VerticalAlignment::Center;
         self.horizontal_alignment = HorizontalAlignment::Center;
+        self
+    }
+
+    pub fn with_padding(mut self, padding: Thickness) -> Self {
+        self.padding = padding;
         self
     }
 
@@ -47,21 +52,20 @@ impl Positioning {
 
         match self.vertical_alignment {
             VerticalAlignment::Top => {
-                writeln!(result, "top: {};", self.top()).expect("infallible");
+                writeln!(result, "top: {};", self.margin.top).expect("infallible");
             }
             VerticalAlignment::Center => {
                 writeln!(result, "top: 50%;").expect("infallible");
                 translate.1 = -50.0;
             }
             VerticalAlignment::Bottom => {
-                writeln!(result, "bottom: {};", self.bottom()).expect("infallible");
+                writeln!(result, "bottom: {};", self.margin.bottom).expect("infallible");
             }
             VerticalAlignment::Stretch => {
                 writeln!(
                     result,
                     "top: {};\nbottom: {};\nheight: 100%;",
-                    self.top(),
-                    self.bottom()
+                    self.margin.top, self.margin.bottom
                 )
                 .expect("infallible");
             }
@@ -69,21 +73,20 @@ impl Positioning {
 
         match self.horizontal_alignment {
             HorizontalAlignment::Left => {
-                writeln!(result, "left: {};", self.left()).expect("infallible");
+                writeln!(result, "left: {};", self.margin.left).expect("infallible");
             }
             HorizontalAlignment::Center => {
                 writeln!(result, "left: 50%;").expect("infallible");
                 translate.0 = -50.0;
             }
             HorizontalAlignment::Right => {
-                writeln!(result, "right: {};", self.right()).expect("infallible");
+                writeln!(result, "right: {};", self.margin.right).expect("infallible");
             }
             HorizontalAlignment::Stretch => {
                 writeln!(
                     result,
                     "left: {};\nbottom: {};\nwidth: 100%;",
-                    self.left(),
-                    self.right()
+                    self.margin.left, self.margin.right
                 )
                 .expect("infallible");
             }
@@ -96,6 +99,10 @@ impl Positioning {
                 translate.0, translate.1
             )
             .expect("infallible");
+        }
+
+        if self.padding != Thickness::UNSPECIFIED {
+            writeln!(result, "padding: {};", self.padding).expect("infallible");
         }
 
         if result.is_empty() {
@@ -128,7 +135,7 @@ pub enum HorizontalAlignment {
     Stretch,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Thickness {
     left: StyleUnit,
     top: StyleUnit,
@@ -143,9 +150,28 @@ impl Thickness {
         right: StyleUnit::Unspecified,
         bottom: StyleUnit::Unspecified,
     };
+
+    pub fn all(value: StyleUnit) -> Thickness {
+        Self {
+            left: value,
+            top: value,
+            right: value,
+            bottom: value,
+        }
+    }
 }
 
-#[derive(Debug, strum::Display, Clone, Copy)]
+impl Display for Thickness {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} {} {} {}",
+            self.left, self.top, self.right, self.bottom
+        )
+    }
+}
+
+#[derive(Debug, strum::Display, Clone, Copy, PartialEq)]
 pub enum StyleUnit {
     #[strum(to_string = "unset")]
     Unspecified,

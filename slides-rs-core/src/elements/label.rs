@@ -40,6 +40,13 @@ pub struct Label {
 }
 
 impl WebRenderable for Label {
+    fn collect_google_font_references(
+        &self,
+        fonts: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        self.styling.collect_google_font_references(fonts)
+    }
+
     fn output_to_html<W: std::io::Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
         let id = self.id.expect("id should have been set here!");
         let style_positioning = self.positioning.to_css_style();

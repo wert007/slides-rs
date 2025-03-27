@@ -1,4 +1,4 @@
-use std::{io::Write, marker::PhantomData, path::PathBuf};
+use std::{collections::HashSet, io::Write, marker::PhantomData, path::PathBuf};
 
 pub type Result<T> = std::result::Result<T, error::SlidesError>;
 
@@ -51,13 +51,38 @@ impl Presentation {
     pub fn output_to_directory(self, directory: impl Into<PathBuf>) -> Result<()> {
         let directory: PathBuf = directory.into();
         let mut emitter = PresentationEmitter::new(directory)?;
+
         writeln!(
             emitter.raw_html(),
             r#"<html>
             <head>
             <link href="style.css" rel="stylesheet"/>
             <script src="navigation.js"></script>
-            </head>
+
+            <!-- For Google font! -->
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>"#
+        )?;
+
+        let mut google_font_references = HashSet::new();
+        for slide in &self.slides {
+            slide.collect_google_font_references(&mut google_font_references)?;
+        }
+
+        for styling in &self.stylings {
+            styling.collect_google_font_references(&mut google_font_references)?;
+        }
+
+        for google_font in google_font_references {
+            writeln!(
+                emitter.raw_html(),
+                r#"<link href="https://fonts.googleapis.com/css2?family={google_font}" rel="stylesheet">"#
+            )?;
+        }
+
+        writeln!(
+            emitter.raw_html(),
+            r#"</head>
             <body onload="init()" onkeydown="keydown(event)">"#
         )?;
         for (index, mut slide) in self.slides.into_iter().enumerate() {
@@ -138,5 +163,12 @@ impl Slide {
 
     fn set_fallback_id(&mut self, fallback: String) {
         self.id.get_or_insert(fallback);
+    }
+
+    fn collect_google_font_references(&self, fonts: &mut HashSet<String>) -> Result<()> {
+        for element in &self.elements {
+            element.collect_google_font_references(fonts)?;
+        }
+        Ok(())
     }
 }

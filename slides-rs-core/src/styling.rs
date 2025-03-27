@@ -1,7 +1,13 @@
+use crate::Result;
 use std::{fmt::Display, ops::Deref};
 
 pub trait ToCss {
     fn to_css_style(&self) -> Option<String>;
+
+    fn collect_google_font_references(
+        &self,
+        fonts: &mut std::collections::HashSet<String>,
+    ) -> Result<()>;
 }
 
 #[derive(Debug)]
@@ -44,6 +50,13 @@ impl ToCss for DynamicElementStyling {
             (Some(a), Some(b)) => Some(format!("{a}\n{b}")),
         }
     }
+
+    fn collect_google_font_references(
+        &self,
+        fonts: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        self.specific.collect_google_font_references(fonts)
+    }
 }
 
 #[derive(Debug, Default)]
@@ -63,6 +76,13 @@ impl ToCss for BaseElementStyling {
         } else {
             Some(result)
         }
+    }
+
+    fn collect_google_font_references(
+        &self,
+        _: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        Ok(())
     }
 }
 
@@ -113,6 +133,13 @@ impl<S: ToCss> ToCss for ElementStyling<S> {
             (Some(a), Some(b)) => Some(format!("{a}\n{b}")),
         }
     }
+
+    fn collect_google_font_references(
+        &self,
+        fonts: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        self.specific.collect_google_font_references(fonts)
+    }
 }
 
 #[derive(Debug, Default)]
@@ -139,16 +166,46 @@ impl ToCss for SlideStyling {
             Some(result)
         }
     }
+    fn collect_google_font_references(
+        &self,
+        _: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        Ok(())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, strum::Display)]
+pub enum Font {
+    #[strum(to_string = "unset")]
+    Unspecified,
+    #[strum(to_string = "\"{0}\"")]
+    GoogleFont(String),
+    #[strum(to_string = "\"{0}\"")]
+    System(String),
+}
+
+impl Font {
+    pub fn gfont(name: impl Into<String>) -> Self {
+        Self::GoogleFont(name.into())
+    }
+
+    pub fn system(name: impl Into<String>) -> Self {
+        Self::System(name.into())
+    }
 }
 
 #[derive(Debug)]
 pub struct LabelStyling {
     text_color: Option<Color>,
+    font: Font,
 }
 
 impl LabelStyling {
     pub fn new() -> ElementStyling<LabelStyling> {
-        ElementStyling::new(Self { text_color: None })
+        ElementStyling::new(Self {
+            text_color: None,
+            font: Font::Unspecified,
+        })
     }
 }
 
@@ -156,6 +213,21 @@ impl ElementStyling<LabelStyling> {
     pub fn with_text_color(mut self, text_color: Color) -> Self {
         self.specific.text_color = Some(text_color);
         self
+    }
+
+    pub fn with_font(mut self, font: Font) -> Self {
+        self.specific.font = font;
+        self
+    }
+
+    pub fn header_data(&self) -> Option<String> {
+        match &self.font {
+            Font::Unspecified => None,
+            Font::GoogleFont(name) => Some(format!(
+                r#"<link href="https://fonts.googleapis.com/css2?family={name}" rel="stylesheet">"#
+            )),
+            Font::System(_) => None,
+        }
     }
 }
 
@@ -166,11 +238,27 @@ impl ToCss for LabelStyling {
         if let Some(text_color) = self.text_color {
             writeln!(result, "color: {text_color};").expect("infallible");
         }
+        if self.font != Font::Unspecified {
+            writeln!(result, "font-family: {};", self.font).expect("infallible");
+        }
         if result.is_empty() {
             None
         } else {
             Some(result)
         }
+    }
+
+    fn collect_google_font_references(
+        &self,
+        fonts: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        match &self.font {
+            Font::GoogleFont(name) => {
+                fonts.insert(name.clone());
+            }
+            _ => {}
+        }
+        Ok(())
     }
 }
 
@@ -217,6 +305,13 @@ impl ToCss for ImageStyling {
         } else {
             Some(result)
         }
+    }
+
+    fn collect_google_font_references(
+        &self,
+        _: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        Ok(())
     }
 }
 

@@ -1,6 +1,6 @@
 use slides_rs_core::{
-    Background, Color, Image, ImageSource, ImageStyling, Label, LabelStyling, ObjectFit,
-    Positioning, Presentation, Slide, SlideStyling,
+    Background, Color, Font, Image, ImageSource, ImageStyling, Label, LabelStyling, ObjectFit,
+    Positioning, Presentation, Slide, SlideStyling, StyleUnit, Thickness,
 };
 
 fn main() -> slides_rs_core::Result<()> {
@@ -43,18 +43,28 @@ fn main() -> slides_rs_core::Result<()> {
             )
             .add_label(
                 Label::new("Hello World!")
-                    .with_positioning(Positioning::new().with_alignment_center())
+                    .with_positioning(
+                        Positioning::new()
+                            .with_alignment_center()
+                            .with_padding(Thickness::all(StyleUnit::Pixel(50.0))),
+                    )
                     .with_element_styling(
                         LabelStyling::new()
                             .with_background(Background::Color(Color::from_rgb(51, 51, 51)))
-                            .with_text_color(Color::WHITE),
+                            .with_text_color(Color::WHITE)
+                            .with_font(Font::gfont("Roboto")),
                     ),
             )
             .add_label(
-                Label::new("Hiiiiii World!").with_element_styling(
-                    LabelStyling::new()
-                        .with_background(Background::Color(Color::from_rgb(127, 127, 255))),
-                ),
+                Label::new("Hiiiiii World!")
+                    .with_element_styling(
+                        LabelStyling::new()
+                            .with_background(Background::Color(Color::from_rgb(127, 127, 255)))
+                            .with_font(Font::system("Arial")),
+                    )
+                    .with_positioning(
+                        Positioning::new().with_padding(Thickness::all(StyleUnit::Pixel(10.0))),
+                    ),
             ),
     );
 
