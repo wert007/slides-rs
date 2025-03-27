@@ -21,6 +21,7 @@ pub enum TokenKind {
     LetKeyword,
     Number,
     SingleChar(char),
+    String,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -65,6 +66,17 @@ impl Token {
                 length: 0,
             },
             kind: TokenKind::Number,
+        }
+    }
+
+    fn string(file: FileId, start: usize) -> Token {
+        Token {
+            location: Location {
+                file,
+                start,
+                length: 0,
+            },
+            kind: TokenKind::String,
         }
     }
 
@@ -137,12 +149,12 @@ pub fn lex(file: super::FileId, context: &mut super::Context) -> Vec<Token> {
                             State::EscapedMultiLineString
                         } else {
                             finish_token(index, current_token.take());
-                            current_token = Some(Token::number(file, index));
+                            current_token = Some(Token::string(file, index));
                             State::OneLineString
                         };
                     } else {
                         finish_token(index, current_token.take());
-                        current_token = Some(Token::number(file, index));
+                        current_token = Some(Token::string(file, index));
                         state = State::OneLineString;
                     }
                     iter.next();

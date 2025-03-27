@@ -55,6 +55,10 @@ pub enum SyntaxNodeKind {
         arguments: Vec<(SyntaxNode, Option<Token>)>,
         rparen: Token,
     },
+    TypedString {
+        type_: Token,
+        string: Token,
+    },
 }
 
 pub struct SyntaxNode {
@@ -180,6 +184,12 @@ impl SyntaxNode {
             },
         }
     }
+
+    fn typed_string(type_: Token, string: Token) -> SyntaxNode {
+        SyntaxNode {
+            kind: SyntaxNodeKind::TypedString { type_, string },
+        }
+    }
 }
 
 pub struct Ast {
@@ -253,6 +263,13 @@ fn debug_syntax_node(node: &SyntaxNode, context: &Context, indent: String) {
             for (argument, _) in arguments {
                 debug_syntax_node(&argument, context, format!("{indent}        "));
             }
+        }
+        SyntaxNodeKind::TypedString { type_, string } => {
+            println!(
+                "Typed String {}{}",
+                type_.text(context),
+                string.text(context)
+            );
         }
     }
 }
@@ -435,8 +452,15 @@ fn parse_function_call(parser: &mut Parser, context: &mut Context) -> SyntaxNode
 
 fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     match parser.current_token().kind {
-        TokenKind::Identifier => SyntaxNode::variable_reference(parser.next_token()),
+        TokenKind::Identifier => {
+            if parser.peek() == TokenKind::String {
+                SyntaxNode::typed_string(parser.next_token(), parser.next_token())
+            } else {
+                SyntaxNode::variable_reference(parser.next_token())
+            }
+        }
         TokenKind::Number => SyntaxNode::literal(parser.next_token()),
+        TokenKind::String => SyntaxNode::literal(parser.next_token()),
         err => {
             println!("HELLO");
             debug_tokens(&parser.tokens[parser.index..], context);
