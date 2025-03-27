@@ -50,9 +50,23 @@ impl LabelStyling {
     }
 }
 
+#[derive(Debug, Default, PartialEq, Eq, strum::Display)]
+#[strum(serialize_all = "kebab-case")]
+pub enum ObjectFit {
+    #[default]
+    #[strum(to_string = "unset")]
+    Unspecified,
+    Contain,
+    None,
+    Cover,
+    Fill,
+    ScaleDown,
+}
+
 #[derive(Debug, Default)]
 pub struct ImageStyling {
     background: Background,
+    object_fit: ObjectFit,
 }
 
 impl ImageStyling {
@@ -65,14 +79,21 @@ impl ImageStyling {
         use std::fmt::Write;
         let mut result = String::new();
         if self.background != Background::Unspecified {
-            writeln!(result, "background: {};", self.background)
-                .expect("Writing to string is infallible");
+            writeln!(result, "background: {};", self.background).expect("infallible");
+        }
+        if self.object_fit != ObjectFit::Unspecified {
+            writeln!(result, "object-fit: {};", self.object_fit).expect("infallible");
         }
         if result.is_empty() {
             None
         } else {
             Some(result)
         }
+    }
+
+    pub fn with_object_fit(mut self, object_fit: ObjectFit) -> Self {
+        self.object_fit = object_fit;
+        self
     }
 }
 

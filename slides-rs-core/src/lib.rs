@@ -53,6 +53,7 @@ impl Presentation {
             slide.set_fallback_id(format!("slide-{index}"));
             slide.output_to_html(&mut emitter)?
         }
+        emitter.copy_referenced_files()?;
         writeln!(emitter.raw_html(), "</body></html>")?;
         Ok(())
     }

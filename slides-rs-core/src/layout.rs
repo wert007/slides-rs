@@ -1,5 +1,6 @@
 use crate::Result;
 
+#[derive(Debug)]
 pub struct Positioning {
     vertical_alignment: VerticalAlignment,
     horizontal_alignment: HorizontalAlignment,
@@ -40,7 +41,7 @@ impl Positioning {
                 writeln!(result, "bottom: 0px;").expect("infallible");
             }
             VerticalAlignment::Stretch => {
-                writeln!(result, "top: 0px;\nbottom: 0px;").expect("infallible");
+                writeln!(result, "top: 0px;\nbottom: 0px;\nheight: 100%;").expect("infallible");
             }
         }
 
@@ -56,7 +57,7 @@ impl Positioning {
                 writeln!(result, "right: 0px;").expect("infallible");
             }
             HorizontalAlignment::Stretch => {
-                writeln!(result, "left: 0px;\nbottom: 0px;").expect("infallible");
+                writeln!(result, "left: 0px;\nbottom: 0px;\nwidth: 100%;").expect("infallible");
             }
         }
 
@@ -76,29 +77,14 @@ impl Positioning {
         }
     }
 
-    pub(crate) fn output_optional_parent_start(
-        &self,
-        index_html: &mut std::fs::File,
-    ) -> Result<()> {
-        // match self.horizontal_alignment {
-        //     HorizontalAlignment::Center => {
-        //         writeln!(index_html, "<span class=\"horizontal-center\">")?;
-        //     }
-        //     _ => {}
-        // }
-        Ok(())
-    }
-    pub(crate) fn output_optional_parent_end(&self, index_html: &mut std::fs::File) -> Result<()> {
-        // match self.horizontal_alignment {
-        //     HorizontalAlignment::Center => {
-        //         writeln!(index_html, "</span>")?;
-        //     }
-        //     _ => {}
-        // }
-        Ok(())
+    pub fn with_alignment_stretch(mut self) -> Positioning {
+        self.vertical_alignment = VerticalAlignment::Stretch;
+        self.horizontal_alignment = HorizontalAlignment::Stretch;
+        self
     }
 }
 
+#[derive(Debug)]
 pub enum VerticalAlignment {
     Top,
     Center,
@@ -106,6 +92,7 @@ pub enum VerticalAlignment {
     Stretch,
 }
 
+#[derive(Debug)]
 pub enum HorizontalAlignment {
     Left,
     Center,
@@ -113,6 +100,7 @@ pub enum HorizontalAlignment {
     Stretch,
 }
 
+#[derive(Debug)]
 pub struct Thickness {
     left: StyleUnit,
     top: StyleUnit,
@@ -129,6 +117,7 @@ impl Thickness {
     };
 }
 
+#[derive(Debug)]
 pub enum StyleUnit {
     Unspecified,
     Pixel(f64),

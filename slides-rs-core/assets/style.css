@@ -10,8 +10,16 @@ body {
     margin: 0;
 }
 
-.label {
+.label,
+.image {
     position: absolute;
+}
+
+.image {
+    max-width: 100dvw;
+    max-height: 100dvh;
+    object-fit: contain;
+    object-position: center;
 }
 
 .flex {

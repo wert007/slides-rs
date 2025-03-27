@@ -13,11 +13,13 @@ pub trait WebRenderable {
 }
 
 #[enum_dispatch(WebRenderable)]
+#[derive(Debug)]
 pub enum Element {
     Image,
     Label,
 }
 
+#[derive(Debug)]
 pub struct Image {
     id: Option<String>,
     source: ImageSource,
@@ -25,8 +27,22 @@ pub struct Image {
     styling: ImageStyling,
 }
 
+#[derive(Debug)]
 pub enum ImageSource {
     Path(PathBuf),
+}
+
+impl ImageSource {
+    pub fn path(path: impl Into<PathBuf>) -> Self {
+        Self::Path(path.into())
+    }
+
+    fn add_files<W: std::io::Write>(&self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
+        match self {
+            ImageSource::Path(path_buf) => emitter.add_file(path_buf)?,
+        }
+        Ok(())
+    }
 }
 
 impl Display for ImageSource {
@@ -46,6 +62,16 @@ impl Image {
             styling: ImageStyling::default(),
         }
     }
+
+    pub fn with_positioning(mut self, positioning: Positioning) -> Self {
+        self.positioning = positioning;
+        self
+    }
+
+    pub fn with_styling(mut self, styling: ImageStyling) -> Self {
+        self.styling = styling;
+        self
+    }
 }
 
 impl WebRenderable for Image {
@@ -62,6 +88,7 @@ impl WebRenderable for Image {
         if let Some(style) = style {
             writeln!(emitter.raw_css(), "#{id} {{\n{style}\n}}")?;
         }
+        self.source.add_files(emitter)?;
         writeln!(
             emitter.raw_html(),
             "<img id=\"{id}\" class=\"image\" src=\"{}\"/>",
@@ -82,6 +109,7 @@ impl WebRenderable for Image {
     }
 }
 
+#[derive(Debug)]
 pub struct Label {
     id: Option<String>,
     text: Cow<'static, str>,

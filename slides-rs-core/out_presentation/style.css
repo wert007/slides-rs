@@ -10,8 +10,16 @@ body {
     margin: 0;
 }
 
-.label {
+.label,
+.image {
     position: absolute;
+}
+
+.image {
+    max-width: 100dvw;
+    max-height: 100dvh;
+    object-fit: contain;
+    object-position: center;
 }
 
 .flex {
@@ -27,12 +35,23 @@ body {
 #slide-0 { background: rgb(255, 127, 127, 1);
  }
 #slide-0-element-0 {
+top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;
+bottom: 0px;
+width: 100%;
+
+object-fit: cover;
+
+}
+#slide-0-element-1 {
 top: 50%;
 left: 50%;
 transform: translate(-50%, -50%);
 
 }
-#slide-0-element-1 {
+#slide-0-element-2 {
 top: 0px;
 left: 0px;
 
