@@ -1,16 +1,4 @@
-use super::{Context, FileId};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Location {
-    pub file: FileId,
-    pub start: usize,
-    pub length: usize,
-}
-impl Location {
-    fn set_end(&mut self, end: usize) {
-        self.length = end - self.start;
-    }
-}
+use super::{Context, FileId, Files, diagnostics::Location};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TokenKind {
@@ -91,10 +79,10 @@ impl Token {
         }
     }
 
-    fn finish(&mut self, end: usize, context: &Context) {
+    fn finish(&mut self, end: usize, files: &Files) {
         self.location.set_end(end);
         if self.kind == TokenKind::Identifier {
-            self.kind = match dbg!(self.text(context)) {
+            self.kind = match self.text(files) {
                 "let" => TokenKind::LetKeyword,
                 "slide" => TokenKind::SlideKeyword,
                 "styling" => TokenKind::StylingKeyword,
@@ -103,12 +91,17 @@ impl Token {
         }
     }
 
-    pub fn text<'a, 'b: 'a>(&'a self, context: &'b Context) -> &'a str {
-        &context[self.location]
+    pub fn text<'a, 'b: 'a>(&'a self, files: &'b Files) -> &'a str {
+        &files[self.location]
     }
 }
 
 pub fn lex(file: super::FileId, context: &mut super::Context) -> Vec<Token> {
+    let Context {
+        loaded_files,
+        diagnostics,
+        ..
+    } = context;
     #[derive(Debug, Clone, Copy)]
     enum State {
         Init,
@@ -125,11 +118,11 @@ pub fn lex(file: super::FileId, context: &mut super::Context) -> Vec<Token> {
     let mut state = State::Init;
     let mut finish_token = |index: usize, token: Option<Token>| {
         if let Some(mut token) = token {
-            token.finish(index, &context);
+            token.finish(index, &loaded_files);
             result.push(token);
         }
     };
-    let mut iter = context[file].content().char_indices().peekable();
+    let mut iter = loaded_files[file].content().char_indices().peekable();
     while let Some(&(index, char)) = iter.peek() {
         match state {
             State::Init => match char {
@@ -137,14 +130,22 @@ pub fn lex(file: super::FileId, context: &mut super::Context) -> Vec<Token> {
                     iter.next();
                     if iter.peek().is_some_and(|&(_, c)| c == '/') {
                         state = State::LineComment;
+                    } else {
+                        diagnostics.report_unexpected_char(
+                            '/',
+                            Location {
+                                file,
+                                start: index,
+                                length: 1,
+                            },
+                        );
                     }
                 }
                 '"' => {
                     if let Some(previous_token) = current_token.as_mut() {
-                        previous_token.finish(index, &context);
-                        let was_empty_str = previous_token.text(context) == "\"\"";
+                        previous_token.finish(index, &loaded_files);
+                        let was_empty_str = previous_token.text(&loaded_files) == "\"\"";
                         let distance = index - previous_token.location.start;
-                        dbg!(was_empty_str, distance, previous_token.text(context));
                         state = if was_empty_str && distance == 2 {
                             State::EscapedMultiLineString
                         } else {
@@ -181,8 +182,17 @@ pub fn lex(file: super::FileId, context: &mut super::Context) -> Vec<Token> {
                     iter.next();
                 }
                 err => {
-                    debug_tokens(&result, context);
-                    panic!("Not handled: {err}")
+                    finish_token(index, current_token.take());
+                    // debug_tokens(&result, &loaded_files);
+                    diagnostics.report_unexpected_char(
+                        err,
+                        Location {
+                            file,
+                            start: index,
+                            length: 1,
+                        },
+                    );
+                    iter.next();
                 }
             },
             State::Identifier => {
@@ -237,16 +247,16 @@ pub fn lex(file: super::FileId, context: &mut super::Context) -> Vec<Token> {
             }
         }
     }
-    let end = context[file].content().len();
+    let end = loaded_files[file].content().len();
     finish_token(end, current_token.take());
     finish_token(end, Some(Token::eof(file, end)));
 
     result
 }
 
-pub fn debug_tokens(tokens: &[Token], context: &mut super::Context) {
+pub fn debug_tokens(tokens: &[Token], files: &Files) {
     for token in tokens {
-        println!("Token: {:?} >{}<", token.kind, token.text(context));
+        println!("Token: {:?} >{}<", token.kind, token.text(files));
     }
 }
 

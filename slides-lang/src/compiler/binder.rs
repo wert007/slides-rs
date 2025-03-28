@@ -13,7 +13,15 @@ pub(crate) fn create_presentation_from_file(file: PathBuf) -> slides_rs_core::Re
     let ast = parser::parse_file(file, &mut context);
     debug_ast(&ast, &context);
     bind_ast(ast, &mut context);
-    Ok(context.presentation)
+    let Context {
+        presentation,
+        diagnostics,
+        loaded_files,
+    } = context;
+    if !diagnostics.is_empty() {
+        diagnostics.write(&mut std::io::stdout(), &loaded_files)?;
+    }
+    Ok(presentation)
 }
 
 fn bind_ast(ast: parser::Ast, context: &mut Context) {}
