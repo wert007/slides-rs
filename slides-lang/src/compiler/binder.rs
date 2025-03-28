@@ -2,6 +2,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use slides_rs_core::{Background, Color, Label, Presentation};
 use string_interner::{Symbol, symbol::SymbolUsize};
+use summum_types::summum;
 
 use super::{
     Context,
@@ -323,16 +324,18 @@ impl Type {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-pub enum Value {
-    Float(f64),
-    Integer(i64),
-    String(String),
-    StyleReference(slides_rs_core::StylingReference),
-    Background(slides_rs_core::Background),
-    Color(slides_rs_core::Color),
-    Label(slides_rs_core::Label),
+summum! {
+    #[allow(dead_code)]
+    #[derive(Debug, Clone)]
+    pub enum Value {
+        Float(f64),
+        Integer(i64),
+        String(String),
+        StyleReference(slides_rs_core::StylingReference),
+        Background(slides_rs_core::Background),
+        Color(slides_rs_core::Color),
+        Label(slides_rs_core::Label),
+    }
 }
 
 impl Value {
@@ -359,33 +362,33 @@ impl Value {
         Value::String(result)
     }
 
-    pub(crate) fn as_background(self) -> Option<Background> {
-        match self {
-            Self::Background(it) => Some(it),
-            _ => None,
-        }
-    }
+    // pub(crate) fn as_background(self) -> Option<Background> {
+    //     match self {
+    //         Self::Background(it) => Some(it),
+    //         _ => None,
+    //     }
+    // }
 
-    pub(crate) fn as_int(self) -> Option<i64> {
-        match self {
-            Self::Integer(it) => Some(it),
-            _ => None,
-        }
-    }
+    // pub(crate) fn as_int(self) -> Option<i64> {
+    //     match self {
+    //         Self::Integer(it) => Some(it),
+    //         _ => None,
+    //     }
+    // }
 
-    pub(crate) fn as_label_mut(&mut self) -> Option<&mut Label> {
-        match self {
-            Self::Label(it) => Some(it),
-            _ => None,
-        }
-    }
+    // pub(crate) fn as_label_mut(&mut self) -> Option<&mut Label> {
+    //     match self {
+    //         Self::Label(it) => Some(it),
+    //         _ => None,
+    //     }
+    // }
 
-    pub(crate) fn as_color(&self) -> Option<Color> {
-        match self {
-            Self::Color(it) => Some(*it),
-            _ => None,
-        }
-    }
+    // pub(crate) fn as_color(&self) -> Option<Color> {
+    //     match self {
+    //         Self::Color(it) => Some(*it),
+    //         _ => None,
+    //     }
+    // }
 }
 
 #[derive(Debug)]

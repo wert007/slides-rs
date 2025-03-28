@@ -2,13 +2,17 @@ styling blue_bg(Label):
     background = rgb(20, 60, 180);
     text_color = c"white";
 
+styling default(Slide):
+    background = rgb(120, 160, 180);
+
 slide intro:
     background = rgb(255, 127, 127);
     // let dict = {
     //     alignment: .center,
     // };
     // Creation of anonymous image
-    // image(p"assets/mountain") {
+    let i = image(p"assets/mountain");
+    //  {
     //    alignment: .center,
     //
     //            object-fit: cover,

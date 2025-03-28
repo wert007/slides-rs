@@ -84,11 +84,7 @@ fn evaluate_assignment(
     match target {
         AssignmentTarget::Variable(name) => match name.as_str() {
             "background" => {
-                slide.styling_mut().set_background(
-                    value
-                        .as_background()
-                        .expect("TODO: Runtime error handling!"),
-                );
+                slide.styling_mut().set_background(value.into_background());
             }
             _ => {
                 evaluator.set_variable(name, value);
@@ -96,16 +92,14 @@ fn evaluate_assignment(
         },
         AssignmentTarget::Member(base, member) => match context.string_interner.resolve(member) {
             "text_color" => {
-                base.as_label_mut()
-                    .expect("Type error")
+                base.as_mut_label()
                     .element_styling_mut()
-                    .set_text_color(value.as_color().expect("Type error"));
+                    .set_text_color(value.into_color());
             }
             "background" => {
-                base.as_label_mut()
-                    .expect("Type error")
+                base.as_mut_label()
                     .element_styling_mut()
-                    .set_background(value.as_background().expect("Type error"));
+                    .set_background(value.into_background());
             }
             err => todo!("Handle member {err}",),
         },
@@ -169,9 +163,9 @@ fn evaluate_function_call(
     let function_name = extract_function_name(*function_call.base, context);
     match function_name.as_str() {
         "rgb" => Value::Color(super::functions::rgb(
-            arguments[0].clone().as_int().expect("Argument error"),
-            arguments[1].clone().as_int().expect("Argument error"),
-            arguments[2].clone().as_int().expect("Argument error"),
+            *arguments[0].as_integer(),
+            *arguments[1].as_integer(),
+            *arguments[2].as_integer(),
         )),
         f => unreachable!("Unknown Function {f}!"),
     }
