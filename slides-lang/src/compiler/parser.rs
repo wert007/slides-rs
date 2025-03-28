@@ -8,6 +8,7 @@ use super::{
     lexer::{Token, TokenKind},
 };
 
+#[derive(Debug)]
 pub struct StylingStatement {
     pub styling_keyword: Token,
     pub name: Token,
@@ -18,11 +19,13 @@ pub struct StylingStatement {
     pub body: Vec<SyntaxNode>,
 }
 
+#[derive(Debug)]
 pub struct ExpressionStatement {
     pub expression: Box<SyntaxNode>,
     pub semicolon: Token,
 }
 
+#[derive(Debug)]
 pub struct VariableDeclaration {
     pub let_keyword: Token,
     pub name: Token,
@@ -31,6 +34,7 @@ pub struct VariableDeclaration {
     pub semicolon: Token,
 }
 
+#[derive(Debug)]
 pub struct SlideStatement {
     pub slide_keyword: Token,
     pub name: Token,
@@ -38,18 +42,22 @@ pub struct SlideStatement {
     pub body: Vec<SyntaxNode>,
 }
 
+#[derive(Debug)]
 pub struct MemberAccess {
     pub base: Box<SyntaxNode>,
     pub period: Token,
     pub member: Token,
 }
 
+#[derive(Debug)]
 pub struct AssignmentStatement {
     pub lhs: Box<SyntaxNode>,
     pub equals: Token,
     pub assignment: Box<SyntaxNode>,
     pub semicolon: Token,
 }
+
+#[derive(Debug)]
 
 pub struct FunctionCall {
     pub base: Box<SyntaxNode>,
@@ -58,29 +66,33 @@ pub struct FunctionCall {
     pub rparen: Token,
 }
 
+#[derive(Debug)]
 pub struct TypedString {
     pub type_: Token,
     pub string: Token,
 }
 
+#[derive(Debug)]
 pub struct DictEntry {
     pub identifier: Token,
     pub colon: Token,
     pub value: Box<SyntaxNode>,
 }
 
+#[derive(Debug)]
 pub struct Dict {
     pub lbrace: Token,
     pub entries: Vec<(SyntaxNode, Option<Token>)>,
     pub rbrace: Token,
 }
 
+#[derive(Debug)]
 pub struct InferredMember {
     pub period: Token,
     pub member: Token,
 }
 
-#[derive(strum::EnumTryAs)]
+#[derive(strum::EnumTryAs, Debug)]
 pub enum SyntaxNodeKind {
     StylingStatement(StylingStatement),
     ExpressionStatement(ExpressionStatement),
@@ -98,6 +110,7 @@ pub enum SyntaxNodeKind {
     InferredMember(InferredMember),
 }
 
+#[derive(Debug)]
 pub struct SyntaxNode {
     pub location: Location,
     pub kind: SyntaxNodeKind,

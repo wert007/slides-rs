@@ -156,7 +156,7 @@ impl Diagnostics {
         self.report_error(format!("No variable named {variable} found"), location);
     }
 
-    pub(crate) fn report_cannot_convert(&mut self, from: Type, target: Type, location: Location) {
+    pub(crate) fn report_cannot_convert(&mut self, from: &Type, target: &Type, location: Location) {
         self.report_error(
             format!("Cannot convert type {from:?} to type {target:?}"),
             location,

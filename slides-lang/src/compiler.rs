@@ -7,6 +7,7 @@ use string_interner::{backend::BucketBackend, symbol::SymbolUsize};
 
 mod binder;
 mod diagnostics;
+mod evaluator;
 mod lexer;
 mod parser;
 

@@ -15,22 +15,17 @@ slide intro:
     //
     //};
     let lbl = l"Hello World";
-    lbl.align_center();
+    // lbl.align_center();
     lbl.text_color = c"white";
     lbl.background = c"#616161";
 
 
-//slide hello:
-//    l"""
-//    # This could be a title
-//
-//    - With a list
-//    - of elements
-//    - to have a nice markdown support
-//    - which should be all that's needed for text. probably!
-//    """ {
-//    position: { alignment: center },
-//    styling: {
-//        references: [ blue_bg ]
-//    }
-//}
+slide hello:
+   let a = l"""
+   # This could be a title
+
+   - With a list
+   - of elements
+   - to have a nice markdown support
+   - which should be all that's needed for text. probably!
+   """

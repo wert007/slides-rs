@@ -1,11 +1,12 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use slides_rs_core::Presentation;
+use slides_rs_core::{Background, Color, Label, Presentation};
 use string_interner::{Symbol, symbol::SymbolUsize};
 
 use super::{
     Context,
     diagnostics::Location,
+    evaluator,
     lexer::Token,
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
@@ -17,16 +18,20 @@ pub(crate) fn create_presentation_from_file(file: PathBuf) -> slides_rs_core::Re
     debug_ast(&ast, &context);
     let ast = bind_ast(ast, &mut context);
     debug_bound_ast(&ast, &context);
-    let Context {
-        presentation,
-        diagnostics,
-        loaded_files,
-        ..
-    } = context;
-    if !diagnostics.is_empty() {
-        diagnostics.write(&mut std::io::stdout(), &loaded_files)?;
+    // let Context {
+    //     presentation,
+    //     diagnostics,
+    //     loaded_files,
+    //     ..
+    // } = context;
+    if !context.diagnostics.is_empty() {
+        context
+            .diagnostics
+            .write(&mut std::io::stdout(), &context.loaded_files)?;
+    } else {
+        evaluator::create_presentation_from_ast(ast, &mut context)?;
     }
-    Ok(presentation)
+    Ok(context.presentation)
 }
 
 fn debug_bound_ast(ast: &BoundAst, context: &Context) {
@@ -136,14 +141,16 @@ impl Scope {
             variables: HashMap::new(),
         };
         let id = interner.create_or_get_variable("rgb");
-        global.try_register_variable(
-            id,
-            Type::Function(FunctionType {
-                argument_types: vec![Type::Integer, Type::Integer, Type::Integer],
-                return_type: Box::new(Type::Color),
-            }),
-            Location::zero(),
-        );
+        global
+            .try_register_variable(
+                id,
+                Type::Function(FunctionType {
+                    argument_types: vec![Type::Integer, Type::Integer, Type::Integer],
+                    return_type: Box::new(Type::Color),
+                }),
+                Location::zero(),
+            )
+            .expect("infallible");
         global
     }
 
@@ -316,11 +323,16 @@ impl Type {
     }
 }
 
-#[derive(Debug)]
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Float(f64),
     Integer(i64),
     String(String),
+    StyleReference(slides_rs_core::StylingReference),
+    Background(slides_rs_core::Background),
+    Color(slides_rs_core::Color),
+    Label(slides_rs_core::Label),
 }
 
 impl Value {
@@ -329,6 +341,10 @@ impl Value {
             Value::Float(_) => Type::Float,
             Value::Integer(_) => Type::Integer,
             Value::String(_) => Type::String,
+            Value::StyleReference(_) => Type::Styling,
+            Value::Background(_) => Type::Background,
+            Value::Color(_) => Type::Color,
+            Value::Label(_) => Type::Label,
         }
     }
 
@@ -342,59 +358,97 @@ impl Value {
         }
         Value::String(result)
     }
+
+    pub(crate) fn as_background(self) -> Option<Background> {
+        match self {
+            Self::Background(it) => Some(it),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_int(self) -> Option<i64> {
+        match self {
+            Self::Integer(it) => Some(it),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_label_mut(&mut self) -> Option<&mut Label> {
+        match self {
+            Self::Label(it) => Some(it),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_color(&self) -> Option<Color> {
+        match self {
+            Self::Color(it) => Some(*it),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug)]
-enum ConversionKind {
+pub enum ConversionKind {
     Implicit,
     TypedString,
 }
 
 #[derive(Debug, strum::EnumString)]
-enum StylingType {
+pub enum StylingType {
     Label,
     Image,
     Slide,
 }
+#[derive(Debug)]
 
-struct StylingStatement {
-    name: VariableId,
-    type_: StylingType,
-    body: Vec<BoundNode>,
+pub struct StylingStatement {
+    pub name: VariableId,
+    pub type_: StylingType,
+    pub body: Vec<BoundNode>,
+}
+#[derive(Debug)]
+
+pub struct AssignmentStatement {
+    pub lhs: Box<BoundNode>,
+    pub value: Box<BoundNode>,
+}
+#[derive(Debug)]
+
+pub struct FunctionCall {
+    pub base: Box<BoundNode>,
+    pub arguments: Vec<BoundNode>,
+    pub function_type: FunctionType,
+}
+#[derive(Debug)]
+
+pub struct SlideStatement {
+    pub name: VariableId,
+    pub body: Vec<BoundNode>,
+}
+#[derive(Debug)]
+
+pub struct VariableDeclaration {
+    pub variable: VariableId,
+    pub value: Box<BoundNode>,
+}
+#[derive(Debug)]
+
+pub struct MemberAccess {
+    pub base: Box<BoundNode>,
+    pub member: SymbolUsize,
 }
 
-struct AssignmentStatement {
-    lhs: Box<BoundNode>,
-    value: Box<BoundNode>,
+#[derive(Debug)]
+
+pub struct Conversion {
+    pub base: Box<BoundNode>,
+    pub kind: ConversionKind,
+    pub target: Type,
 }
 
-struct FunctionCall {
-    base: Box<BoundNode>,
-    arguments: Vec<BoundNode>,
-    function_type: FunctionType,
-}
-
-struct SlideStatement {
-    name: VariableId,
-    body: Vec<BoundNode>,
-}
-
-struct VariableDeclaration {
-    variable: VariableId,
-    value: Box<BoundNode>,
-}
-
-struct MemberAccess {
-    base: Box<BoundNode>,
-    member: SymbolUsize,
-}
-
-struct Conversion {
-    base: Box<BoundNode>,
-    kind: ConversionKind,
-}
-
-enum BoundNodeKind {
+#[derive(Debug)]
+pub enum BoundNodeKind {
     Error,
     StylingStatement(StylingStatement),
     AssignmentStatement(AssignmentStatement),
@@ -408,10 +462,11 @@ enum BoundNodeKind {
     Conversion(Conversion),
 }
 
-struct BoundNode {
+#[derive(Debug)]
+pub struct BoundNode {
     base: Option<SyntaxNodeKind>,
     location: Location,
-    kind: BoundNodeKind,
+    pub kind: BoundNodeKind,
     type_: Type,
 }
 impl BoundNode {
@@ -558,21 +613,22 @@ impl BoundNode {
         }
     }
 
-    fn conversion(base: BoundNode, target: Type, kind: ConversionKind) -> BoundNode {
+    fn conversion(base: BoundNode, target: &Type, kind: ConversionKind) -> BoundNode {
         BoundNode {
             base: None,
             location: base.location,
             kind: BoundNodeKind::Conversion(Conversion {
                 base: Box::new(base),
                 kind,
+                target: target.clone(),
             }),
-            type_: target,
+            type_: target.clone(),
         }
     }
 }
 
-struct BoundAst {
-    statements: Vec<BoundNode>,
+pub struct BoundAst {
+    pub statements: Vec<BoundNode>,
 }
 
 fn bind_ast(ast: parser::Ast, context: &mut Context) -> BoundAst {
@@ -615,9 +671,8 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
             bind_typed_string(typed_string, statement.location, binder, context)
         }
         SyntaxNodeKind::Error => BoundNode::syntax_error(statement.location),
-        SyntaxNodeKind::DictEntry(dict_entry) => todo!(),
         SyntaxNodeKind::Dict(dict) => bind_dict(dict, statement.location, binder, context),
-        SyntaxNodeKind::InferredMember(inferred_member) => todo!(),
+        unsupported => unreachable!("Not supported: {unsupported:?}"),
     }
 }
 
@@ -726,30 +781,40 @@ fn bind_typed_string(
             return BoundNode::error(typed_string.type_.location);
         }
     };
-    bind_conversion(literal, type_, ConversionKind::TypedString, context)
+    bind_conversion(literal, &type_, ConversionKind::TypedString, context)
 }
 
 fn bind_conversion(
     base: BoundNode,
-    target: Type,
+    target: &Type,
     conversion_kind: ConversionKind,
     context: &mut Context,
 ) -> BoundNode {
-    if base.type_ == Type::Error || base.type_ == target {
+    if base.type_ == Type::Error || &base.type_ == target {
         return base;
     }
     match conversion_kind {
-        ConversionKind::Implicit => {
-            context
-                .diagnostics
-                .report_cannot_convert(base.type_, target, base.location);
-            BoundNode::error(base.location)
-        }
+        ConversionKind::Implicit => match (&base.type_, target) {
+            (Type::Color, Type::Background) => {}
+            (Type::Error, _) => {
+                return BoundNode::error(base.location);
+            }
+            (_, Type::Error) => {
+                return BoundNode::error(base.location);
+            }
+            (_, _) => {
+                context
+                    .diagnostics
+                    .report_cannot_convert(&base.type_, target, base.location);
+                return BoundNode::error(base.location);
+            }
+        },
         ConversionKind::TypedString => match target {
-            Type::Label | Type::Color => BoundNode::conversion(base, target, conversion_kind),
+            Type::Label | Type::Color => {}
             unknown => unreachable!("Unknown TypedString {unknown:?}"),
         },
     }
+    BoundNode::conversion(base, target, conversion_kind)
 }
 
 fn bind_literal(
@@ -784,7 +849,6 @@ fn bind_variable_reference(
         .string_interner
         .create_or_get_variable(token.text(&context.loaded_files));
     let Some(variable) = binder.look_up_variable(name) else {
-        // TODO: Show error, that variable could not be found!
         context
             .diagnostics
             .report_unknown_variable(token.location, token.text(&context.loaded_files));
@@ -819,7 +883,7 @@ fn bind_assignment_statement(
 ) -> BoundNode {
     let lhs = bind_node(*assignment_statement.lhs, binder, context);
     let value = bind_node(*assignment_statement.assignment, binder, context);
-    // TODO: Type checking!
+    let value = bind_conversion(value, &lhs.type_, ConversionKind::Implicit, context);
     BoundNode::assignment_statement(location, lhs, value)
 }
 
