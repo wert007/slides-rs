@@ -91,11 +91,11 @@ impl Presentation {
         }
 
         for styling in self.stylings {
-            writeln!(emitter.raw_css(), ".{} {{", styling.name())?;
-            let Some(styling) = styling.to_css_style() else {
+            let Some(css) = styling.to_css_style() else {
                 continue;
             };
-            writeln!(emitter.raw_css(), "{styling}")?;
+            writeln!(emitter.raw_css(), ".{} {{", styling.name())?;
+            writeln!(emitter.raw_css(), "{css}")?;
             writeln!(emitter.raw_css(), "}}")?;
         }
         emitter.copy_referenced_files()?;
