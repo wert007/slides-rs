@@ -45,7 +45,7 @@ pub struct MemberAccess {
 }
 
 pub struct AssignmentStatement {
-    pub expression: Box<SyntaxNode>,
+    pub lhs: Box<SyntaxNode>,
     pub equals: Token,
     pub assignment: Box<SyntaxNode>,
     pub semicolon: Token,
@@ -218,7 +218,7 @@ impl SyntaxNode {
         let location = Location::combine(expression.location, semicolon.location);
         SyntaxNode {
             kind: SyntaxNodeKind::AssignmentStatement(AssignmentStatement {
-                expression: Box::new(expression),
+                lhs: Box::new(expression),
                 equals,
                 assignment: Box::new(assignment),
                 semicolon,
@@ -355,11 +355,7 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
         }
         SyntaxNodeKind::AssignmentStatement(assignment_statement) => {
             println!("Assignment Statement:");
-            debug_syntax_node(
-                &assignment_statement.expression,
-                files,
-                format!("{indent}    "),
-            );
+            debug_syntax_node(&assignment_statement.lhs, files, format!("{indent}    "));
             debug_syntax_node(
                 &assignment_statement.assignment,
                 files,

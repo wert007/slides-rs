@@ -61,7 +61,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
             );
         }
         BoundNodeKind::FunctionCall(function_call) => {
-            println!("FunctionCall");
+            println!("FunctionCall: {:?}", statement.type_);
             debug_bound_node(&function_call.base, context, format!("{indent}    "));
             for arg in &function_call.arguments {
                 debug_bound_node(arg, context, format!("{indent}        "));
@@ -108,6 +108,13 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 context.string_interner.resolve(member_access.member)
             );
             debug_bound_node(&member_access.base, context, format!("{indent}    "));
+        }
+        BoundNodeKind::Conversion(conversion) => {
+            println!(
+                "Conversion to {:?} (Kind {:?})",
+                statement.type_, conversion.kind
+            );
+            debug_bound_node(&conversion.base, context, format!("{indent}    "));
         }
     }
 }
@@ -254,7 +261,7 @@ impl Binder {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionType {
     argument_types: Vec<Type>,
     return_type: Box<Type>,
@@ -265,7 +272,7 @@ impl FunctionType {
     }
 }
 
-#[derive(Debug, strum::EnumTryAs, Clone)]
+#[derive(Debug, strum::EnumTryAs, Clone, PartialEq, Eq)]
 pub enum Type {
     Error,
     Void,
@@ -279,6 +286,7 @@ pub enum Type {
     ObjectFit,
     Function(FunctionType),
     Slide,
+    Label,
 }
 impl Type {
     fn field_type(&self, member: &str) -> Option<Type> {
@@ -295,6 +303,15 @@ impl Type {
             Type::ObjectFit => None,
             Type::Function(_) => None,
             Type::Slide => None,
+            Type::Label => match member {
+                "text_color" => Some(Type::Color),
+                "background" => Some(Type::Background),
+                "align_center" => Some(Type::Function(FunctionType {
+                    argument_types: Vec::new(),
+                    return_type: Box::new(Type::Void),
+                })),
+                _ => None,
+            },
         }
     }
 }
@@ -325,6 +342,12 @@ impl Value {
         }
         Value::String(result)
     }
+}
+
+#[derive(Debug)]
+enum ConversionKind {
+    Implicit,
+    TypedString,
 }
 
 #[derive(Debug, strum::EnumString)]
@@ -366,6 +389,11 @@ struct MemberAccess {
     member: SymbolUsize,
 }
 
+struct Conversion {
+    base: Box<BoundNode>,
+    kind: ConversionKind,
+}
+
 enum BoundNodeKind {
     Error,
     StylingStatement(StylingStatement),
@@ -377,6 +405,7 @@ enum BoundNodeKind {
     VariableDeclaration(VariableDeclaration),
     Dict(Vec<(String, BoundNode)>),
     MemberAccess(MemberAccess),
+    Conversion(Conversion),
 }
 
 struct BoundNode {
@@ -528,6 +557,18 @@ impl BoundNode {
             type_,
         }
     }
+
+    fn conversion(base: BoundNode, target: Type, kind: ConversionKind) -> BoundNode {
+        BoundNode {
+            base: None,
+            location: base.location,
+            kind: BoundNodeKind::Conversion(Conversion {
+                base: Box::new(base),
+                kind,
+            }),
+            type_: target,
+        }
+    }
 }
 
 struct BoundAst {
@@ -643,10 +684,16 @@ fn bind_slide_statement(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
+    let scope = binder.create_scope();
+    let id = context.string_interner.create_or_get_variable("background");
+    scope
+        .try_register_variable(id, Type::Background, slide_statement.name.location)
+        .expect("infallible");
     let mut statements = Vec::with_capacity(slide_statement.body.len());
     for statement in slide_statement.body {
         statements.push(bind_node(statement, binder, context));
     }
+    binder.drop_scope();
     slide_statement.body = Vec::new();
     let Some(name) = binder.expect_register_variable_token(
         slide_statement.name,
@@ -666,18 +713,42 @@ fn bind_typed_string(
     context: &mut Context,
 ) -> BoundNode {
     let type_ = typed_string.type_.text(&context.loaded_files);
-    match type_ {
-        "c" | "l" => {
-            let text = typed_string.string.text(&context.loaded_files);
-            let text = &text[1..text.len() - 1];
-            BoundNode::literal(typed_string.string, Value::parse_string_literal(text))
-        }
+    let text = typed_string.string.text(&context.loaded_files);
+    let text = &text[1..text.len() - 1];
+    let literal = BoundNode::literal(typed_string.string, Value::parse_string_literal(text));
+    let type_ = match type_ {
+        "c" => Type::Color,
+        "l" => Type::Label,
         unknown => {
             context
                 .diagnostics
                 .report_unknown_string_type(unknown, location);
             return BoundNode::error(typed_string.type_.location);
         }
+    };
+    bind_conversion(literal, type_, ConversionKind::TypedString, context)
+}
+
+fn bind_conversion(
+    base: BoundNode,
+    target: Type,
+    conversion_kind: ConversionKind,
+    context: &mut Context,
+) -> BoundNode {
+    if base.type_ == Type::Error || base.type_ == target {
+        return base;
+    }
+    match conversion_kind {
+        ConversionKind::Implicit => {
+            context
+                .diagnostics
+                .report_cannot_convert(base.type_, target, base.location);
+            BoundNode::error(base.location)
+        }
+        ConversionKind::TypedString => match target {
+            Type::Label | Type::Color => BoundNode::conversion(base, target, conversion_kind),
+            unknown => unreachable!("Unknown TypedString {unknown:?}"),
+        },
     }
 }
 
@@ -746,8 +817,8 @@ fn bind_assignment_statement(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
-    let lhs = bind_node(*assignment_statement.assignment, binder, context);
-    let value = bind_node(*assignment_statement.expression, binder, context);
+    let lhs = bind_node(*assignment_statement.lhs, binder, context);
+    let value = bind_node(*assignment_statement.assignment, binder, context);
     // TODO: Type checking!
     BoundNode::assignment_statement(location, lhs, value)
 }

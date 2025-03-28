@@ -1,4 +1,8 @@
-use super::{FileId, Files, binder::Variable, lexer::Token};
+use super::{
+    FileId, Files,
+    binder::{Type, Variable},
+    lexer::Token,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Location {
@@ -134,12 +138,7 @@ impl Diagnostics {
         self.report_error(format!("Unexpected styling type {type_}"), location);
     }
 
-    pub(crate) fn report_unknown_member(
-        &mut self,
-        member: Token,
-        base_type: super::binder::Type,
-        name: &str,
-    ) {
+    pub(crate) fn report_unknown_member(&mut self, member: Token, base_type: Type, name: &str) {
         self.report_error(
             format!("Unknown member {name} on Type {base_type:?}"),
             member.location,
@@ -155,5 +154,12 @@ impl Diagnostics {
 
     pub(crate) fn report_unknown_variable(&mut self, location: Location, variable: &str) {
         self.report_error(format!("No variable named {variable} found"), location);
+    }
+
+    pub(crate) fn report_cannot_convert(&mut self, from: Type, target: Type, location: Location) {
+        self.report_error(
+            format!("Cannot convert type {from:?} to type {target:?}"),
+            location,
+        );
     }
 }
