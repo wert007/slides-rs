@@ -7,7 +7,7 @@ use crate::{
 
 use super::WebRenderable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FormattedText {
     text: String,
 }
@@ -30,7 +30,7 @@ impl Display for FormattedText {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Label {
     id: Option<String>,
     text: FormattedText,
@@ -77,6 +77,10 @@ impl WebRenderable for Label {
         self.id.get_or_insert(id);
     }
 
+    fn set_id(&mut self, id: String) {
+        self.id = Some(id);
+    }
+
     fn set_parent_id(&mut self, id: String) {
         self.id = Some(format!(
             "{id}-{}",
@@ -109,5 +113,9 @@ impl Label {
     pub fn with_styling(mut self, styling: StylingReference) -> Label {
         self.stylings.push(styling);
         self
+    }
+
+    pub fn element_styling_mut(&mut self) -> &mut ElementStyling<LabelStyling> {
+        &mut self.styling
     }
 }

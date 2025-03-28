@@ -12,7 +12,7 @@ pub trait ToCss {
     ) -> Result<()>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StylingReference {
     name: String,
 }
@@ -65,7 +65,7 @@ impl ToCss for DynamicElementStyling {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct BaseElementStyling {
     background: Background,
 }
@@ -96,7 +96,7 @@ impl ToCss for BaseElementStyling {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ElementStyling<S> {
     base: BaseElementStyling,
     specific: S,
@@ -129,6 +129,10 @@ impl<S: ToCss + 'static> ElementStyling<S> {
             base: self.base,
             specific: Box::new(self.specific),
         }
+    }
+
+    pub fn set_background(&mut self, background: Background) {
+        self.base.background = background;
     }
 }
 
@@ -181,7 +185,7 @@ impl ToCss for SlideStyling {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, strum::Display)]
+#[derive(Debug, PartialEq, Eq, strum::Display, Clone)]
 pub enum Font {
     #[strum(to_string = "unset")]
     Unspecified,
@@ -201,7 +205,7 @@ impl Font {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LabelStyling {
     text_color: Option<Color>,
     font: Font,
@@ -225,6 +229,10 @@ impl ElementStyling<LabelStyling> {
     pub fn with_font(mut self, font: Font) -> Self {
         self.specific.font = font;
         self
+    }
+
+    pub fn set_text_color(&mut self, text_color: Color) {
+        self.specific.text_color = Some(text_color);
     }
 }
 
@@ -320,7 +328,7 @@ impl ToCss for ImageStyling {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum Background {
     #[default]
     Unspecified,
@@ -358,6 +366,15 @@ impl Color {
 
     pub const fn argb(r: u8, g: u8, b: u8, alpha: u8) -> Self {
         Self { r, g, b, alpha }
+    }
+
+    pub fn from_css(color: &str) -> Self {
+        csscolorparser::parse(color)
+            .map(|color| {
+                let [r, g, b, alpha] = color.to_rgba8();
+                Color { r, g, b, alpha }
+            })
+            .unwrap_or_default()
     }
 }
 

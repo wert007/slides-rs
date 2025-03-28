@@ -96,6 +96,10 @@ impl WebRenderable for Image {
         self.id.get_or_insert(id);
     }
 
+    fn set_id(&mut self, id: String) {
+        self.id = Some(id);
+    }
+
     fn set_parent_id(&mut self, id: String) {
         self.id = Some(format!(
             "{id}-{}",

@@ -92,11 +92,10 @@ impl Presentation {
 
         for styling in self.stylings {
             writeln!(emitter.raw_css(), ".{} {{", styling.name())?;
-            writeln!(
-                emitter.raw_css(),
-                "{}",
-                styling.to_css_style().expect("should not be empty!")
-            )?;
+            let Some(styling) = styling.to_css_style() else {
+                continue;
+            };
+            writeln!(emitter.raw_css(), "{styling}")?;
             writeln!(emitter.raw_css(), "}}")?;
         }
         emitter.copy_referenced_files()?;
@@ -175,5 +174,14 @@ impl Slide {
             element.collect_google_font_references(fonts)?;
         }
         Ok(())
+    }
+
+    pub fn with_name(mut self, name: impl Into<String>) -> Slide {
+        self.id = Some(name.into());
+        self
+    }
+
+    pub fn styling_mut(&mut self) -> &mut ElementStyling<SlideStyling> {
+        &mut self.styling
     }
 }

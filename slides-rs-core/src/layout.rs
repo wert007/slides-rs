@@ -1,6 +1,6 @@
 use std::{fmt::Display, ops::Add};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Positioning {
     vertical_alignment: VerticalAlignment,
     horizontal_alignment: HorizontalAlignment,
@@ -119,7 +119,7 @@ impl Positioning {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum VerticalAlignment {
     Top,
     Center,
@@ -127,7 +127,7 @@ pub enum VerticalAlignment {
     Stretch,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum HorizontalAlignment {
     Left,
     Center,
@@ -135,7 +135,7 @@ pub enum HorizontalAlignment {
     Stretch,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Thickness {
     left: StyleUnit,
     top: StyleUnit,

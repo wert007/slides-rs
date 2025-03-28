@@ -16,7 +16,7 @@ pub trait WebRenderable {
         Ok(())
     }
     fn set_fallback_id(&mut self, id: String);
-
+    fn set_id(&mut self, id: String);
     fn set_parent_id(&mut self, id: String);
 }
 
