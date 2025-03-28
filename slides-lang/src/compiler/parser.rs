@@ -8,84 +8,98 @@ use super::{
     lexer::{Token, TokenKind},
 };
 
+pub struct StylingStatement {
+    styling_keyword: Token,
+    name: Token,
+    lparen: Token,
+    type_: Token,
+    rparen: Token,
+    colon: Token,
+    body: Vec<SyntaxNode>,
+}
+
+pub struct ExpressionStatement {
+    expression: Box<SyntaxNode>,
+    semicolon: Token,
+}
+
+pub struct VariableDeclaration {
+    let_keyword: Token,
+    name: Token,
+    equals: Token,
+    expression: Box<SyntaxNode>,
+    semicolon: Token,
+}
+
+pub struct SlideStatement {
+    slide_keyword: Token,
+    name: Token,
+    colon: Token,
+    body: Vec<SyntaxNode>,
+}
+
+pub struct MemberAccess {
+    base: Box<SyntaxNode>,
+    period: Token,
+    member: Token,
+}
+
+pub struct AssignmentStatement {
+    expression: Box<SyntaxNode>,
+    equals: Token,
+    assignment: Box<SyntaxNode>,
+    semicolon: Token,
+}
+
+pub struct FunctionCall {
+    base: Box<SyntaxNode>,
+    lparen: Token,
+    arguments: Vec<(SyntaxNode, Option<Token>)>,
+    rparen: Token,
+}
+
+pub struct TypedString {
+    type_: Token,
+    string: Token,
+}
+
+pub struct DictEntry {
+    identifier: Token,
+    colon: Token,
+    value: Box<SyntaxNode>,
+}
+
+pub struct Dict {
+    lbrace: Token,
+    entries: Vec<(SyntaxNode, Option<Token>)>,
+    rbrace: Token,
+}
+
+pub struct InferredMember {
+    period: Token,
+    member: Token,
+}
+
 pub enum SyntaxNodeKind {
-    StylingStatement {
-        styling_keyword: Token,
-        name: Token,
-        lparen: Token,
-        type_: Token,
-        rparen: Token,
-        colon: Token,
-        body: Vec<SyntaxNode>,
-    },
-    ExpressionStatement {
-        expression: Box<SyntaxNode>,
-        semicolon: Token,
-    },
-    VariableDeclaration {
-        let_keyword: Token,
-        name: Token,
-        equals: Token,
-        expression: Box<SyntaxNode>,
-        semicolon: Token,
-    },
-    SlideStatement {
-        slide_keyword: Token,
-        name: Token,
-        colon: Token,
-        body: Vec<SyntaxNode>,
-    },
-    VariableReference {
-        variable: Token,
-    },
-    Literal {
-        literal: Token,
-    },
-    MemberAccess {
-        base: Box<SyntaxNode>,
-        period: Token,
-        member: Token,
-    },
-    AssignmentStatement {
-        expression: Box<SyntaxNode>,
-        equals: Token,
-        assignment: Box<SyntaxNode>,
-        semicolon: Token,
-    },
-    FunctionCall {
-        base: Box<SyntaxNode>,
-        lparen: Token,
-        arguments: Vec<(SyntaxNode, Option<Token>)>,
-        rparen: Token,
-    },
-    TypedString {
-        type_: Token,
-        string: Token,
-    },
+    StylingStatement(StylingStatement),
+    ExpressionStatement(ExpressionStatement),
+    VariableDeclaration(VariableDeclaration),
+    SlideStatement(SlideStatement),
+    VariableReference(Token),
+    Literal(Token),
+    MemberAccess(MemberAccess),
+    AssignmentStatement(AssignmentStatement),
+    FunctionCall(FunctionCall),
+    TypedString(TypedString),
     Error,
-    DictIdentifier {
-        identifier: Box<SyntaxNode>,
-        identifier_part: Option<(Token, Token)>,
-    },
-    DictEntry {
-        identifier: Box<SyntaxNode>,
-        colon: Token,
-        value: Box<SyntaxNode>,
-    },
-    Dict {
-        lbrace: Token,
-        entries: Vec<(SyntaxNode, Option<Token>)>,
-        rbrace: Token,
-    },
-    InferredMember {
-        period: Token,
-        member: Token,
-    },
+    DictEntry(DictEntry),
+    Dict(Dict),
+    InferredMember(InferredMember),
 }
 
 pub struct SyntaxNode {
-    location: Location,
-    kind: SyntaxNodeKind,
+    pub location: Location,
+    pub kind: SyntaxNodeKind,
 }
 
 impl SyntaxNode {
@@ -103,7 +117,7 @@ impl SyntaxNode {
             body.last().expect("not be empty").location,
         );
         SyntaxNode {
-            kind: SyntaxNodeKind::StylingStatement {
+            kind: SyntaxNodeKind::StylingStatement(StylingStatement {
                 styling_keyword,
                 name,
                 lparen,
@@ -111,7 +125,7 @@ impl SyntaxNode {
                 rparen,
                 colon,
                 body,
-            },
+            }),
             location,
         }
     }
@@ -119,10 +133,10 @@ impl SyntaxNode {
     fn expression_statement(expression: SyntaxNode, semicolon: Token) -> SyntaxNode {
         let location = Location::combine(expression.location, semicolon.location);
         SyntaxNode {
-            kind: SyntaxNodeKind::ExpressionStatement {
+            kind: SyntaxNodeKind::ExpressionStatement(ExpressionStatement {
                 expression: Box::new(expression),
                 semicolon,
-            },
+            }),
             location,
         }
     }
@@ -136,13 +150,13 @@ impl SyntaxNode {
     ) -> SyntaxNode {
         let location = Location::combine(let_keyword.location, semicolon.location);
         SyntaxNode {
-            kind: SyntaxNodeKind::VariableDeclaration {
+            kind: SyntaxNodeKind::VariableDeclaration(VariableDeclaration {
                 let_keyword,
                 name,
                 equals,
                 expression: Box::new(expression),
                 semicolon,
-            },
+            }),
             location,
         }
     }
@@ -158,26 +172,26 @@ impl SyntaxNode {
             body.last().expect("not empty").location,
         );
         SyntaxNode {
-            kind: SyntaxNodeKind::SlideStatement {
+            kind: SyntaxNodeKind::SlideStatement(SlideStatement {
                 slide_keyword,
                 name,
                 colon,
                 body,
-            },
+            }),
             location,
         }
     }
 
     fn variable_reference(variable: Token) -> SyntaxNode {
         SyntaxNode {
-            kind: SyntaxNodeKind::VariableReference { variable },
+            kind: SyntaxNodeKind::VariableReference(variable),
             location: variable.location,
         }
     }
 
     fn literal(literal: Token) -> SyntaxNode {
         SyntaxNode {
-            kind: SyntaxNodeKind::Literal { literal },
+            kind: SyntaxNodeKind::Literal(literal),
             location: literal.location,
         }
     }
@@ -185,11 +199,11 @@ impl SyntaxNode {
     fn member_access(base: SyntaxNode, period: Token, member: Token) -> SyntaxNode {
         let location = Location::combine(base.location, member.location);
         SyntaxNode {
-            kind: SyntaxNodeKind::MemberAccess {
+            kind: SyntaxNodeKind::MemberAccess(MemberAccess {
                 base: Box::new(base),
                 period,
                 member,
-            },
+            }),
             location,
         }
     }
@@ -202,12 +216,12 @@ impl SyntaxNode {
     ) -> SyntaxNode {
         let location = Location::combine(expression.location, semicolon.location);
         SyntaxNode {
-            kind: SyntaxNodeKind::AssignmentStatement {
+            kind: SyntaxNodeKind::AssignmentStatement(AssignmentStatement {
                 expression: Box::new(expression),
                 equals,
                 assignment: Box::new(assignment),
                 semicolon,
-            },
+            }),
             location,
         }
     }
@@ -220,12 +234,12 @@ impl SyntaxNode {
     ) -> SyntaxNode {
         let location = Location::combine(base.location, rparen.location);
         SyntaxNode {
-            kind: SyntaxNodeKind::FunctionCall {
+            kind: SyntaxNodeKind::FunctionCall(FunctionCall {
                 base: Box::new(base),
                 lparen,
                 arguments,
                 rparen,
-            },
+            }),
             location,
         }
     }
@@ -233,7 +247,7 @@ impl SyntaxNode {
     fn typed_string(type_: Token, string: Token) -> SyntaxNode {
         let location = Location::combine(type_.location, string.location);
         SyntaxNode {
-            kind: SyntaxNodeKind::TypedString { type_, string },
+            kind: SyntaxNodeKind::TypedString(TypedString { type_, string }),
             location,
         }
     }
@@ -245,34 +259,15 @@ impl SyntaxNode {
         }
     }
 
-    fn dict_identifier(
-        identifier: SyntaxNode,
-        identifier_part: Option<(Token, Token)>,
-    ) -> SyntaxNode {
-        let location = Location::combine(
-            identifier.location,
-            identifier_part
-                .map(|(_, i)| i.location)
-                .unwrap_or(identifier.location),
-        );
-        SyntaxNode {
-            location,
-            kind: SyntaxNodeKind::DictIdentifier {
-                identifier: Box::new(identifier),
-                identifier_part,
-            },
-        }
-    }
-
-    fn dict_entry(identifier: SyntaxNode, colon: Token, value: SyntaxNode) -> Self {
+    fn dict_entry(identifier: Token, colon: Token, value: SyntaxNode) -> Self {
         let location = Location::combine(identifier.location, value.location);
         SyntaxNode {
             location,
-            kind: SyntaxNodeKind::DictEntry {
-                identifier: Box::new(identifier),
+            kind: SyntaxNodeKind::DictEntry(DictEntry {
+                identifier,
                 colon,
                 value: Box::new(value),
-            },
+            }),
         }
     }
 
@@ -280,11 +275,11 @@ impl SyntaxNode {
         let location = Location::combine(lbrace.location, rbrace.location);
         SyntaxNode {
             location,
-            kind: SyntaxNodeKind::Dict {
+            kind: SyntaxNodeKind::Dict(Dict {
                 lbrace,
                 entries,
                 rbrace,
-            },
+            }),
         }
     }
 
@@ -292,13 +287,13 @@ impl SyntaxNode {
         let location = Location::combine(period.location, member.location);
         SyntaxNode {
             location,
-            kind: SyntaxNodeKind::InferredMember { period, member },
+            kind: SyntaxNodeKind::InferredMember(InferredMember { period, member }),
         }
     }
 }
 
 pub struct Ast {
-    statements: Vec<SyntaxNode>,
+    pub statements: Vec<SyntaxNode>,
     eof: Token,
 }
 
@@ -311,82 +306,97 @@ pub fn debug_ast(ast: &Ast, context: &Context) {
 fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
     print!("{indent}");
     match &node.kind {
-        SyntaxNodeKind::StylingStatement {
-            name, type_, body, ..
-        } => {
-            println!("Styling {} for {}:", name.text(files), type_.text(files));
-            for statement in body {
+        SyntaxNodeKind::StylingStatement(styling_statement) => {
+            println!(
+                "Styling {} for {}:",
+                styling_statement.name.text(files),
+                styling_statement.type_.text(files)
+            );
+            for statement in &styling_statement.body {
                 debug_syntax_node(statement, files, format!("{indent}    "));
             }
         }
-        SyntaxNodeKind::ExpressionStatement { expression, .. } => {
+        SyntaxNodeKind::ExpressionStatement(expression_statement) => {
             println!("ExpressionStatement:");
-            debug_syntax_node(&expression, files, format!("{indent}    "));
+            debug_syntax_node(
+                &expression_statement.expression,
+                files,
+                format!("{indent}    "),
+            );
         }
-        SyntaxNodeKind::VariableDeclaration {
-            name, expression, ..
-        } => {
-            println!("Variable Declaration {}:", name.text(files));
-            debug_syntax_node(&expression, files, format!("{indent}    "));
+        SyntaxNodeKind::VariableDeclaration(variable_declaration) => {
+            println!(
+                "Variable Declaration {}:",
+                variable_declaration.name.text(files)
+            );
+            debug_syntax_node(
+                &variable_declaration.expression,
+                files,
+                format!("{indent}    "),
+            );
         }
-        SyntaxNodeKind::SlideStatement { name, body, .. } => {
-            println!("Slide Declaration {}:", name.text(files));
-            for statement in body {
+        SyntaxNodeKind::SlideStatement(slide_statement) => {
+            println!("Slide Declaration {}:", slide_statement.name.text(files));
+            for statement in &slide_statement.body {
                 debug_syntax_node(statement, files, format!("{indent}    "));
             }
         }
-        SyntaxNodeKind::VariableReference { variable } => {
+        SyntaxNodeKind::VariableReference(variable) => {
             println!("Variable {}", variable.text(files));
         }
-        SyntaxNodeKind::Literal { literal } => {
+        SyntaxNodeKind::Literal(literal) => {
             println!("Literal {}", literal.text(files));
         }
-        SyntaxNodeKind::MemberAccess { base, member, .. } => {
+        SyntaxNodeKind::MemberAccess(member_access) => {
             println!("Member Access:");
-            debug_syntax_node(base, files, format!("{indent}    "));
-            println!("{indent}    .{}", member.text(files));
+            debug_syntax_node(&member_access.base, files, format!("{indent}    "));
+            println!("{indent}    .{}", member_access.member.text(files));
         }
-        SyntaxNodeKind::AssignmentStatement {
-            expression,
-            assignment,
-            ..
-        } => {
+        SyntaxNodeKind::AssignmentStatement(assignment_statement) => {
             println!("Assignment Statement:");
-            debug_syntax_node(&expression, files, format!("{indent}    "));
-            debug_syntax_node(&assignment, files, format!("{indent}    = "));
+            debug_syntax_node(
+                &assignment_statement.expression,
+                files,
+                format!("{indent}    "),
+            );
+            debug_syntax_node(
+                &assignment_statement.assignment,
+                files,
+                format!("{indent}    = "),
+            );
         }
-        SyntaxNodeKind::FunctionCall {
-            base, arguments, ..
-        } => {
+        SyntaxNodeKind::FunctionCall(function_call) => {
             println!("Function Call:");
-            debug_syntax_node(&base, files, format!("{indent}    "));
+            debug_syntax_node(&function_call.base, files, format!("{indent}    "));
             println!("{indent}    Arguments:");
-            for (argument, _) in arguments {
+            for (argument, _) in &function_call.arguments {
                 debug_syntax_node(&argument, files, format!("{indent}        "));
             }
         }
-        SyntaxNodeKind::TypedString { type_, string } => {
-            println!("Typed String {}{}", type_.text(files), string.text(files));
+        SyntaxNodeKind::TypedString(typed_string) => {
+            println!(
+                "Typed String {}{}",
+                typed_string.type_.text(files),
+                typed_string.string.text(files)
+            );
         }
         SyntaxNodeKind::Error => println!("Error Node"),
-        SyntaxNodeKind::DictIdentifier { .. } => {
-            println!("Dict Identifier: {}", &files[node.location]);
-        }
-        SyntaxNodeKind::DictEntry {
-            identifier, value, ..
-        } => {
+        SyntaxNodeKind::DictEntry(dict_entry) => {
             println!("DictEntry");
-            debug_syntax_node(&identifier, files, format!("{indent}    "));
-            debug_syntax_node(&value, files, format!("{indent}    "));
+            debug_syntax_node(
+                &dict_entry.value,
+                files,
+                format!("{indent}    {}: ", dict_entry.identifier.text(files)),
+            );
         }
-        SyntaxNodeKind::Dict { entries, .. } => {
+        SyntaxNodeKind::Dict(dict) => {
             println!("Dict");
-            for (entry, _) in entries {
+            for (entry, _) in &dict.entries {
                 debug_syntax_node(entry, files, format!("{indent}    "));
             }
         }
-        SyntaxNodeKind::InferredMember { member, .. } => {
-            println!("Inferred member {}", member.text(files))
+        SyntaxNodeKind::InferredMember(inferred_member) => {
+            println!("Inferred member {}", inferred_member.member.text(files))
         }
     }
 }
@@ -628,15 +638,18 @@ fn parse_dict(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     SyntaxNode::dict(lbrace, entries, rbrace)
 }
 
-fn parse_dict_identifier(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let identifier = SyntaxNode::variable_reference(parser.match_token(TokenKind::Identifier));
-    let mut identifier = SyntaxNode::dict_identifier(identifier, None);
+fn parse_dict_identifier(parser: &mut Parser, context: &mut Context) -> Token {
+    let mut identifier = parser.match_token(TokenKind::Identifier);
     while parser.current_token().kind == TokenKind::SingleChar('-') {
         // TODO: Ensure that `foo - bar` is not a valid dict identifier
         // TODO: Ensure that `foo-2` is parsed correctly!
-        let minus_token = parser.match_token(TokenKind::SingleChar('-'));
+        let _minus_token = parser.match_token(TokenKind::SingleChar('-'));
         let identifier_part = parser.match_token(TokenKind::Identifier);
-        identifier = SyntaxNode::dict_identifier(identifier, Some((minus_token, identifier_part)));
+
+        identifier = Token {
+            location: Location::combine(identifier.location, identifier_part.location),
+            kind: TokenKind::Identifier,
+        };
     }
     identifier
 }

@@ -4,7 +4,8 @@ use slides_rs_core::Presentation;
 
 use super::{
     Context, File,
-    parser::{self, debug_ast},
+    diagnostics::Location,
+    parser::{self, SyntaxNode, debug_ast},
 };
 
 pub(crate) fn create_presentation_from_file(file: PathBuf) -> slides_rs_core::Result<Presentation> {
@@ -24,4 +25,35 @@ pub(crate) fn create_presentation_from_file(file: PathBuf) -> slides_rs_core::Re
     Ok(presentation)
 }
 
-fn bind_ast(ast: parser::Ast, context: &mut Context) {}
+struct Binder {}
+
+impl Binder {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+enum BoundNodeKind {}
+
+struct BoundNode {
+    base: Option<SyntaxNode>,
+    location: Location,
+    kind: BoundNodeKind,
+}
+
+struct BoundAst {
+    statements: Vec<BoundNode>,
+}
+
+fn bind_ast(ast: parser::Ast, context: &mut Context) -> BoundAst {
+    let mut binder = Binder::new();
+    let mut statements = Vec::with_capacity(ast.statements.len());
+    for statement in ast.statements {
+        statements.push(bind_statement(statement, &mut binder, context));
+    }
+    BoundAst { statements }
+}
+
+fn bind_statement(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) -> BoundNode {
+    todo!()
+}
