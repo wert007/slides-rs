@@ -11,7 +11,7 @@ slide intro:
     //     alignment: .center,
     // };
     // Creation of anonymous image
-    let i = image(p"assets/mountain");
+    let i = image(p"./assets/mountain.jpg");
     //  {
     //    alignment: .center,
     //

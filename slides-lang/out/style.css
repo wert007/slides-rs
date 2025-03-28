@@ -49,3 +49,24 @@ ol {
     width: 100%;
 }
 
+#intro { background: rgb(255, 127, 127, 1);
+ }
+#intro-i {
+top: unset;
+left: unset;
+
+}
+#intro-lbl {
+top: unset;
+left: unset;
+
+background: rgb(97, 97, 97, 1);
+
+color: rgb(255, 255, 255, 1);
+
+}
+#hello-a {
+top: unset;
+left: unset;
+
+}

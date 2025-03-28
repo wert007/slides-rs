@@ -7,7 +7,7 @@ use crate::{
 
 use super::WebRenderable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Image {
     id: Option<String>,
     source: ImageSource,
@@ -16,7 +16,7 @@ pub struct Image {
     stylings: Vec<StylingReference>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ImageSource {
     Path(PathBuf),
 }

@@ -1,8 +1,10 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use slides_rs_core::{Background, Color, Label, Presentation};
+use slides_rs_core::{Background, Color, Image, Label, Presentation};
 use string_interner::{Symbol, symbol::SymbolUsize};
 use summum_types::summum;
+
+pub mod globals;
 
 use super::{
     Context,
@@ -141,17 +143,20 @@ impl Scope {
         let mut global = Self {
             variables: HashMap::new(),
         };
-        let id = interner.create_or_get_variable("rgb");
-        global
-            .try_register_variable(
-                id,
-                Type::Function(FunctionType {
-                    argument_types: vec![Type::Integer, Type::Integer, Type::Integer],
-                    return_type: Box::new(Type::Color),
-                }),
-                Location::zero(),
-            )
-            .expect("infallible");
+        let f = globals::FUNCTIONS;
+        for function in f {
+            let id = interner.create_or_get_variable(function.name);
+            global
+                .try_register_variable(
+                    id,
+                    Type::Function(FunctionType {
+                        argument_types: function.parameters.to_vec(),
+                        return_type: Box::new(function.return_type.clone()),
+                    }),
+                    Location::zero(),
+                )
+                .expect("infallible");
+        }
         global
     }
 
@@ -295,7 +300,10 @@ pub enum Type {
     Function(FunctionType),
     Slide,
     Label,
+    Image,
+    Path,
 }
+
 impl Type {
     fn field_type(&self, member: &str) -> Option<Type> {
         match self {
@@ -320,6 +328,32 @@ impl Type {
                 })),
                 _ => None,
             },
+            Type::Image => None,
+            Type::Path => None,
+        }
+    }
+
+    pub const fn from_rust_string(rust_string: &str) -> Option<Self> {
+        if const_str::compare!(==, rust_string, "()" ) {
+            Some(Self::Void)
+        } else if const_str::compare!(==, rust_string, "f64") {
+            Some(Self::Float)
+        } else if const_str::compare!(==, rust_string, "i64") {
+            Some(Self::Integer)
+        } else if const_str::compare!(==, rust_string, "String") {
+            Some(Self::String)
+        } else if const_str::compare!(==, rust_string, "Background") {
+            Some(Self::Background)
+        } else if const_str::compare!(==, rust_string, "Color") {
+            Some(Self::Color)
+        } else if const_str::compare!(==, rust_string, "Label") {
+            Some(Self::Label)
+        } else if const_str::compare!(==, rust_string, "Image") {
+            Some(Self::Image)
+        } else if const_str::compare!(==, rust_string, "PathBuf") {
+            Some(Self::Path)
+        } else {
+            None
         }
     }
 }
@@ -335,6 +369,8 @@ summum! {
         Background(slides_rs_core::Background),
         Color(slides_rs_core::Color),
         Label(slides_rs_core::Label),
+        Path(PathBuf),
+        Image(slides_rs_core::Image),
     }
 }
 
@@ -348,6 +384,8 @@ impl Value {
             Value::Background(_) => Type::Background,
             Value::Color(_) => Type::Color,
             Value::Label(_) => Type::Label,
+            Value::Path(_) => Type::Path,
+            Value::Image(_) => Type::Image,
         }
     }
 
@@ -777,6 +815,7 @@ fn bind_typed_string(
     let type_ = match type_ {
         "c" => Type::Color,
         "l" => Type::Label,
+        "p" => Type::Path,
         unknown => {
             context
                 .diagnostics
@@ -813,7 +852,7 @@ fn bind_conversion(
             }
         },
         ConversionKind::TypedString => match target {
-            Type::Label | Type::Color => {}
+            Type::Label | Type::Color | Type::Path => {}
             unknown => unreachable!("Unknown TypedString {unknown:?}"),
         },
     }

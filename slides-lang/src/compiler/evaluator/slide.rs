@@ -1,9 +1,11 @@
+use std::path::PathBuf;
+
 use slides_rs_core::{Background, Color, Label, Slide, WebRenderable};
 use string_interner::{Symbol, symbol::SymbolUsize};
 
 use crate::compiler::{
     Context,
-    binder::{BoundNode, BoundNodeKind, Type, Value},
+    binder::{self, BoundNode, BoundNodeKind, Type, Value},
 };
 
 use super::Evaluator;
@@ -26,6 +28,11 @@ pub fn evaluate_to_slide(
                 label.set_id(name);
                 slide = slide.add_label(label);
             }
+            Value::Image(mut image) => {
+                image.set_id(name);
+                slide = slide.add_image(image);
+            }
+
             _ => {}
         }
     }
@@ -161,14 +168,19 @@ fn evaluate_function_call(
         .map(|a| evaluate_expression(a, evaluator, context))
         .collect();
     let function_name = extract_function_name(*function_call.base, context);
-    match function_name.as_str() {
-        "rgb" => Value::Color(super::functions::rgb(
-            *arguments[0].as_integer(),
-            *arguments[1].as_integer(),
-            *arguments[2].as_integer(),
-        )),
-        f => unreachable!("Unknown Function {f}!"),
-    }
+    (binder::globals::FUNCTIONS
+        .iter()
+        .find(|f| f.name == function_name.as_str())
+        .expect("Unknown Function")
+        .call)(arguments)
+    // match function_name.as_str() {
+    //     "rgb" => Value::Color(super::functions::rgb(
+    //         *arguments[0].as_integer(),
+    //         *arguments[1].as_integer(),
+    //         *arguments[2].as_integer(),
+    //     )),
+    //     f => unreachable!("Unknown Function {f}!"),
+    // }
 }
 
 fn extract_function_name(base: BoundNode, context: &mut Context) -> String {
@@ -206,6 +218,11 @@ fn evaluate_conversion(
         Type::ObjectFit => todo!(),
         Type::Function(_) => todo!(),
         Type::Slide => todo!(),
+        Type::Image => todo!(),
+        Type::Path => match base {
+            Value::String(text) => Value::Path(PathBuf::from(text)),
+            _ => unreachable!("Impossible converion!"),
+        },
         Type::Label => match base {
             Value::String(text) => Value::Label(Label::new(text)),
             _ => unreachable!("Impossible conversion!"),

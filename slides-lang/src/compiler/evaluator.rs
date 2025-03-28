@@ -7,7 +7,7 @@ use super::{
     binder::{BoundAst, BoundNode, BoundNodeKind, Value},
 };
 
-mod functions;
+pub mod functions;
 mod slide;
 mod style;
 

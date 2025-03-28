@@ -271,7 +271,7 @@ impl ToCss for LabelStyling {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq, strum::Display)]
+#[derive(Debug, Default, PartialEq, Eq, strum::Display, Clone, Copy)]
 #[strum(serialize_all = "kebab-case")]
 pub enum ObjectFit {
     #[default]
@@ -284,7 +284,7 @@ pub enum ObjectFit {
     ScaleDown,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ImageStyling {
     object_fit: ObjectFit,
 }

@@ -114,6 +114,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 
 [[package]]
+name = "const-str"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e991226a70654b49d34de5ed064885f0bef0348a8e70018b8ff1ac80aa984a2"
+
+[[package]]
 name = "csscolorparser"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -344,6 +350,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "const-str",
  "slides-rs-core",
  "string-interner",
  "strum",
