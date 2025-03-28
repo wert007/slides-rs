@@ -1,7 +1,9 @@
 use std::{ops::Index, path::PathBuf};
 
+use binder::VariableId;
 use diagnostics::{Diagnostics, Location};
 use slides_rs_core::Presentation;
+use string_interner::{backend::BucketBackend, symbol::SymbolUsize};
 
 mod binder;
 mod diagnostics;
@@ -10,6 +12,10 @@ mod parser;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct FileId(usize);
+
+impl FileId {
+    pub const ZERO: FileId = FileId(0);
+}
 
 struct File {
     name: PathBuf,
@@ -85,10 +91,44 @@ impl Index<Location> for Files {
     }
 }
 
+struct StringInterner {
+    general: string_interner::StringInterner<BucketBackend<SymbolUsize>>,
+    variables: string_interner::StringInterner<BucketBackend<VariableId>>,
+}
+
+impl StringInterner {
+    pub fn new() -> Self {
+        Self {
+            general: string_interner::StringInterner::new(),
+            variables: string_interner::StringInterner::new(),
+        }
+    }
+    pub fn resolve_variable(&self, variable_id: VariableId) -> &str {
+        self.variables
+            .resolve(variable_id)
+            .expect("VariableId should be valid")
+    }
+
+    pub fn resolve(&self, symbol: SymbolUsize) -> &str {
+        self.general
+            .resolve(symbol)
+            .expect("Symbol should be valid")
+    }
+
+    fn create_or_get_variable(&mut self, name: &str) -> VariableId {
+        self.variables.get_or_intern(name)
+    }
+
+    fn create_or_get(&mut self, member: &str) -> SymbolUsize {
+        self.general.get_or_intern(member)
+    }
+}
+
 struct Context {
     presentation: Presentation,
     pub loaded_files: Files,
     diagnostics: Diagnostics,
+    string_interner: StringInterner,
 }
 
 impl Context {
@@ -97,6 +137,7 @@ impl Context {
             presentation: Presentation::new(),
             loaded_files: Files::new(),
             diagnostics: Diagnostics::new(),
+            string_interner: StringInterner::new(),
         }
     }
 

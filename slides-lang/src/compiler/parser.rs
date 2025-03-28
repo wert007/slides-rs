@@ -9,77 +9,78 @@ use super::{
 };
 
 pub struct StylingStatement {
-    styling_keyword: Token,
-    name: Token,
-    lparen: Token,
-    type_: Token,
-    rparen: Token,
-    colon: Token,
-    body: Vec<SyntaxNode>,
+    pub styling_keyword: Token,
+    pub name: Token,
+    pub lparen: Token,
+    pub type_: Token,
+    pub rparen: Token,
+    pub colon: Token,
+    pub body: Vec<SyntaxNode>,
 }
 
 pub struct ExpressionStatement {
-    expression: Box<SyntaxNode>,
-    semicolon: Token,
+    pub expression: Box<SyntaxNode>,
+    pub semicolon: Token,
 }
 
 pub struct VariableDeclaration {
-    let_keyword: Token,
-    name: Token,
-    equals: Token,
-    expression: Box<SyntaxNode>,
-    semicolon: Token,
+    pub let_keyword: Token,
+    pub name: Token,
+    pub equals: Token,
+    pub expression: Box<SyntaxNode>,
+    pub semicolon: Token,
 }
 
 pub struct SlideStatement {
-    slide_keyword: Token,
-    name: Token,
-    colon: Token,
-    body: Vec<SyntaxNode>,
+    pub slide_keyword: Token,
+    pub name: Token,
+    pub colon: Token,
+    pub body: Vec<SyntaxNode>,
 }
 
 pub struct MemberAccess {
-    base: Box<SyntaxNode>,
-    period: Token,
-    member: Token,
+    pub base: Box<SyntaxNode>,
+    pub period: Token,
+    pub member: Token,
 }
 
 pub struct AssignmentStatement {
-    expression: Box<SyntaxNode>,
-    equals: Token,
-    assignment: Box<SyntaxNode>,
-    semicolon: Token,
+    pub expression: Box<SyntaxNode>,
+    pub equals: Token,
+    pub assignment: Box<SyntaxNode>,
+    pub semicolon: Token,
 }
 
 pub struct FunctionCall {
-    base: Box<SyntaxNode>,
-    lparen: Token,
-    arguments: Vec<(SyntaxNode, Option<Token>)>,
-    rparen: Token,
+    pub base: Box<SyntaxNode>,
+    pub lparen: Token,
+    pub arguments: Vec<(SyntaxNode, Option<Token>)>,
+    pub rparen: Token,
 }
 
 pub struct TypedString {
-    type_: Token,
-    string: Token,
+    pub type_: Token,
+    pub string: Token,
 }
 
 pub struct DictEntry {
-    identifier: Token,
-    colon: Token,
-    value: Box<SyntaxNode>,
+    pub identifier: Token,
+    pub colon: Token,
+    pub value: Box<SyntaxNode>,
 }
 
 pub struct Dict {
-    lbrace: Token,
-    entries: Vec<(SyntaxNode, Option<Token>)>,
-    rbrace: Token,
+    pub lbrace: Token,
+    pub entries: Vec<(SyntaxNode, Option<Token>)>,
+    pub rbrace: Token,
 }
 
 pub struct InferredMember {
-    period: Token,
-    member: Token,
+    pub period: Token,
+    pub member: Token,
 }
 
+#[derive(strum::EnumTryAs)]
 pub enum SyntaxNodeKind {
     StylingStatement(StylingStatement),
     ExpressionStatement(ExpressionStatement),

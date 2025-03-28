@@ -1,4 +1,4 @@
-use super::{FileId, Files, lexer::Token};
+use super::{FileId, Files, binder::Variable, lexer::Token};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Location {
@@ -22,19 +22,40 @@ impl Location {
     fn end(&self) -> usize {
         self.start + self.length
     }
+
+    pub const fn zero() -> Location {
+        Self {
+            file: FileId::ZERO,
+            start: 0,
+            length: 0,
+        }
+    }
 }
 
 pub struct Diagnostic {
     error_message: String,
     location: Location,
+    hints: Vec<Diagnostic>,
 }
 impl Diagnostic {
-    fn write<W: std::io::Write>(&self, w: &mut W, files: &Files) -> std::io::Result<()> {
+    fn write<W: std::io::Write>(self, w: &mut W, files: &Files) -> std::io::Result<()> {
         let file = &files[self.location.file];
         let file_name = file.name.display();
         let line_number = file.line_number(self.location.start);
         writeln!(w, "[{file_name}:{line_number}] {}", self.error_message)?;
+        for hint in self.hints {
+            hint.write(w, files)?;
+        }
         Ok(())
+    }
+
+    fn add_hint(&mut self, message: String, location: Location) -> &mut Self {
+        self.hints.push(Diagnostic {
+            error_message: message,
+            location,
+            hints: Vec::new(),
+        });
+        self
     }
 }
 
@@ -48,11 +69,13 @@ impl Diagnostics {
         }
     }
 
-    fn report_error(&mut self, error_message: String, location: Location) {
+    fn report_error(&mut self, error_message: String, location: Location) -> &mut Diagnostic {
         self.diagnostics.push(Diagnostic {
             error_message,
             location,
+            hints: Vec::new(),
         });
+        self.diagnostics.last_mut().unwrap()
     }
 
     pub fn report_unexpected_char(&mut self, unexpected: char, location: Location) {
@@ -89,5 +112,48 @@ impl Diagnostics {
 
     pub(crate) fn is_empty(&self) -> bool {
         self.diagnostics.is_empty()
+    }
+
+    pub(crate) fn report_redeclaration_of_variable(
+        &mut self,
+        location: Location,
+        name: &str,
+        previous: &Variable,
+    ) {
+        self.report_error(
+            format!("Unallowed redeclaration of variable {name}."),
+            location,
+        )
+        .add_hint(
+            format!("Previous declaration was here"),
+            previous.definition,
+        );
+    }
+
+    pub(crate) fn report_unexpected_styling_type(&mut self, type_: &str, location: Location) {
+        self.report_error(format!("Unexpected styling type {type_}"), location);
+    }
+
+    pub(crate) fn report_unknown_member(
+        &mut self,
+        member: Token,
+        base_type: super::binder::Type,
+        name: &str,
+    ) {
+        self.report_error(
+            format!("Unknown member {name} on Type {base_type:?}"),
+            member.location,
+        );
+    }
+
+    pub(crate) fn report_unknown_string_type(&mut self, string_type: &str, location: Location) {
+        self.report_error(
+            format!("Unknown string_type {string_type} found."),
+            location,
+        );
+    }
+
+    pub(crate) fn report_unknown_variable(&mut self, location: Location, variable: &str) {
+        self.report_error(format!("No variable named {variable} found"), location);
     }
 }
