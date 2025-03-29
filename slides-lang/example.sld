@@ -27,14 +27,14 @@ slide intro:
 
 
 slide hello:
-   let a = l"""
-   # This could be a title
+    let a = l"""
+        # This could be a title
 
-   - With a list
-   - of elements
-   - to have a nice markdown support
-   - which should be all that's needed for text. probably!
-   """ {
+        - With a list
+        - of elements
+        - to have a nice markdown support
+        - which should be all that's needed for text. probably!
+    """ {
     text_color: c"green"
     background: c"fuchsia"
    }

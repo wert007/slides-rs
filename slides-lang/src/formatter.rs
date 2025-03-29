@@ -27,7 +27,6 @@ impl<W: Write> Formatter<W> {
 
     fn emit_indent(&mut self) -> Result<()> {
         if self.column < self.indent {
-            dbg!(self.column, self.indent);
             let buffer = vec![b' '; self.indent - self.column];
             self.w.write(&buffer)?;
             self.column = self.indent;
