@@ -1,7 +1,7 @@
 mod binder;
 pub mod diagnostics;
 mod evaluator;
-mod lexer;
+pub mod lexer;
 pub mod parser;
 
 pub fn compile_project(
