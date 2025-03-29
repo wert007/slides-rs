@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+convert_case = "0.8.0"
 csscolorparser = "0.7.0"
 enum_dispatch = "0.3.13"
 markdown = "0.3.0"

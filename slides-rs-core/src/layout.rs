@@ -1,5 +1,7 @@
 use std::{fmt::Display, ops::Add};
 
+use crate::SlidesEnum;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Positioning {
     vertical_alignment: VerticalAlignment,
@@ -117,9 +119,17 @@ impl Positioning {
         self.horizontal_alignment = HorizontalAlignment::Stretch;
         self
     }
+
+    pub fn set_vertical_alignment(&mut self, vertical_alignment: VerticalAlignment) {
+        self.vertical_alignment = vertical_alignment;
+    }
+
+    pub fn set_horizontal_alignment(&mut self, horizontal_alignment: HorizontalAlignment) {
+        self.horizontal_alignment = horizontal_alignment;
+    }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, strum::VariantNames, strum::EnumString)]
 pub enum VerticalAlignment {
     Top,
     Center,
@@ -127,13 +137,17 @@ pub enum VerticalAlignment {
     Stretch,
 }
 
-#[derive(Debug, Clone, Copy)]
+impl SlidesEnum for VerticalAlignment {}
+
+#[derive(Debug, Clone, Copy, strum::VariantNames, strum::EnumString)]
 pub enum HorizontalAlignment {
     Left,
     Center,
     Right,
     Stretch,
 }
+
+impl SlidesEnum for HorizontalAlignment {}
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Thickness {

@@ -11,13 +11,15 @@ slide intro:
     //     alignment: .center,
     // };
     // Creation of anonymous image
-    let i = image(p"./assets/mountain.jpg");
-    //  {
-    //    alignment: .center,
-    //
-    //            object-fit: cover,
-    //
-    //};
+    let a = ObjectFit.Cover;
+    let i = image(p"./assets/mountain.jpg")
+     {
+        object_fit: ObjectFit.Cover,
+        halign: HAlign.Stretch,
+        valign: VAlign.Stretch,
+    }
+    ;
+
     let lbl = l"Hello World";
     // lbl.align_center();
     lbl.text_color = c"white";
@@ -32,4 +34,7 @@ slide hello:
    - of elements
    - to have a nice markdown support
    - which should be all that's needed for text. probably!
-   """
+   """ {
+    text_color: c"green"
+    background: c"fuchsia"
+   }

@@ -1,5 +1,7 @@
+use convert_case::{Case, Casing};
+
 use crate::Result;
-use std::{fmt::Display, ops::Deref};
+use std::{any::type_name, fmt::Display, ops::Deref};
 
 pub trait ToCss {
     fn class_name(&self) -> String;
@@ -271,8 +273,19 @@ impl ToCss for LabelStyling {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq, strum::Display, Clone, Copy)]
-#[strum(serialize_all = "kebab-case")]
+#[derive(
+    Debug,
+    Default,
+    PartialEq,
+    Eq,
+    strum::Display,
+    Clone,
+    Copy,
+    strum::EnumString,
+    strum::IntoStaticStr,
+    strum::VariantNames,
+)]
+// #[strum(serialize_all = "kebab-case")]
 pub enum ObjectFit {
     #[default]
     #[strum(to_string = "unset")]
@@ -283,6 +296,23 @@ pub enum ObjectFit {
     Fill,
     ScaleDown,
 }
+
+impl ObjectFit {
+    pub fn as_css(&self) -> String {
+        self.to_string().to_case(Case::Kebab)
+    }
+}
+
+pub trait SlidesEnum: ::strum::VariantNames {
+    fn name() -> &'static str {
+        type_name::<Self>()
+    }
+    fn variants() -> &'static [&'static str] {
+        Self::VARIANTS
+    }
+}
+
+impl SlidesEnum for ObjectFit {}
 
 #[derive(Debug, Default, Clone)]
 pub struct ImageStyling {
@@ -300,6 +330,10 @@ impl ElementStyling<ImageStyling> {
         self.specific.object_fit = object_fit;
         self
     }
+
+    pub fn set_object_fit(&mut self, object_fit: ObjectFit) {
+        self.specific.object_fit = object_fit;
+    }
 }
 
 impl ToCss for ImageStyling {
@@ -307,7 +341,7 @@ impl ToCss for ImageStyling {
         use std::fmt::Write;
         let mut result = String::new();
         if self.object_fit != ObjectFit::Unspecified {
-            writeln!(result, "object-fit: {};", self.object_fit).expect("infallible");
+            writeln!(result, "object-fit: {};", self.object_fit.as_css()).expect("infallible");
         }
         if result.is_empty() {
             None

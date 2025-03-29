@@ -92,6 +92,12 @@ pub struct InferredMember {
     pub member: Token,
 }
 
+#[derive(Debug)]
+pub struct PostInitialization {
+    pub expression: Box<SyntaxNode>,
+    pub dict: Box<SyntaxNode>,
+}
+
 #[derive(strum::EnumTryAs, Debug)]
 pub enum SyntaxNodeKind {
     StylingStatement(StylingStatement),
@@ -108,6 +114,7 @@ pub enum SyntaxNodeKind {
     DictEntry(DictEntry),
     Dict(Dict),
     InferredMember(InferredMember),
+    PostInitialization(PostInitialization),
 }
 
 #[derive(Debug)]
@@ -304,6 +311,17 @@ impl SyntaxNode {
             kind: SyntaxNodeKind::InferredMember(InferredMember { period, member }),
         }
     }
+
+    fn post_initialization(expression: SyntaxNode, dict: SyntaxNode) -> SyntaxNode {
+        let location = Location::combine(expression.location, dict.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::PostInitialization(PostInitialization {
+                expression: Box::new(expression),
+                dict: Box::new(dict),
+            }),
+        }
+    }
 }
 
 pub struct Ast {
@@ -407,6 +425,15 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
         }
         SyntaxNodeKind::InferredMember(inferred_member) => {
             println!("Inferred member {}", inferred_member.member.text(files))
+        }
+        SyntaxNodeKind::PostInitialization(post_initialization) => {
+            println!("Post Initialized Expression");
+            debug_syntax_node(
+                &post_initialization.expression,
+                files,
+                format!("{indent}    "),
+            );
+            debug_syntax_node(&post_initialization.dict, files, format!("{indent}    "));
         }
     }
 }
@@ -562,7 +589,13 @@ fn parse_variable_declaration(parser: &mut Parser, context: &mut Context) -> Syn
 }
 
 fn parse_expression(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    parse_function_call(parser, context)
+    let expression = parse_function_call(parser, context);
+    if parser.current_token().kind == TokenKind::SingleChar('{') {
+        let dict = parse_dict(parser, context);
+        SyntaxNode::post_initialization(expression, dict)
+    } else {
+        expression
+    }
 }
 
 fn parse_function_call(parser: &mut Parser, context: &mut Context) -> SyntaxNode {

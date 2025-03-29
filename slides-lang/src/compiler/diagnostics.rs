@@ -138,10 +138,15 @@ impl Diagnostics {
         self.report_error(format!("Unexpected styling type {type_}"), location);
     }
 
-    pub(crate) fn report_unknown_member(&mut self, member: Token, base_type: Type, name: &str) {
+    pub(crate) fn report_unknown_member(
+        &mut self,
+        location: Location,
+        base_type: &Type,
+        name: &str,
+    ) {
         self.report_error(
             format!("Unknown member {name} on Type {base_type:?}"),
-            member.location,
+            location,
         );
     }
 

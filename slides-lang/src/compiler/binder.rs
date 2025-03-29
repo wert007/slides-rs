@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use slides_rs_core::{Background, Color, Image, Label, Presentation};
+use slides_rs_core::{Background, Color, Image, Label, ObjectFit, Presentation};
 use string_interner::{Symbol, symbol::SymbolUsize};
 use summum_types::summum;
 
@@ -46,7 +46,7 @@ fn debug_bound_ast(ast: &BoundAst, context: &Context) {
 fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
     print!("{indent}");
     match &statement.kind {
-        BoundNodeKind::Error => println!("#Error"),
+        BoundNodeKind::Error(()) => println!("#Error"),
         BoundNodeKind::StylingStatement(styling_statement) => {
             println!(
                 "Style {} for {:?}",
@@ -109,7 +109,12 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 format!("{indent}    ="),
             );
         }
-        BoundNodeKind::Dict(items) => todo!(),
+        BoundNodeKind::Dict(items) => {
+            println!("Dict:");
+            for (name, entry) in items {
+                debug_bound_node(entry, context, format!("{indent}    {name}: "));
+            }
+        }
         BoundNodeKind::MemberAccess(member_access) => {
             println!(
                 "Member Access .{}",
@@ -123,6 +128,11 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 statement.type_, conversion.kind
             );
             debug_bound_node(&conversion.base, context, format!("{indent}    "));
+        }
+        BoundNodeKind::PostInitialization(post_initialization) => {
+            println!("Post Initialization");
+            debug_bound_node(&post_initialization.base, context, format!("{indent}    "));
+            debug_bound_node(&post_initialization.dict, context, format!("{indent}    "));
         }
     }
 }
@@ -157,6 +167,28 @@ impl Scope {
                 )
                 .expect("infallible");
         }
+
+        for enum_ in globals::ENUMS {
+            let id = interner.create_or_get_variable(enum_.name);
+            global
+                .try_register_variable(
+                    id,
+                    Type::Enum(
+                        Box::new(enum_.type_),
+                        enum_
+                            .variants
+                            .into_iter()
+                            .copied()
+                            .map(Into::into)
+                            .collect(),
+                    ),
+                    Location::zero(),
+                )
+                .expect("infallible");
+        }
+
+        debug_scope("globals", &global, interner);
+
         global
     }
 
@@ -189,6 +221,15 @@ impl Scope {
 
     fn look_up(&self, variable_id: VariableId) -> Option<&Variable> {
         self.variables.get(&variable_id)
+    }
+}
+
+fn debug_scope(name: &str, scope: &Scope, interner: &super::StringInterner) {
+    println!("Scope {name}");
+    println!();
+    for (id, variable) in &scope.variables {
+        let name = interner.resolve_variable(*id);
+        println!("Variable {name}: {:?}", variable.type_);
     }
 }
 
@@ -297,28 +338,20 @@ pub enum Type {
     Background,
     Color,
     ObjectFit,
+    HAlign,
+    VAlign,
     Function(FunctionType),
     Slide,
     Label,
     Image,
     Path,
+    Enum(Box<Type>, Vec<String>),
 }
 
 impl Type {
     fn field_type(&self, member: &str) -> Option<Type> {
         match self {
             Type::Error => Some(Type::Error),
-            Type::Void => None,
-            Type::Float => None,
-            Type::Integer => None,
-            Type::String => None,
-            Type::Dict => None,
-            Type::Styling => None,
-            Type::Background => None,
-            Type::Color => None,
-            Type::ObjectFit => None,
-            Type::Function(_) => None,
-            Type::Slide => None,
             Type::Label => match member {
                 "text_color" => Some(Type::Color),
                 "background" => Some(Type::Background),
@@ -328,8 +361,21 @@ impl Type {
                 })),
                 _ => None,
             },
-            Type::Image => None,
-            Type::Path => None,
+            Type::Image => match member {
+                "background" => Some(Type::Background),
+                "object_fit" => Some(Type::ObjectFit),
+                "halign" => Some(Type::HAlign),
+                "valign" => Some(Type::VAlign),
+                _ => None,
+            },
+            Type::Enum(result, variants) => {
+                if variants.iter().any(|v| v == member) {
+                    Some(*result.clone())
+                } else {
+                    None
+                }
+            }
+            _ => None,
         }
     }
 
@@ -356,6 +402,10 @@ impl Type {
             None
         }
     }
+
+    pub(crate) fn is_enum(&self) -> bool {
+        matches!(self, Type::Enum(..))
+    }
 }
 
 summum! {
@@ -371,6 +421,10 @@ summum! {
         Label(slides_rs_core::Label),
         Path(PathBuf),
         Image(slides_rs_core::Image),
+        ObjectFit(slides_rs_core::ObjectFit),
+        VerticalAlignment(slides_rs_core::VerticalAlignment),
+        HorizontalAlignment(slides_rs_core::HorizontalAlignment),
+        Dict(HashMap<String, Value>),
     }
 }
 
@@ -386,6 +440,10 @@ impl Value {
             Value::Label(_) => Type::Label,
             Value::Path(_) => Type::Path,
             Value::Image(_) => Type::Image,
+            Value::ObjectFit(_) => Type::ObjectFit,
+            Value::Dict(_) => Type::Dict,
+            Value::VerticalAlignment(_) => Type::VAlign,
+            Value::HorizontalAlignment(_) => Type::HAlign,
         }
     }
 
@@ -489,8 +547,16 @@ pub struct Conversion {
 }
 
 #[derive(Debug)]
+pub struct PostInitialization {
+    pub base: Box<BoundNode>,
+    pub dict: Box<BoundNode>,
+}
+
+summum! {
+
+#[derive(Debug)]
 pub enum BoundNodeKind {
-    Error,
+    Error(()),
     StylingStatement(StylingStatement),
     AssignmentStatement(AssignmentStatement),
     FunctionCall(FunctionCall),
@@ -501,21 +567,22 @@ pub enum BoundNodeKind {
     Dict(Vec<(String, BoundNode)>),
     MemberAccess(MemberAccess),
     Conversion(Conversion),
+    PostInitialization(PostInitialization),
 }
-
+}
 #[derive(Debug)]
 pub struct BoundNode {
     base: Option<SyntaxNodeKind>,
     location: Location,
     pub kind: BoundNodeKind,
-    type_: Type,
+    pub type_: Type,
 }
 impl BoundNode {
     fn syntax_error(location: Location) -> BoundNode {
         BoundNode {
             base: Some(SyntaxNodeKind::Error),
             location,
-            kind: BoundNodeKind::Error,
+            kind: BoundNodeKind::Error(()),
             type_: Type::Error,
         }
     }
@@ -524,7 +591,7 @@ impl BoundNode {
         BoundNode {
             base: None,
             location,
-            kind: BoundNodeKind::Error,
+            kind: BoundNodeKind::Error(()),
             type_: Type::Error,
         }
     }
@@ -666,6 +733,18 @@ impl BoundNode {
             type_: target.clone(),
         }
     }
+
+    fn post_initialization(location: Location, base: BoundNode, dict: BoundNode) -> BoundNode {
+        BoundNode {
+            base: None,
+            location,
+            type_: base.type_.clone(),
+            kind: BoundNodeKind::PostInitialization(PostInitialization {
+                base: Box::new(base),
+                dict: Box::new(dict),
+            }),
+        }
+    }
 }
 
 pub struct BoundAst {
@@ -713,8 +792,34 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         }
         SyntaxNodeKind::Error => BoundNode::syntax_error(statement.location),
         SyntaxNodeKind::Dict(dict) => bind_dict(dict, statement.location, binder, context),
+        SyntaxNodeKind::PostInitialization(post_initialization) => {
+            bind_post_initialization(post_initialization, statement.location, binder, context)
+        }
         unsupported => unreachable!("Not supported: {unsupported:?}"),
     }
+}
+
+fn bind_post_initialization(
+    post_initialization: parser::PostInitialization,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    let base = bind_node(*post_initialization.expression, binder, context);
+    let mut dict = bind_node(*post_initialization.dict, binder, context);
+    for (entry, entry_type) in dict.kind.as_mut_dict() {
+        if let Some(target) = base.type_.field_type(entry.as_str()) {
+            let mut fallback = BoundNode::error(entry_type.location);
+            std::mem::swap(entry_type, &mut fallback);
+            *entry_type = bind_conversion(fallback, &target, ConversionKind::Implicit, context)
+        } else {
+            context
+                .diagnostics
+                .report_unknown_member(dict.location, &base.type_, &entry);
+            *entry_type = BoundNode::error(entry_type.location);
+        }
+    }
+    BoundNode::post_initialization(location, base, dict)
 }
 
 fn bind_member_access(
@@ -729,9 +834,11 @@ fn bind_member_access(
         let member = context.string_interner.create_or_get(member);
         BoundNode::member_access(location, base, member, type_)
     } else {
-        context
-            .diagnostics
-            .report_unknown_member(member_access.member, base.type_, member);
+        context.diagnostics.report_unknown_member(
+            member_access.member.location,
+            &base.type_,
+            member,
+        );
         BoundNode::error(location)
     }
 }

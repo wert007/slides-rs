@@ -91,21 +91,14 @@ fn evaluate_statement(
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     match statement.kind {
-        BoundNodeKind::Error => unreachable!("Errors should create errors!"),
+        BoundNodeKind::Error(()) => unreachable!("Errors should create errors!"),
         BoundNodeKind::StylingStatement(styling_statement) => {
             evaluate_styling_statement(styling_statement, evaluator, context)
         }
-        BoundNodeKind::AssignmentStatement(assignment_statement) => todo!(),
-        BoundNodeKind::FunctionCall(function_call) => todo!(),
-        BoundNodeKind::VariableReference(variable) => todo!(),
-        BoundNodeKind::Literal(value) => todo!(),
         BoundNodeKind::SlideStatement(slide_statement) => {
             evaluate_slide_statement(slide_statement, evaluator, context)
         }
-        BoundNodeKind::VariableDeclaration(variable_declaration) => todo!(),
-        BoundNodeKind::Dict(items) => todo!(),
-        BoundNodeKind::MemberAccess(member_access) => todo!(),
-        BoundNodeKind::Conversion(conversion) => todo!(),
+        err => unreachable!("No Top Level Statement: {err:?}"),
     }
 }
 

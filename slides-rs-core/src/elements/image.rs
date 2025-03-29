@@ -67,6 +67,14 @@ impl Image {
         self.stylings.push(styling);
         self
     }
+
+    pub fn element_styling_mut(&mut self) -> &mut ElementStyling<ImageStyling> {
+        &mut self.styling
+    }
+
+    pub fn positioning_mut(&mut self) -> &mut Positioning {
+        &mut self.positioning
+    }
 }
 
 impl WebRenderable for Image {
