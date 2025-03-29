@@ -1,13 +1,10 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use convert_case::{Case, Casing};
-use slides_rs_core::{Background, Color, Label, ObjectFit, Slide, WebRenderable};
-use string_interner::{Symbol, symbol::SymbolUsize};
+use slides_rs_core::{Background, Color, Label, Slide, WebRenderable};
+use string_interner::symbol::SymbolUsize;
 
-use crate::compiler::{
-    Context,
-    binder::{self, BoundNode, BoundNodeKind, Type, Value},
-};
+use crate::Context;
+use crate::compiler::binder::{self, BoundNode, BoundNodeKind, Type, Value};
 
 use super::Evaluator;
 
@@ -203,10 +200,10 @@ fn evaluate_post_initialization(
 
 fn evaluate_member_access(
     member_access: binder::MemberAccess,
-    evaluator: &mut Evaluator,
+    _evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
-    if let Some((enum_type, variants)) = member_access.base.type_.try_as_enum_ref() {
+    if let Some((enum_type, _)) = member_access.base.type_.try_as_enum_ref() {
         let variant = context.string_interner.resolve(member_access.member);
         match &**enum_type {
             &Type::ObjectFit => Value::ObjectFit(variant.parse().expect("Valid variant")),

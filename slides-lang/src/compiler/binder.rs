@@ -1,18 +1,17 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use slides_rs_core::{Background, Color, Image, Label, ObjectFit, Presentation};
-use string_interner::{Symbol, symbol::SymbolUsize};
+use slides_rs_core::Presentation;
+use string_interner::symbol::SymbolUsize;
 use summum_types::summum;
 
 pub mod globals;
 
 use super::{
-    Context,
-    diagnostics::Location,
     evaluator,
     lexer::Token,
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
+use crate::{Context, Location, StringInterner, VariableId};
 
 pub(crate) fn create_presentation_from_file(file: PathBuf) -> slides_rs_core::Result<Presentation> {
     let mut context = Context::new();
@@ -149,7 +148,7 @@ struct Scope {
 }
 
 impl Scope {
-    pub fn global(interner: &mut super::StringInterner) -> Self {
+    pub fn global(interner: &mut StringInterner) -> Self {
         let mut global = Self {
             variables: HashMap::new(),
         };
@@ -224,7 +223,7 @@ impl Scope {
     }
 }
 
-fn debug_scope(name: &str, scope: &Scope, interner: &super::StringInterner) {
+fn debug_scope(name: &str, scope: &Scope, interner: &StringInterner) {
     println!("Scope {name}");
     println!();
     for (id, variable) in &scope.variables {
@@ -233,25 +232,12 @@ fn debug_scope(name: &str, scope: &Scope, interner: &super::StringInterner) {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct VariableId(usize);
-
-impl Symbol for VariableId {
-    fn try_from_usize(index: usize) -> Option<Self> {
-        Some(Self(index))
-    }
-
-    fn to_usize(self) -> usize {
-        self.0
-    }
-}
-
 struct Binder {
     scopes: Vec<Scope>,
 }
 
 impl Binder {
-    pub fn new(interner: &mut super::StringInterner) -> Self {
+    pub fn new(interner: &mut StringInterner) -> Self {
         Self {
             scopes: vec![Scope::global(interner)],
         }
@@ -401,10 +387,6 @@ impl Type {
         } else {
             None
         }
-    }
-
-    pub(crate) fn is_enum(&self) -> bool {
-        matches!(self, Type::Enum(..))
     }
 }
 
@@ -571,6 +553,7 @@ pub enum BoundNodeKind {
 }
 }
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct BoundNode {
     base: Option<SyntaxNodeKind>,
     location: Location,
@@ -912,7 +895,7 @@ fn bind_slide_statement(
 fn bind_typed_string(
     typed_string: parser::TypedString,
     location: Location,
-    binder: &mut Binder,
+    _binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
     let type_ = typed_string.type_.text(&context.loaded_files);
@@ -968,7 +951,7 @@ fn bind_conversion(
 
 fn bind_literal(
     token: super::lexer::Token,
-    binder: &mut Binder,
+    _binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
     let text = token.text(&context.loaded_files);

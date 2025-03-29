@@ -1,40 +1,9 @@
 use super::{
-    FileId, Files,
     binder::{Type, Variable},
     lexer::Token,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Location {
-    pub file: FileId,
-    pub start: usize,
-    pub length: usize,
-}
-impl Location {
-    pub fn set_end(&mut self, end: usize) {
-        self.length = end - self.start;
-    }
-
-    pub(crate) fn combine(start: Location, end: Location) -> Self {
-        Self {
-            file: start.file,
-            start: start.start,
-            length: end.end() - start.start,
-        }
-    }
-
-    fn end(&self) -> usize {
-        self.start + self.length
-    }
-
-    pub const fn zero() -> Location {
-        Self {
-            file: FileId::ZERO,
-            start: 0,
-            length: 0,
-        }
-    }
-}
+use crate::{Files, Location};
 
 pub struct Diagnostic {
     error_message: String,
@@ -86,14 +55,14 @@ impl Diagnostics {
         self.report_error(format!("Unexpected char `{unexpected}` found"), location);
     }
 
-    pub fn report_expected_expression(&mut self, token: Token, files: &super::Files) {
+    pub fn report_expected_expression(&mut self, token: Token, files: &Files) {
         self.report_error(
             format!("Expected expression, found `{}` instead", token.text(files)),
             token.location,
         );
     }
 
-    pub fn report_invalid_top_level_statement(&mut self, token: Token, files: &super::Files) {
+    pub fn report_invalid_top_level_statement(&mut self, token: Token, files: &Files) {
         self.report_error(
             format!(
                 "Expected either a slide or a styling, found `{}` instead",
@@ -103,11 +72,7 @@ impl Diagnostics {
         );
     }
 
-    pub(crate) fn write<W: std::io::Write>(
-        self,
-        w: &mut W,
-        files: &super::Files,
-    ) -> std::io::Result<()> {
+    pub(crate) fn write<W: std::io::Write>(self, w: &mut W, files: &Files) -> std::io::Result<()> {
         for diagnostic in self.diagnostics {
             diagnostic.write(w, files)?;
         }

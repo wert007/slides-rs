@@ -1,4 +1,4 @@
-use super::{Context, FileId, Files, diagnostics::Location};
+use crate::{Context, FileId, Files, Location};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TokenKind {
@@ -96,7 +96,7 @@ impl Token {
     }
 }
 
-pub fn lex(file: super::FileId, context: &mut super::Context) -> Vec<Token> {
+pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
     let Context {
         loaded_files,
         diagnostics,

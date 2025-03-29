@@ -1,8 +1,8 @@
 use slides_rs_core::{ElementStyling, ToCss};
 
-use crate::compiler::{Context, binder::BoundNode};
-
 use super::Evaluator;
+use crate::Context;
+use crate::compiler::binder::BoundNode;
 
 pub fn evaluate_to_styling<S: ToCss + 'static>(
     init_value: ElementStyling<S>,

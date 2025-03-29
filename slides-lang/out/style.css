@@ -51,6 +51,15 @@ ol {
 
 #intro { background: rgb(255, 127, 127, 1);
  }
+#intro-lbl {
+top: unset;
+left: unset;
+
+background: rgb(97, 97, 97, 1);
+
+color: rgb(255, 255, 255, 1);
+
+}
 #intro-i {
 top: unset;
 bottom: unset;
@@ -60,15 +69,6 @@ bottom: unset;
 width: 100%;
 
 object-fit: cover;
-
-}
-#intro-lbl {
-top: unset;
-left: unset;
-
-background: rgb(97, 97, 97, 1);
-
-color: rgb(255, 255, 255, 1);
 
 }
 #hello-a {

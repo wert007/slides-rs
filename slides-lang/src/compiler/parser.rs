@@ -1,12 +1,5 @@
-use std::process::id;
-
-use crate::compiler::lexer::{self, debug_tokens};
-
-use super::{
-    Context, FileId, Files,
-    diagnostics::Location,
-    lexer::{Token, TokenKind},
-};
+use super::lexer::{self, Token, TokenKind, debug_tokens};
+use crate::{Context, FileId, Files, Location};
 
 #[derive(Debug)]
 pub struct StylingStatement {
@@ -324,6 +317,7 @@ impl SyntaxNode {
     }
 }
 
+#[allow(dead_code)]
 pub struct Ast {
     pub statements: Vec<SyntaxNode>,
     eof: Token,
@@ -653,7 +647,7 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     }
 }
 
-fn parse_inferred_member(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+fn parse_inferred_member(parser: &mut Parser, _: &mut Context) -> SyntaxNode {
     let period = parser.match_token(TokenKind::SingleChar('.'));
     let member = parser.match_token(TokenKind::Identifier);
     SyntaxNode::inferred_member(period, member)
@@ -681,7 +675,7 @@ fn parse_dict(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     SyntaxNode::dict(lbrace, entries, rbrace)
 }
 
-fn parse_dict_identifier(parser: &mut Parser, context: &mut Context) -> Token {
+fn parse_dict_identifier(parser: &mut Parser, _: &mut Context) -> Token {
     let mut identifier = parser.match_token(TokenKind::Identifier);
     while parser.current_token().kind == TokenKind::SingleChar('-') {
         // TODO: Ensure that `foo - bar` is not a valid dict identifier

@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 
-use slides_rs_core::{ElementStyling, ImageStyling, LabelStyling, Slide, SlideStyling, ToCss};
+use slides_rs_core::{ImageStyling, LabelStyling, Slide, SlideStyling};
 
-use super::{
-    Context,
-    binder::{BoundAst, BoundNode, BoundNodeKind, Value},
-};
+use super::binder::{BoundAst, BoundNode, BoundNodeKind, Value};
+use crate::Context;
 
 pub mod functions;
 mod slide;
