@@ -13,6 +13,7 @@ struct Formatter<W: std::io::Write> {
     w: W,
     last_written_byte: u8,
     column: usize,
+    trim_lines: bool,
 }
 
 impl<W: Write> Formatter<W> {
@@ -22,10 +23,11 @@ impl<W: Write> Formatter<W> {
             w,
             last_written_byte: 0,
             column: 0,
+            trim_lines: false,
         }
     }
 
-    fn emit_indent(&mut self) -> Result<()> {
+    fn ensure_indent(&mut self) -> Result<()> {
         if self.column < self.indent {
             let buffer = vec![b' '; self.indent - self.column];
             self.w.write(&buffer)?;
@@ -44,7 +46,53 @@ impl<W: Write> Formatter<W> {
         if self.last_written_byte != b'\n' {
             self.ensure_empty_line()?;
         }
-        self.emit_indent()?;
+        self.ensure_indent()?;
+        Ok(())
+    }
+
+    fn emit_token(
+        &mut self,
+        token: Token,
+        files: &crate::Files,
+        insert_trailing_space: bool,
+    ) -> std::io::Result<()> {
+        if let Some(leading) = token.trivia.leading_comments {
+            self.ensure_indented_line()?;
+            self.trim_lines = true;
+            write!(self, "{}", &files[leading])?;
+            // self.ensure_indented_line()?;
+            self.trim_lines = false;
+        }
+        write!(self, "{}", &files[token.location])?;
+        if insert_trailing_space {
+            self.write(&[b' '])?;
+        }
+        if let Some(trailing) = token.trivia.trailing_comments {
+            // TODO: self.reserve(trailing.length);
+            if !insert_trailing_space {
+                self.write(&[b' '])?;
+            }
+            let indent = self.indent;
+            self.indent = self.column;
+            self.trim_lines = true;
+            writeln!(self, "{}", &files[trailing])?;
+            self.trim_lines = false;
+            self.indent = indent;
+        }
+        Ok(())
+    }
+
+    fn ensure_space(&mut self) -> std::io::Result<()> {
+        if self.last_written_byte != b' ' {
+            self.write(&[b' '])?;
+        }
+        Ok(())
+    }
+
+    fn ensure_new_line(&mut self) -> std::io::Result<()> {
+        if self.last_written_byte != b'\n' {
+            self.write(&[b'\n'])?;
+        }
         Ok(())
     }
 }
@@ -54,13 +102,14 @@ impl<W: Write> Write for Formatter<W> {
         let str = std::str::from_utf8(buf)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
 
-        self.emit_indent()?;
+        self.ensure_indent()?;
         for (i, line) in str.lines().enumerate() {
             if i > 0 {
                 self.w.write(&[b'\n'])?;
                 self.column = 0;
-                self.emit_indent()?;
+                self.ensure_indent()?;
             }
+            let line = if self.trim_lines { line.trim() } else { line };
             self.w.write(line.as_bytes())?;
             // TODO: Utf-8
             self.column += line.len();
@@ -95,7 +144,8 @@ fn format_ast<W: Write>(
     for statement in ast.statements {
         format_node(statement, formatter, context)?;
     }
-    formatter.ensure_empty_line()?;
+    formatter.emit_token(ast.eof, &context.loaded_files, false)?;
+    formatter.ensure_new_line()?;
     Ok(())
 }
 
@@ -116,7 +166,7 @@ fn format_node<W: Write>(
             format_slide_statement(slide_statement, formatter, context)
         }
         SyntaxNodeKind::Literal(token) | SyntaxNodeKind::VariableReference(token) => {
-            emit_token(token, formatter, context)
+            formatter.emit_token(token, &context.loaded_files, false)
         }
         SyntaxNodeKind::MemberAccess(member_access) => {
             format_member_access(member_access, formatter, context)
@@ -145,12 +195,9 @@ fn format_dict_entry<W: Write>(
     formatter: &mut Formatter<W>,
     context: &mut Context,
 ) -> std::result::Result<(), std::io::Error> {
-    formatter.emit_indent()?;
-    write!(
-        formatter,
-        "{}: ",
-        dict_entry.identifier.text(&context.loaded_files)
-    )?;
+    formatter.ensure_indent()?;
+    formatter.emit_token(dict_entry.identifier, &context.loaded_files, false)?;
+    formatter.emit_token(dict_entry.colon, &context.loaded_files, true)?;
     format_node(*dict_entry.value, formatter, context)?;
     Ok(())
 }
@@ -160,16 +207,19 @@ fn format_dict<W: Write>(
     formatter: &mut Formatter<W>,
     context: &mut Context,
 ) -> Result<()> {
-    writeln!(formatter, "{{")?;
+    formatter.emit_token(dict.lbrace, &context.loaded_files, false)?;
+    formatter.ensure_new_line()?;
     formatter.indent += 4;
-    for (entry, _) in dict.entries {
+    for (entry, comma) in dict.entries {
         format_node(entry, formatter, context)?;
-        writeln!(formatter, ",")?;
+        match comma {
+            Some(it) => formatter.emit_token(it, &context.loaded_files, false)?,
+            None => write!(formatter, ",")?,
+        }
+        formatter.ensure_new_line()?;
     }
     formatter.indent -= 4;
-    formatter.flush()?;
-    write!(formatter, "}}")?;
-    formatter.flush()?;
+    formatter.emit_token(dict.rbrace, &context.loaded_files, false)?;
     Ok(())
 }
 
@@ -179,7 +229,7 @@ fn format_post_initialization<W: Write>(
     context: &mut Context,
 ) -> Result<()> {
     format_node(*post_initialization.expression, formatter, context)?;
-    write!(formatter, " ")?;
+    formatter.ensure_space()?;
     format_node(*post_initialization.dict, formatter, context)?;
     Ok(())
 }
@@ -190,11 +240,9 @@ fn format_member_access<W: Write>(
     context: &mut Context,
 ) -> Result<()> {
     format_node(*member_access.base, formatter, context)?;
-    write!(
-        formatter,
-        ".{}",
-        member_access.member.text(&context.loaded_files)
-    )?;
+    // formatter.reserve()
+    formatter.emit_token(member_access.period, &context.loaded_files, false)?;
+    formatter.emit_token(member_access.member, &context.loaded_files, false)?;
     Ok(())
 }
 
@@ -204,13 +252,17 @@ fn format_variable_declaration<W: Write>(
     context: &mut Context,
 ) -> Result<()> {
     formatter.ensure_indented_line()?;
-    write!(
-        formatter,
-        "let {} = ",
-        variable_declaration.name.text(&context.loaded_files)
+    formatter.emit_token(
+        variable_declaration.let_keyword,
+        &context.loaded_files,
+        true,
     )?;
+    formatter.emit_token(variable_declaration.name, &context.loaded_files, true)?;
+    formatter.emit_token(variable_declaration.equals, &context.loaded_files, true)?;
+    // TODO: formatter.reserve(variable_declaration.expression.location.length)
     format_node(*variable_declaration.expression, formatter, context)?;
-    writeln!(formatter, ";")?;
+    formatter.emit_token(variable_declaration.semicolon, &context.loaded_files, false)?;
+    formatter.ensure_new_line()?;
     Ok(())
 }
 
@@ -219,11 +271,10 @@ fn format_slide_statement<W: Write>(
     formatter: &mut Formatter<W>,
     context: &mut Context,
 ) -> Result<()> {
-    writeln!(
-        formatter,
-        "slide {}:",
-        slide_statement.name.text(&context.loaded_files)
-    )?;
+    formatter.emit_token(slide_statement.slide_keyword, &context.loaded_files, true)?;
+    formatter.emit_token(slide_statement.name, &context.loaded_files, false)?;
+    formatter.emit_token(slide_statement.colon, &context.loaded_files, false)?;
+    formatter.ensure_new_line()?;
     formatter.indent += 4;
     for statement in slide_statement.body {
         format_node(statement, formatter, context)?;
@@ -238,8 +289,9 @@ fn format_typed_string<W: Write>(
     formatter: &mut Formatter<W>,
     context: &mut Context,
 ) -> Result<()> {
-    emit_token(typed_string.type_, formatter, context)?;
-    emit_token(typed_string.string, formatter, context)?;
+    // TODO: Make it illegal to write `p "path"`
+    formatter.emit_token(typed_string.type_, &context.loaded_files, false)?;
+    formatter.emit_token(typed_string.string, &context.loaded_files, false)?;
     Ok(())
 }
 
@@ -249,26 +301,18 @@ fn format_function_call<W: Write>(
     context: &mut Context,
 ) -> Result<()> {
     format_node(*function_call.base, formatter, context)?;
-    write!(formatter, "(")?;
-    for (i, (argument, _)) in function_call.arguments.into_iter().enumerate() {
-        if i > 0 {
-            write!(formatter, ", ")?;
-        }
+    formatter.emit_token(function_call.lparen, &context.loaded_files, false)?;
+    let arguments_count = function_call.arguments.len();
+    for (i, (argument, comma)) in function_call.arguments.into_iter().enumerate() {
         format_node(argument, formatter, context)?;
+        if i != arguments_count {
+            match comma {
+                Some(it) => formatter.emit_token(it, &context.loaded_files, true)?,
+                None => write!(formatter, ", ")?,
+            }
+        }
     }
-    write!(formatter, ")")?;
-    Ok(())
-}
-
-fn emit_token<W: Write>(
-    token: Token,
-    formatter: &mut Formatter<W>,
-    context: &mut Context,
-) -> std::result::Result<(), std::io::Error> {
-    let indent = formatter.indent;
-    formatter.indent = 0;
-    write!(formatter, "{}", token.text(&context.loaded_files))?;
-    formatter.indent = indent;
+    formatter.emit_token(function_call.rparen, &context.loaded_files, false)?;
     Ok(())
 }
 
@@ -279,9 +323,11 @@ fn format_assignment_statement<W: Write>(
 ) -> Result<()> {
     formatter.ensure_indented_line()?;
     format_node(*assignment_statement.lhs, formatter, context)?;
-    write!(formatter, " = ")?;
+    formatter.ensure_space()?;
+    formatter.emit_token(assignment_statement.equals, &context.loaded_files, true)?;
     format_node(*assignment_statement.assignment, formatter, context)?;
-    writeln!(formatter, ";")?;
+    formatter.emit_token(assignment_statement.semicolon, &context.loaded_files, false)?;
+    formatter.ensure_new_line()?;
     Ok(())
 }
 
@@ -290,10 +336,18 @@ fn format_styling_statement<W: std::io::Write>(
     formatter: &mut Formatter<W>,
     context: &mut Context,
 ) -> Result<()> {
-    let name = styling_statement.name.text(&context.loaded_files);
-    let type_ = styling_statement.type_.text(&context.loaded_files);
-    writeln!(formatter, "styling {name}({type_}):")?;
+    formatter.emit_token(
+        styling_statement.styling_keyword,
+        &context.loaded_files,
+        true,
+    )?;
+    formatter.emit_token(styling_statement.name, &context.loaded_files, false)?;
+    formatter.emit_token(styling_statement.lparen, &context.loaded_files, false)?;
+    formatter.emit_token(styling_statement.type_, &context.loaded_files, false)?;
+    formatter.emit_token(styling_statement.rparen, &context.loaded_files, false)?;
+    formatter.emit_token(styling_statement.colon, &context.loaded_files, false)?;
     formatter.indent += 4;
+    formatter.ensure_new_line()?;
     for statement in styling_statement.body {
         format_node(statement, formatter, context)?;
     }
@@ -301,3 +355,29 @@ fn format_styling_statement<W: std::io::Write>(
     formatter.ensure_empty_line()?;
     Ok(())
 }
+
+// fn format_leading_trivia<W: Write>(
+//     trivia: &[compiler::lexer::Trivia],
+//     formatter: &mut Formatter<W>,
+//     context: &mut Context,
+// ) -> Result<()> {
+//     for trivia in trivia.into_iter().filter_map(|t| t.comments_before) {
+//         writeln!(formatter, "{}", &context.loaded_files[trivia].trim())?;
+//     }
+//     formatter.ensure_indent()?;
+//     Ok(())
+// }
+
+// fn format_following_trivia<W: Write>(
+//     trivia: &[compiler::lexer::Trivia],
+//     formatter: &mut Formatter<W>,
+//     context: &mut Context,
+// ) -> Result<()> {
+//     let indent = formatter.indent;
+//     formatter.indent = formatter.column;
+//     for trivia in trivia.into_iter().filter_map(|t| t.comments_after) {
+//         writeln!(formatter, "{}", &context.loaded_files[trivia].trim())?;
+//     }
+//     formatter.indent = indent;
+//     Ok(())
+// }

@@ -1,3 +1,5 @@
+// My file!
+
 styling blue_bg(Label):
     background = rgb(20, 60, 180);
     text_color = c"white";
@@ -38,3 +40,6 @@ slide hello:
     text_color: c"green"
     background: c"fuchsia"
    }
+
+
+// Last line comment! Would be trivia of eof!

@@ -1,3 +1,5 @@
+use std::{cell::RefCell, usize};
+
 use crate::{Context, FileId, Files, Location};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -11,20 +13,31 @@ pub enum TokenKind {
     SingleChar(char),
     String,
 }
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+pub struct Trivia {
+    pub leading_comments: Option<Location>,
+    pub trailing_comments: Option<Location>,
+    pub leading_blank_line: bool,
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Token {
     pub location: Location,
     pub kind: TokenKind,
+    pub trivia: Trivia,
 }
 
 impl Token {
     pub fn fabricate(kind: TokenKind, mut location: Location) -> Self {
         location.length = 0;
-        Token { location, kind }
+        Token {
+            location,
+            kind,
+            trivia: Trivia::default(),
+        }
     }
 
-    fn eof(file: FileId, start: usize) -> Token {
+    fn eof(file: FileId, start: usize, trivia: Trivia) -> Token {
         Token {
             location: Location {
                 file,
@@ -32,10 +45,11 @@ impl Token {
                 length: 0,
             },
             kind: TokenKind::Eof,
+            trivia,
         }
     }
 
-    fn identifier(file: FileId, start: usize) -> Token {
+    fn identifier(file: FileId, start: usize, trivia: Trivia) -> Token {
         Token {
             location: Location {
                 file,
@@ -43,10 +57,11 @@ impl Token {
                 length: 0,
             },
             kind: TokenKind::Identifier,
+            trivia,
         }
     }
 
-    fn number(file: FileId, start: usize) -> Token {
+    fn number(file: FileId, start: usize, trivia: Trivia) -> Token {
         Token {
             location: Location {
                 file,
@@ -54,10 +69,11 @@ impl Token {
                 length: 0,
             },
             kind: TokenKind::Number,
+            trivia,
         }
     }
 
-    fn string(file: FileId, start: usize) -> Token {
+    fn string(file: FileId, start: usize, trivia: Trivia) -> Token {
         Token {
             location: Location {
                 file,
@@ -65,10 +81,11 @@ impl Token {
                 length: 0,
             },
             kind: TokenKind::String,
+            trivia,
         }
     }
 
-    fn single_char_token(file: FileId, start: usize, char: char) -> Token {
+    fn single_char_token(file: FileId, start: usize, char: char, trivia: Trivia) -> Token {
         Token {
             location: Location {
                 file,
@@ -76,6 +93,7 @@ impl Token {
                 length: 0,
             },
             kind: TokenKind::SingleChar(char),
+            trivia,
         }
     }
 
@@ -114,15 +132,28 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
         // Whitespace,
     }
     let mut current_token: Option<Token> = None;
-    let mut result = Vec::new();
+    let mut current_trivia = Trivia::default();
+    let mut is_comment_on_same_line_as_token = false;
+    let result = RefCell::new(Vec::new());
     let mut state = State::Init;
-    let mut finish_token = |index: usize, token: Option<Token>| {
+    let finish_token = |index: usize, token: Option<Token>| {
         if let Some(mut token) = token {
             token.finish(index, &loaded_files);
-            result.push(token);
+            result.borrow_mut().push(token);
         }
     };
-    let mut iter = loaded_files[file].content().char_indices().peekable();
+    let finish_trivia = |index: usize, trivia: &mut Trivia| {
+        if let Some(comment_before) = &mut trivia.leading_comments {
+            comment_before.set_end(index);
+        }
+    };
+    let text_len = loaded_files[file].content().len();
+
+    let mut iter = loaded_files[file]
+        .content()
+        .char_indices()
+        .chain(std::iter::once((text_len, '\0')))
+        .peekable();
     while let Some(&(index, char)) = iter.peek() {
         match state {
             State::Init => match char {
@@ -130,6 +161,33 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                     iter.next();
                     if iter.peek().is_some_and(|&(_, c)| c == '/') {
                         state = State::LineComment;
+                        finish_token(index, current_token);
+                        let last_token = result
+                            .borrow()
+                            .last()
+                            .map(|t| t.location.end())
+                            // HACK: This is only None, if there were no tokens
+                            // yet, which means the file started with a comment.
+                            // This should ensure, that the found comment will
+                            // be treated as leading comment. This will fail, if
+                            // the file is only made of one line, which is a
+                            // comment.
+                            .unwrap_or(usize::MAX);
+                        let line_number_last_token = loaded_files[file].line_number(last_token);
+                        let line_number_comment = loaded_files[file].line_number(index);
+                        let location = if line_number_comment != line_number_last_token {
+                            &mut current_trivia.leading_comments
+                        } else {
+                            is_comment_on_same_line_as_token = true;
+                            &mut current_trivia.trailing_comments
+                        };
+                        location
+                            .get_or_insert(Location {
+                                file,
+                                start: index,
+                                length: 0,
+                            })
+                            .set_end(index);
                     } else {
                         diagnostics.report_unexpected_char(
                             '/',
@@ -150,12 +208,15 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                             State::EscapedMultiLineString
                         } else {
                             finish_token(index, current_token.take());
-                            current_token = Some(Token::string(file, index));
+                            current_token = Some(Token::string(file, index, current_trivia));
+                            current_trivia = Trivia::default();
                             State::OneLineString
                         };
                     } else {
                         finish_token(index, current_token.take());
-                        current_token = Some(Token::string(file, index));
+                        finish_trivia(index, &mut current_trivia);
+                        current_token = Some(Token::string(file, index, current_trivia));
+                        current_trivia = Trivia::default();
                         state = State::OneLineString;
                     }
                     iter.next();
@@ -163,22 +224,39 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                 number if number.is_ascii_digit() => {
                     state = State::Number;
                     finish_token(index, current_token.take());
-                    current_token = Some(Token::number(file, index));
+                    finish_trivia(index, &mut current_trivia);
+                    current_token = Some(Token::number(file, index, current_trivia));
+                    current_trivia = Trivia::default();
+                    iter.next();
+                }
+                '\0' => {
+                    finish_token(index, current_token.take());
+                    finish_trivia(index, &mut current_trivia);
+
+                    finish_token(index, Some(Token::eof(file, index, current_trivia)));
                     iter.next();
                 }
                 whitespace if whitespace.is_ascii_whitespace() => {
                     finish_token(index, current_token.take());
                     iter.next();
-                    continue;
                 }
                 alphabet if alphabet.is_ascii_alphabetic() => {
                     state = State::Identifier;
                     finish_token(index, current_token.take());
-                    current_token = Some(Token::identifier(file, index))
+                    finish_trivia(index, &mut current_trivia);
+                    current_token = Some(Token::identifier(file, index, current_trivia));
+                    current_trivia = Trivia::default();
                 }
                 single_char_token if is_token(single_char_token) => {
                     finish_token(index, current_token.take());
-                    current_token = Some(Token::single_char_token(file, index, single_char_token));
+                    current_token = Some(Token::single_char_token(
+                        file,
+                        index,
+                        single_char_token,
+                        current_trivia,
+                    ));
+                    finish_trivia(index, &mut current_trivia);
+                    current_trivia = Trivia::default();
                     iter.next();
                 }
                 err => {
@@ -240,23 +318,43 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                 iter.next();
             }
             State::LineComment => {
-                if char == '\n' {
+                if char == '\n' || char == '\0' {
+                    if is_comment_on_same_line_as_token {
+                        current_trivia
+                            .trailing_comments
+                            .expect("Should have been set")
+                            .set_end(index);
+                        result
+                            .borrow_mut()
+                            .last_mut()
+                            .expect("Should have been available")
+                            .trivia = current_trivia;
+                    } else {
+                        current_trivia
+                            .leading_comments
+                            .expect("Should have been set")
+                            .set_end(index);
+                    }
                     state = State::Init;
                 }
                 iter.next();
             }
         }
     }
-    let end = loaded_files[file].content().len();
-    finish_token(end, current_token.take());
-    finish_token(end, Some(Token::eof(file, end)));
 
-    result
+    result.into_inner()
 }
 
 pub fn debug_tokens(tokens: &[Token], files: &Files) {
     for token in tokens {
-        println!("Token: {:?} >{}<", token.kind, token.text(files));
+        print!("Token: {:?} >{}<", token.kind, token.text(files));
+        if let Some(comment) = token.trivia.leading_comments {
+            print!(" // trivia-comment-before: {}", files[comment].trim());
+        }
+        if let Some(comment) = token.trivia.trailing_comments {
+            print!(" // trivia-comment-after: {}", files[comment].trim());
+        }
+        println!();
     }
 }
 

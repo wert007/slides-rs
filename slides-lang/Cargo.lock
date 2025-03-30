@@ -361,6 +361,7 @@ dependencies = [
  "clap",
  "const-str",
  "convert_case",
+ "enum_dispatch",
  "slides-rs-core",
  "string-interner",
  "strum",

@@ -1,4 +1,4 @@
-use super::lexer::{self, Token, TokenKind, debug_tokens};
+use super::lexer::{self, Token, TokenKind, Trivia, debug_tokens};
 use crate::{Context, FileId, Files, Location};
 
 #[derive(Debug)]
@@ -317,10 +317,9 @@ impl SyntaxNode {
     }
 }
 
-#[allow(dead_code)]
 pub struct Ast {
     pub statements: Vec<SyntaxNode>,
-    eof: Token,
+    pub eof: Token,
 }
 
 pub fn debug_ast(ast: &Ast, context: &Context) {
@@ -686,6 +685,7 @@ fn parse_dict_identifier(parser: &mut Parser, _: &mut Context) -> Token {
         identifier = Token {
             location: Location::combine(identifier.location, identifier_part.location),
             kind: TokenKind::Identifier,
+            trivia: identifier.trivia,
         };
     }
     identifier
