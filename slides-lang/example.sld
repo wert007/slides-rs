@@ -1,7 +1,9 @@
 // My file!
-
 styling blue_bg(Label):
-    background = rgb(20, 60, 180);
+
+    a.background = rgb(20, 60, 180);
+
+    aaaaaaaaa.background = rgb(20, 60, 180);
     text_color = c"white";
 
 styling default(Slide):
@@ -14,19 +16,16 @@ slide intro:
     // };
     // Creation of anonymous image
     let a = ObjectFit.Cover;
-    let i = image(p"./assets/mountain.jpg")
-     {
+    let i = image(p"./assets/mountain.jpg") {
         object_fit: ObjectFit.Cover,
         halign: HAlign.Stretch,
         valign: VAlign.Stretch,
-    }
-    ;
-
+    };
     let lbl = l"Hello World";
-    // lbl.align_center();
-    lbl.text_color = c"white";
-    lbl.background = c"#616161";
 
+    lbl.text_color = c"white";
+
+    lbl.background = c"#616161";
 
 slide hello:
     let a = l"""
@@ -37,9 +36,8 @@ slide hello:
         - to have a nice markdown support
         - which should be all that's needed for text. probably!
     """ {
-    text_color: c"green"
-    background: c"fuchsia"
-   }
-
+        text_color: c"green",
+        background: c"fuchsia",
+    };
 
 // Last line comment! Would be trivia of eof!

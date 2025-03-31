@@ -11,6 +11,8 @@ enum Command {
     },
     Format {
         file: PathBuf,
+        #[clap(long)]
+        dry: bool,
     },
 }
 
@@ -20,8 +22,8 @@ fn main() -> anyhow::Result<()> {
         Command::Run { file, output } => {
             slides_lang::compiler::compile_project(file, output)?;
         }
-        Command::Format { file } => {
-            slides_lang::formatter::format_file(file)?;
+        Command::Format { file, dry } => {
+            slides_lang::formatter::format_file(file, dry)?;
         }
     }
     Ok(())

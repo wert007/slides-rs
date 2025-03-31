@@ -149,6 +149,8 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
     };
     let text_len = loaded_files[file].content().len();
 
+    let mut is_empty_line = false;
+
     let mut iter = loaded_files[file]
         .content()
         .char_indices()
@@ -175,11 +177,17 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                             .unwrap_or(usize::MAX);
                         let line_number_last_token = loaded_files[file].line_number(last_token);
                         let line_number_comment = loaded_files[file].line_number(index);
+                        let mut result_mut = result.borrow_mut();
+                        is_comment_on_same_line_as_token =
+                            line_number_comment == line_number_last_token;
                         let location = if line_number_comment != line_number_last_token {
                             &mut current_trivia.leading_comments
                         } else {
-                            is_comment_on_same_line_as_token = true;
-                            &mut current_trivia.trailing_comments
+                            &mut result_mut
+                                .last_mut()
+                                .expect("have token on same line, there must be a token then!")
+                                .trivia
+                                .trailing_comments
                         };
                         location
                             .get_or_insert(Location {
@@ -198,6 +206,7 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                             },
                         );
                     }
+                    is_empty_line = false;
                 }
                 '"' => {
                     if let Some(previous_token) = current_token.as_mut() {
@@ -220,6 +229,7 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                         state = State::OneLineString;
                     }
                     iter.next();
+                    is_empty_line = false;
                 }
                 number if number.is_ascii_digit() => {
                     state = State::Number;
@@ -228,6 +238,7 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                     current_token = Some(Token::number(file, index, current_trivia));
                     current_trivia = Trivia::default();
                     iter.next();
+                    is_empty_line = false;
                 }
                 '\0' => {
                     finish_token(index, current_token.take());
@@ -237,6 +248,12 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                     iter.next();
                 }
                 whitespace if whitespace.is_ascii_whitespace() => {
+                    if whitespace == '\n' {
+                        if is_empty_line {
+                            current_trivia.leading_blank_line = true;
+                        }
+                        is_empty_line = true;
+                    }
                     finish_token(index, current_token.take());
                     iter.next();
                 }
@@ -246,6 +263,7 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                     finish_trivia(index, &mut current_trivia);
                     current_token = Some(Token::identifier(file, index, current_trivia));
                     current_trivia = Trivia::default();
+                    is_empty_line = false;
                 }
                 single_char_token if is_token(single_char_token) => {
                     finish_token(index, current_token.take());
@@ -258,6 +276,7 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                     finish_trivia(index, &mut current_trivia);
                     current_trivia = Trivia::default();
                     iter.next();
+                    is_empty_line = false;
                 }
                 err => {
                     finish_token(index, current_token.take());
@@ -271,6 +290,7 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                         },
                     );
                     iter.next();
+                    is_empty_line = false;
                 }
             },
             State::Identifier => {
@@ -320,15 +340,15 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
             State::LineComment => {
                 if char == '\n' || char == '\0' {
                     if is_comment_on_same_line_as_token {
-                        current_trivia
-                            .trailing_comments
-                            .expect("Should have been set")
-                            .set_end(index);
                         result
                             .borrow_mut()
                             .last_mut()
                             .expect("Should have been available")
-                            .trivia = current_trivia;
+                            .trivia
+                            .trailing_comments
+                            .as_mut()
+                            .expect("Should have been set")
+                            .set_end(index);
                     } else {
                         current_trivia
                             .leading_comments
