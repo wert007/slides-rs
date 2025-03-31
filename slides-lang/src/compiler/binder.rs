@@ -429,15 +429,12 @@ impl Value {
         }
     }
 
-    fn parse_string_literal(text: &str) -> Value {
-        let mut result = String::with_capacity(text.len());
-        let mut tmp = text.chars();
-        while let Some(ch) = tmp.next() {
-            match ch {
-                _ => result.push(ch),
-            }
+    pub fn parse_string_literal(text: &str, replace_escapisms: bool) -> Value {
+        if text.contains('\n') {
+            parse_multiline_string(text, replace_escapisms)
+        } else {
+            parse_single_line_string(text, replace_escapisms)
         }
-        Value::String(result)
     }
 
     // pub(crate) fn as_background(self) -> Option<Background> {
@@ -467,6 +464,70 @@ impl Value {
     //         _ => None,
     //     }
     // }
+}
+
+fn parse_multiline_string(text: &str, replace_escapisms: bool) -> Value {
+    let text = text
+        .strip_suffix("\"\"\"")
+        .expect("valid string literal")
+        .strip_prefix("\"\"\"")
+        .expect("valid string literal");
+    let mut result = String::with_capacity(text.len());
+    let mut is_start = true;
+    let mut indent = 0;
+    for line in text.lines() {
+        let line = if is_start && line.is_empty() {
+            continue;
+        } else if line.is_empty() {
+            result.push('\n');
+            continue;
+        } else if !is_start {
+            &line[indent.min(line.len())..]
+        } else {
+            line
+        };
+        let mut tmp = line.chars();
+        while let Some(ch) = tmp.next() {
+            match ch {
+                ' ' if is_start => {
+                    indent += 1;
+                }
+                _ => {
+                    is_start = false;
+                    result.push(ch);
+                }
+            }
+        }
+        result.push('\n');
+    }
+    // Remove trailing whitespace
+    let trunc = result
+        .as_bytes()
+        .iter()
+        .enumerate()
+        .rev()
+        .skip_while(|(_, b)| b.is_ascii_whitespace())
+        .map(|(i, _)| i + 1)
+        .next()
+        .unwrap_or(result.len());
+    result.truncate(trunc);
+    Value::String(result)
+}
+
+fn parse_single_line_string(text: &str, replace_escapisms: bool) -> Value {
+    let text = text
+        .strip_suffix('"')
+        .expect("valid string literal")
+        .strip_prefix('"')
+        .expect("valid string literal");
+    let mut result = String::with_capacity(text.len());
+    let mut tmp = text.chars();
+    while let Some(ch) = tmp.next() {
+        match ch {
+            _ => result.push(ch),
+        }
+    }
+    Value::String(result)
 }
 
 #[derive(Debug)]
@@ -900,8 +961,7 @@ fn bind_typed_string(
 ) -> BoundNode {
     let type_ = typed_string.type_.text(&context.loaded_files);
     let text = typed_string.string.text(&context.loaded_files);
-    let text = &text[1..text.len() - 1];
-    let literal = BoundNode::literal(typed_string.string, Value::parse_string_literal(text));
+    let literal = BoundNode::literal(typed_string.string, Value::parse_string_literal(text, true));
     let type_ = match type_ {
         "c" => Type::Color,
         "l" => Type::Label,
@@ -963,10 +1023,7 @@ fn bind_literal(
                 Value::Integer(text.parse().expect("lexer filtered"))
             }
         }
-        super::lexer::TokenKind::String => {
-            let text = &text[1..text.len() - 1];
-            Value::parse_string_literal(text)
-        }
+        super::lexer::TokenKind::String => Value::parse_string_literal(text, true),
         err => unreachable!("This is a unhandled literal {err:?}"),
     };
     BoundNode::literal(token, value)

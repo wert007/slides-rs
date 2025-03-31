@@ -1,9 +1,5 @@
 // My file!
 styling blue_bg(Label):
-
-    a.background = rgb(20, 60, 180);
-
-    aaaaaaaaa.background = rgb(20, 60, 180);
     text_color = c"white";
 
 styling default(Slide):
@@ -22,19 +18,17 @@ slide intro:
         valign: VAlign.Stretch,
     };
     let lbl = l"Hello World";
-
     lbl.text_color = c"white";
-
     lbl.background = c"#616161";
 
 slide hello:
     let a = l"""
         # This could be a title
 
-        - With a list
-        - of elements
-        - to have a nice markdown support
-        - which should be all that's needed for text. probably!
+         - With a list
+         - of elements
+         - to have a nice markdown support
+         - which should be all that's needed for text. probably!
     """ {
         text_color: c"green",
         background: c"fuchsia",
