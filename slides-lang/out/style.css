@@ -49,34 +49,3 @@ ol {
     width: 100%;
 }
 
-#intro { background: rgb(255, 127, 127, 1);
- }
-#intro-lbl {
-top: unset;
-left: unset;
-
-background: rgb(97, 97, 97, 1);
-
-color: rgb(255, 255, 255, 1);
-
-}
-#intro-i {
-top: unset;
-bottom: unset;
-height: 100%;
-left: unset;
-bottom: unset;
-width: 100%;
-
-object-fit: cover;
-
-}
-#hello-a {
-top: unset;
-left: unset;
-
-background: rgb(255, 0, 255, 1);
-
-color: rgb(0, 128, 0, 1);
-
-}

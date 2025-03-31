@@ -91,23 +91,47 @@ pub struct PostInitialization {
     pub dict: Box<SyntaxNode>,
 }
 
-#[derive(strum::EnumTryAs, Debug)]
+#[derive(Debug)]
+pub struct Parameter {
+    pub identifier: Token,
+    pub colon: Token,
+    pub type_: Token,
+}
+#[derive(Debug)]
+pub struct ParameterBlock {
+    pub lparen: Token,
+    pub parameters: Vec<(SyntaxNode, Option<Token>)>,
+    pub rparen: Token,
+}
+#[derive(Debug)]
+pub struct ElementStatement {
+    pub element_keyword: Token,
+    pub name: Token,
+    pub parameters: Box<SyntaxNode>,
+    pub colon: Token,
+    pub body: Vec<SyntaxNode>,
+}
+
+#[derive(strum::EnumTryAs, Debug, strum::AsRefStr)]
 pub enum SyntaxNodeKind {
+    Error(bool),
     StylingStatement(StylingStatement),
+    SlideStatement(SlideStatement),
+    ElementStatement(ElementStatement),
     ExpressionStatement(ExpressionStatement),
     VariableDeclaration(VariableDeclaration),
-    SlideStatement(SlideStatement),
+    AssignmentStatement(AssignmentStatement),
     VariableReference(Token),
     Literal(Token),
     MemberAccess(MemberAccess),
-    AssignmentStatement(AssignmentStatement),
     FunctionCall(FunctionCall),
     TypedString(TypedString),
-    Error(bool),
     DictEntry(DictEntry),
     Dict(Dict),
     InferredMember(InferredMember),
     PostInitialization(PostInitialization),
+    Parameter(Parameter),
+    ParameterBlock(ParameterBlock),
 }
 
 #[derive(Debug)]
@@ -315,6 +339,59 @@ impl SyntaxNode {
             }),
         }
     }
+
+    fn parameter(identifier: Token, colon: Token, type_: Token) -> SyntaxNode {
+        let location = Location::combine(identifier.location, type_.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::Parameter(Parameter {
+                identifier,
+                colon,
+                type_,
+            }),
+        }
+    }
+
+    fn parameter_block(
+        lparen: Token,
+        parameters: Vec<(SyntaxNode, Option<Token>)>,
+        rparen: Token,
+    ) -> SyntaxNode {
+        let location = Location::combine(lparen.location, rparen.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::ParameterBlock(ParameterBlock {
+                lparen,
+                parameters,
+                rparen,
+            }),
+        }
+    }
+
+    fn element_statement(
+        element_keyword: Token,
+        name: Token,
+        parameters: SyntaxNode,
+        colon: Token,
+        body: Vec<SyntaxNode>,
+    ) -> SyntaxNode {
+        let location = Location::combine(
+            element_keyword.location,
+            body.last()
+                .expect("no empty statements are allowed!")
+                .location,
+        );
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::ElementStatement(ElementStatement {
+                element_keyword,
+                name,
+                parameters: Box::new(parameters),
+                colon,
+                body,
+            }),
+        }
+    }
 }
 
 pub struct Ast {
@@ -338,6 +415,18 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
                 styling_statement.type_.text(files)
             );
             for statement in &styling_statement.body {
+                debug_syntax_node(statement, files, format!("{indent}    "));
+            }
+        }
+        SyntaxNodeKind::ElementStatement(element_statement) => {
+            println!("Custom Element {}", element_statement.name.text(files),);
+            debug_syntax_node(
+                &element_statement.parameters,
+                files,
+                format!("{indent}    "),
+            );
+            println!("{indent}Body:");
+            for statement in &element_statement.body {
                 debug_syntax_node(statement, files, format!("{indent}    "));
             }
         }
@@ -428,6 +517,19 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
             );
             debug_syntax_node(&post_initialization.dict, files, format!("{indent}    "));
         }
+        SyntaxNodeKind::Parameter(parameter) => {
+            println!(
+                "{}: {}",
+                parameter.identifier.text(files),
+                parameter.type_.text(files)
+            )
+        }
+        SyntaxNodeKind::ParameterBlock(parameter_block) => {
+            println!("Parameters");
+            for (parameter, _) in &parameter_block.parameters {
+                debug_syntax_node(parameter, files, format!("{indent}    "));
+            }
+        }
     }
 }
 
@@ -512,6 +614,7 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
     match parser.current_token().kind {
         TokenKind::SlideKeyword => parse_slide_statement(parser, context),
         TokenKind::StylingKeyword => parse_styling_statement(parser, context),
+        TokenKind::ElementKeyword => parse_element_statement(parser, context),
         _ => {
             context
                 .diagnostics
@@ -519,6 +622,47 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
             SyntaxNode::error(*parser.current_token(), false)
         }
     }
+}
+
+fn parse_element_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let element_keyword = parser.match_token(TokenKind::ElementKeyword);
+    let name = parser.match_token(TokenKind::Identifier);
+    let parameters = parse_parameter_node(parser, context);
+    let colon = parser.match_token(TokenKind::SingleChar(':'));
+    let mut body = Vec::new();
+    while !is_start_of_top_level_statement(parser.current_token().kind) {
+        let position = parser.position();
+
+        body.push(parse_statement(parser, context));
+        if let Some(consumed) = parser.ensure_consume(position) {
+            body.push(SyntaxNode::error(consumed, true));
+        }
+    }
+    SyntaxNode::element_statement(element_keyword, name, parameters, colon, body)
+}
+
+fn parse_parameter_node(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let lparen = parser.match_token(TokenKind::SingleChar('('));
+    let mut parameters = Vec::new();
+    while parser.current_token().kind != TokenKind::Eof
+        && parser.current_token().kind != TokenKind::SingleChar(')')
+    {
+        let position = parser.position();
+
+        let identifier = parser.match_token(TokenKind::Identifier);
+        let colon = parser.match_token(TokenKind::SingleChar(':'));
+        let type_ = parser.match_token(TokenKind::Identifier);
+        let optional_comma = parser.try_match_token(TokenKind::SingleChar(','));
+        parameters.push((
+            SyntaxNode::parameter(identifier, colon, type_),
+            optional_comma,
+        ));
+        if let Some(consumed) = parser.ensure_consume(position) {
+            parameters.push((SyntaxNode::error(consumed, true), None));
+        }
+    }
+    let rparen = parser.match_token(TokenKind::SingleChar(')'));
+    SyntaxNode::parameter_block(lparen, parameters, rparen)
 }
 
 fn parse_slide_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
@@ -710,6 +854,9 @@ fn parse_member_access(parser: &mut Parser, context: &mut Context) -> SyntaxNode
 fn is_start_of_top_level_statement(kind: TokenKind) -> bool {
     matches!(
         kind,
-        TokenKind::SlideKeyword | TokenKind::StylingKeyword | TokenKind::Eof
+        TokenKind::SlideKeyword
+            | TokenKind::StylingKeyword
+            | TokenKind::Eof
+            | TokenKind::ElementKeyword
     )
 }

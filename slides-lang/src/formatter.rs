@@ -317,6 +317,9 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::StylingStatement(styling_statement) => {
             format_styling_statement(styling_statement, formatter, context)
         }
+        SyntaxNodeKind::ElementStatement(element_statement) => {
+            format_element_statement(element_statement, formatter, context)
+        }
         SyntaxNodeKind::ExpressionStatement(expression_statement) => {
             format_expression_statement(expression_statement, formatter, context)
         }
@@ -353,7 +356,17 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::PostInitialization(post_initialization) => {
             format_post_initialization(post_initialization, formatter, context)
         }
+        SyntaxNodeKind::Parameter(parameter) => todo!(),
+        SyntaxNodeKind::ParameterBlock(parameter_block) => todo!(),
     }
+}
+
+fn format_element_statement<W: Write + fmt::Debug>(
+    element_statement: compiler::parser::ElementStatement,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> std::result::Result<(), std::io::Error> {
+    todo!()
 }
 
 fn format_expression_statement<W: Write + fmt::Debug>(

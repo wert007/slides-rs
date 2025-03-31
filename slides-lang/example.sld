@@ -5,17 +5,27 @@ styling blue_bg(Label):
 styling default(Slide):
     background = rgb(120, 160, 180);
 
+element image_with_caption(img: Image, caption: string):
+    let img = img {
+        valign: VAlign.Stretch,
+        halign: HAlign.Stretch,
+        object_fit: ObjectFit.Cover,
+    };
+    let caption = label(caption) {
+        text_color: c"white",
+        text_align: TextAlign.Right,
+        valign: VAlign.Bottom,
+        halign: HAlign.Right,
+    };
+
 slide intro:
     background = rgb(255, 127, 127);
-    // let dict = {
-    //     alignment: .center,
-    // };
-    // Creation of anonymous image
-    let a = ObjectFit.Cover;
-    let i = image(p"./assets/mountain.jpg") {
-        object_fit: ObjectFit.Cover,
-        halign: HAlign.Stretch,
+    let i = image_with_caption(
+        image(p"./assets/mountain.jpg"),
+        "Mountain, 2024, pixabay"
+    ) {
         valign: VAlign.Stretch,
+        halign: HAlign.Stretch,
     };
     let lbl = l"Hello World";
     lbl.text_color = c"white";

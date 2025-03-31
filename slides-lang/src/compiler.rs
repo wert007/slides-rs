@@ -1,4 +1,4 @@
-mod binder;
+pub mod binder;
 pub mod diagnostics;
 mod evaluator;
 pub mod lexer;

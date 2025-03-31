@@ -1,5 +1,5 @@
 use super::{
-    binder::{Type, Variable},
+    binder::{Variable, typing::Type},
     lexer::Token,
 };
 

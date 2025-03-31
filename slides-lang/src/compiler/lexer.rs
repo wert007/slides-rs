@@ -8,6 +8,7 @@ pub enum TokenKind {
     Identifier,
     SlideKeyword,
     StylingKeyword,
+    ElementKeyword,
     LetKeyword,
     Number,
     SingleChar(char),
@@ -117,6 +118,7 @@ impl Token {
                 "let" => TokenKind::LetKeyword,
                 "slide" => TokenKind::SlideKeyword,
                 "styling" => TokenKind::StylingKeyword,
+                "element" => TokenKind::ElementKeyword,
                 _ => TokenKind::Identifier,
             };
         }

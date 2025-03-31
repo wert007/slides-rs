@@ -4,7 +4,7 @@ use slides_rs_core::{Background, Color, Label, Slide, WebRenderable};
 use string_interner::symbol::SymbolUsize;
 
 use crate::Context;
-use crate::compiler::binder::{self, BoundNode, BoundNodeKind, Type, Value};
+use crate::compiler::binder::{self, BoundNode, BoundNodeKind, Value, typing::Type};
 
 use super::Evaluator;
 
@@ -203,7 +203,12 @@ fn evaluate_member_access(
     _evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
-    if let Some((enum_type, _)) = member_access.base.type_.try_as_enum_ref() {
+    if let Some((enum_type, _)) = context
+        .type_interner
+        .resolve(member_access.base.type_)
+        .unwrap_or(&Type::Error)
+        .try_as_enum_ref()
+    {
         let variant = context.string_interner.resolve(member_access.member);
         match &**enum_type {
             &Type::ObjectFit => Value::ObjectFit(variant.parse().expect("Valid variant")),
@@ -275,7 +280,11 @@ fn evaluate_conversion(
     context: &mut Context,
 ) -> Value {
     let base = evaluate_expression(*conversion.base, slide, evaluator, context);
-    match conversion.target {
+    match context
+        .type_interner
+        .resolve(conversion.target)
+        .unwrap_or(&Type::Error)
+    {
         Type::Background => match base {
             Value::Color(color) => Value::Background(Background::Color(color)),
             _ => unreachable!("Impossible conversion!"),
