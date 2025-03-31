@@ -6,12 +6,12 @@ styling default(Slide):
     background = rgb(120, 160, 180);
 
 element image_with_caption(img: Image, caption: string):
-    let img = img {
+    img = img {
         valign: VAlign.Stretch,
         halign: HAlign.Stretch,
         object_fit: ObjectFit.Cover,
     };
-    let caption = label(caption) {
+    let captionLabel = label(caption) {
         text_color: c"white",
         text_align: TextAlign.Right,
         valign: VAlign.Bottom,

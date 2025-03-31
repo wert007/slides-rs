@@ -1,4 +1,4 @@
-use slides_rs_core::{HorizontalAlignment, ObjectFit, SlidesEnum, VerticalAlignment};
+use slides_rs_core::{HorizontalAlignment, ObjectFit, SlidesEnum, TextAlign, VerticalAlignment};
 
 include!(concat!(env!("OUT_DIR"), "/global_functions.rs"));
 
@@ -18,8 +18,9 @@ impl EnumDeclaration {
     }
 }
 
-pub const ENUMS: [EnumDeclaration; 3] = [
+pub const ENUMS: [EnumDeclaration; 4] = [
     EnumDeclaration::rename::<ObjectFit>("ObjectFit", Type::ObjectFit),
     EnumDeclaration::rename::<HorizontalAlignment>("HAlign", Type::HAlign),
     EnumDeclaration::rename::<VerticalAlignment>("VAlign", Type::VAlign),
+    EnumDeclaration::rename::<TextAlign>("TextAlign", Type::TextAlign),
 ];

@@ -26,9 +26,7 @@ pub struct TypeInterner {
 
 impl TypeInterner {
     pub fn new() -> Self {
-        let types = Type::iter()
-            .filter(|t| !matches!(t, Type::Enum(..) | Type::Function(_)))
-            .collect();
+        let types = Type::simple_types();
         let mut result = Self { types };
         debug_assert_eq!(result.get_or_intern(Type::Error), TypeId::ERROR);
         debug_assert_eq!(result.get_or_intern(Type::Void), TypeId::VOID);
@@ -56,7 +54,9 @@ impl TypeInterner {
     }
 }
 
-#[derive(Debug, strum::EnumTryAs, Clone, PartialEq, Eq, strum::EnumIter, Default)]
+#[derive(
+    Debug, strum::EnumTryAs, Clone, PartialEq, Eq, strum::EnumIter, Default, strum::AsRefStr,
+)]
 pub enum Type {
     #[default]
     Error,
@@ -71,6 +71,7 @@ pub enum Type {
     ObjectFit,
     HAlign,
     VAlign,
+    TextAlign,
     Function(FunctionType),
     Slide,
     Element,
@@ -134,5 +135,16 @@ impl Type {
         } else {
             None
         }
+    }
+
+    pub fn simple_types() -> Vec<Type> {
+        Type::iter()
+            .filter(|t| {
+                !matches!(
+                    t,
+                    Type::Enum(..) | Type::Function(_) | Type::CustomElement(_)
+                )
+            })
+            .collect()
     }
 }

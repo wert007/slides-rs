@@ -253,12 +253,22 @@ fn debug_scope(name: &str, scope: &Scope, interner: &StringInterner) {
 
 struct Binder {
     scopes: Vec<Scope>,
+    types: HashMap<SymbolUsize, TypeId>,
 }
 
 impl Binder {
     pub fn new(interner: &mut StringInterner, type_interner: &mut TypeInterner) -> Self {
         Self {
             scopes: vec![Scope::global(interner, type_interner)],
+            types: Type::simple_types()
+                .into_iter()
+                .map(|t| {
+                    (
+                        interner.create_or_get(t.as_ref()),
+                        type_interner.get_or_intern(t),
+                    )
+                })
+                .collect(),
         }
     }
 
@@ -317,6 +327,10 @@ impl Binder {
             .rev()
             .filter_map(|s| s.look_up(id))
             .next()
+    }
+
+    fn look_up_type_by_name(&self, type_name: SymbolUsize) -> Option<TypeId> {
+        self.types.get(&type_name).copied()
     }
 }
 
@@ -798,9 +812,22 @@ fn bind_element_statement(
     //     )
     //     .unwrap_or(Type::Error);
     // TODO
-    let argument_types = Vec::new();
+    binder.create_scope();
+    let argument_types = bind_parameter_block(
+        element_statement
+            .parameters
+            .kind
+            .try_as_parameter_block()
+            .expect("Parameters should be parameters"),
+        element_statement.parameters.location,
+        binder,
+        context,
+    );
     let function_type = Type::Function(FunctionType {
-        argument_types,
+        argument_types: argument_types
+            .into_iter()
+            .map(|v| binder.look_up_variable(v).unwrap().type_)
+            .collect(),
         return_type: element_type,
     });
     let function_type = context.type_interner.get_or_intern(function_type);
@@ -808,6 +835,7 @@ fn bind_element_statement(
     for statement in element_statement.body {
         body.push(bind_node(statement, binder, context));
     }
+    binder.drop_scope();
     let Some(name) = binder.expect_register_variable_token(
         element_statement.name,
         function_type,
@@ -817,6 +845,41 @@ fn bind_element_statement(
         return BoundNode::error(element_statement.name.location);
     };
     BoundNode::element_statement(location, element_type, function_type, name, body)
+}
+
+fn bind_parameter_block(
+    parameter_block: parser::ParameterBlock,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> Vec<VariableId> {
+    let mut result = Vec::with_capacity(parameter_block.parameters.len());
+    for (parameter, _) in parameter_block.parameters {
+        let location = parameter.location;
+        let parameter = parameter
+            .kind
+            .try_as_parameter()
+            .expect("Parameter blocks are made of parameter");
+        let type_name = parameter.type_.text(&context.loaded_files);
+        let type_name = context.string_interner.create_or_get(type_name);
+        let type_ = match binder.look_up_type_by_name(type_name) {
+            Some(type_) => type_,
+            None => {
+                // TODO: Diagnostics
+                TypeId::ERROR
+            }
+        };
+        let variable = context
+            .string_interner
+            .create_or_get_variable(parameter.identifier.text(&context.loaded_files));
+        let variable = match binder.expect_register_variable_id(variable, type_, location, context)
+        {
+            Some(it) => it,
+            None => variable,
+        };
+        result.push(variable);
+    }
+    result
 }
 
 fn bind_post_initialization(

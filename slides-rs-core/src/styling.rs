@@ -207,9 +207,41 @@ impl Font {
     }
 }
 
+#[derive(
+    Debug,
+    Default,
+    PartialEq,
+    Eq,
+    strum::Display,
+    Clone,
+    Copy,
+    strum::EnumString,
+    strum::IntoStaticStr,
+    strum::VariantNames,
+)]
+// #[strum(serialize_all = "kebab-case")]
+pub enum TextAlign {
+    #[default]
+    #[strum(to_string = "unset")]
+    Unspecified,
+    Left,
+    Right,
+    Center,
+    Justify,
+}
+
+impl SlidesEnum for TextAlign {}
+
+impl TextAlign {
+    pub fn as_css(&self) -> String {
+        self.to_string().to_case(Case::Kebab)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LabelStyling {
     text_color: Option<Color>,
+    text_align: TextAlign,
     font: Font,
 }
 
@@ -217,6 +249,7 @@ impl LabelStyling {
     pub fn new() -> ElementStyling<LabelStyling> {
         ElementStyling::new(Self {
             text_color: None,
+            text_align: TextAlign::Unspecified,
             font: Font::Unspecified,
         })
     }
