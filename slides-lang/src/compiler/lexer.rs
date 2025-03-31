@@ -12,6 +12,7 @@ pub enum TokenKind {
     Number,
     SingleChar(char),
     String,
+    Error,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Trivia {
@@ -94,6 +95,18 @@ impl Token {
             },
             kind: TokenKind::SingleChar(char),
             trivia,
+        }
+    }
+
+    fn error(file: FileId, start: usize) -> Token {
+        Token {
+            location: Location {
+                file,
+                start,
+                length: 1,
+            },
+            kind: TokenKind::Error,
+            trivia: Trivia::default(),
         }
     }
 
@@ -280,6 +293,7 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                 }
                 err => {
                     finish_token(index, current_token.take());
+                    current_token = Some(Token::error(file, index));
                     // debug_tokens(&result, &loaded_files);
                     diagnostics.report_unexpected_char(
                         err,

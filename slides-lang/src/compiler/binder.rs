@@ -561,9 +561,9 @@ pub struct BoundNode {
     pub type_: Type,
 }
 impl BoundNode {
-    fn syntax_error(location: Location) -> BoundNode {
+    fn syntax_error(location: Location, consumed: bool) -> BoundNode {
         BoundNode {
-            base: Some(SyntaxNodeKind::Error),
+            base: Some(SyntaxNodeKind::Error(consumed)),
             location,
             kind: BoundNodeKind::Error(()),
             type_: Type::Error,
@@ -773,7 +773,7 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         SyntaxNodeKind::TypedString(typed_string) => {
             bind_typed_string(typed_string, statement.location, binder, context)
         }
-        SyntaxNodeKind::Error => BoundNode::syntax_error(statement.location),
+        SyntaxNodeKind::Error(consumed) => BoundNode::syntax_error(statement.location, consumed),
         SyntaxNodeKind::Dict(dict) => bind_dict(dict, statement.location, binder, context),
         SyntaxNodeKind::PostInitialization(post_initialization) => {
             bind_post_initialization(post_initialization, statement.location, binder, context)

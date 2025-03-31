@@ -103,7 +103,7 @@ pub enum SyntaxNodeKind {
     AssignmentStatement(AssignmentStatement),
     FunctionCall(FunctionCall),
     TypedString(TypedString),
-    Error,
+    Error(bool),
     DictEntry(DictEntry),
     Dict(Dict),
     InferredMember(InferredMember),
@@ -266,10 +266,10 @@ impl SyntaxNode {
         }
     }
 
-    fn error(token: Token) -> SyntaxNode {
+    fn error(token: Token, consumed: bool) -> SyntaxNode {
         SyntaxNode {
             location: token.location,
-            kind: SyntaxNodeKind::Error,
+            kind: SyntaxNodeKind::Error(consumed),
         }
     }
 
@@ -401,7 +401,7 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
                 typed_string.string.text(files)
             );
         }
-        SyntaxNodeKind::Error => println!("Error Node"),
+        SyntaxNodeKind::Error(_) => println!("Error Node"),
         SyntaxNodeKind::DictEntry(dict_entry) => {
             println!("DictEntry");
             debug_syntax_node(
@@ -466,9 +466,11 @@ impl Parser {
         self.index
     }
 
-    fn ensure_consume(&mut self, position: usize) {
+    fn ensure_consume(&mut self, position: usize) -> Option<Token> {
         if self.index == position {
-            self.next_token();
+            Some(self.next_token())
+        } else {
+            None
         }
     }
 
@@ -498,7 +500,9 @@ fn parse_presentation(parser: &mut Parser, context: &mut Context) -> Ast {
     while parser.current_token().kind != TokenKind::Eof {
         let start = parser.position();
         statements.push(parse_top_level_statement(parser, context));
-        parser.ensure_consume(start);
+        if let Some(consumed) = parser.ensure_consume(start) {
+            statements.push(SyntaxNode::error(consumed, true));
+        }
     }
     let eof = parser.match_token(TokenKind::Eof);
     Ast { statements, eof }
@@ -512,7 +516,7 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
             context
                 .diagnostics
                 .report_invalid_top_level_statement(*parser.current_token(), &context.loaded_files);
-            SyntaxNode::error(*parser.current_token())
+            SyntaxNode::error(*parser.current_token(), false)
         }
     }
 }
@@ -526,7 +530,9 @@ fn parse_slide_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNo
         let position = parser.position();
 
         body.push(parse_statement(parser, context));
-        parser.ensure_consume(position);
+        if let Some(consumed) = parser.ensure_consume(position) {
+            body.push(SyntaxNode::error(consumed, true));
+        }
     }
 
     SyntaxNode::slide_statement(slide_keyword, name, colon, body)
@@ -543,7 +549,9 @@ fn parse_styling_statement(parser: &mut Parser, context: &mut Context) -> Syntax
     while !is_start_of_top_level_statement(parser.current_token().kind) {
         let position = parser.position();
         body.push(parse_statement(parser, context));
-        parser.ensure_consume(position);
+        if let Some(consumed) = parser.ensure_consume(position) {
+            body.push(SyntaxNode::error(consumed, true));
+        }
     }
 
     SyntaxNode::styling_statement(styling_keyword, name, lparen, type_, rparen, colon, body)
@@ -606,7 +614,9 @@ fn parse_function_call(parser: &mut Parser, context: &mut Context) -> SyntaxNode
 
                     arguments.push((argument, optional_comma));
 
-                    parser.ensure_consume(start);
+                    if let Some(consumed) = parser.ensure_consume(start) {
+                        arguments.push((SyntaxNode::error(consumed, true), None));
+                    }
                 }
                 let rparen = parser.match_token(TokenKind::SingleChar(')'));
                 base = SyntaxNode::function_call(base, lparen, arguments, rparen);
@@ -641,7 +651,7 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
             context
                 .diagnostics
                 .report_expected_expression(*parser.current_token(), &context.loaded_files);
-            SyntaxNode::error(*parser.current_token())
+            SyntaxNode::error(*parser.current_token(), false)
         }
     }
 }
@@ -668,7 +678,9 @@ fn parse_dict(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
             SyntaxNode::dict_entry(dict_identifier, colon, value),
             optional_comma,
         ));
-        parser.ensure_consume(position);
+        if let Some(consumed) = parser.ensure_consume(position) {
+            entries.push((SyntaxNode::error(consumed, true), None));
+        }
     }
     let rbrace = parser.match_token(TokenKind::SingleChar('}'));
     SyntaxNode::dict(lbrace, entries, rbrace)

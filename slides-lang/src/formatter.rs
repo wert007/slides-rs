@@ -9,7 +9,7 @@ use crate::{
     compiler::{
         self,
         lexer::{Token, TokenKind},
-        parser::SyntaxNodeKind,
+        parser::{SyntaxNodeKind, debug_ast},
     },
 };
 
@@ -280,10 +280,12 @@ pub fn format_file(path: std::path::PathBuf, dry: bool) -> std::io::Result<()> {
     if dry {
         let mut formatter = Formatter::new(stdout(), 100);
         let ast = compiler::parser::parse_file(file, &mut context);
+        debug_ast(&ast, &context);
         format_ast(ast, &mut formatter, &mut context)?;
     } else {
         let mut formatter = Formatter::new(File::create(path)?, 100);
         let ast = compiler::parser::parse_file(file, &mut context);
+        debug_ast(&ast, &context);
         format_ast(ast, &mut formatter, &mut context)?;
     }
     Ok(())
@@ -343,7 +345,8 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::TypedString(typed_string) => {
             format_typed_string(typed_string, formatter, context)
         }
-        SyntaxNodeKind::Error => formatter.raw(node.location, &context.loaded_files),
+        SyntaxNodeKind::Error(true) => formatter.raw(node.location, &context.loaded_files),
+        SyntaxNodeKind::Error(false) => Ok(()),
         SyntaxNodeKind::DictEntry(dict_entry) => format_dict_entry(dict_entry, formatter, context),
         SyntaxNodeKind::Dict(dict) => format_dict(dict, formatter, context),
         SyntaxNodeKind::InferredMember(inferred_member) => todo!(),
