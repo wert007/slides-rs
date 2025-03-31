@@ -8,5 +8,6 @@ convert_case = "0.8.0"
 csscolorparser = "0.7.0"
 enum_dispatch = "0.3.13"
 markdown = "0.3.0"
+struct-field-names-as-array = { version = "0.3.0", path = "../struct_field_names_as_array/struct-field-names-as-array" }
 strum = { version = "0.27.1", features = ["derive"] }
 thiserror = "2.0.12"

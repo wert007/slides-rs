@@ -206,8 +206,25 @@ dependencies = [
  "csscolorparser",
  "enum_dispatch",
  "markdown",
+ "struct-field-names-as-array",
  "strum",
  "thiserror",
+]
+
+[[package]]
+name = "struct-field-names-as-array"
+version = "0.3.0"
+dependencies = [
+ "struct-field-names-as-array-derive",
+]
+
+[[package]]
+name = "struct-field-names-as-array-derive"
+version = "0.3.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

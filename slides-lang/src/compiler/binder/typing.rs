@@ -1,5 +1,7 @@
 use strum::IntoEnumIterator;
 
+use super::{ConversionKind, globals};
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FunctionType {
     pub(super) argument_types: Vec<TypeId>,
@@ -83,34 +85,52 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn field_type(&self, member: &str) -> Option<Type> {
-        match self {
-            Type::Error => Some(Type::Error),
-            Type::Label => match member {
-                "text_color" => Some(Type::Color),
-                "background" => Some(Type::Background),
-                "align_center" => Some(Type::Function(FunctionType {
-                    argument_types: Vec::new(),
-                    return_type: TypeId::VOID,
-                })),
-                _ => None,
+    pub fn get_available_conversions(&self, kind: ConversionKind) -> &'static [Type] {
+        match kind {
+            ConversionKind::Implicit => match self {
+                Type::Integer => &[Type::Float],
+                Type::Color => &[Type::Background],
+                Type::Label | Type::Image | Type::CustomElement(_) => &[Type::Element],
+                _ => &[],
             },
-            Type::Image => match member {
-                "background" => Some(Type::Background),
-                "object_fit" => Some(Type::ObjectFit),
-                "halign" => Some(Type::HAlign),
-                "valign" => Some(Type::VAlign),
-                _ => None,
+            ConversionKind::TypedString => match self {
+                Type::String => &[Type::Color, Type::Label, Type::Path],
+                _ => &[],
             },
-            Type::Enum(result, variants) => {
-                if variants.iter().any(|v| v == member) {
-                    Some(*result.clone())
-                } else {
-                    None
-                }
-            }
-            _ => None,
         }
+    }
+
+    pub fn field_type(&self, member: &str) -> Option<Type> {
+        if self == &Type::Error {
+            return Some(Type::Error);
+        }
+        if let Type::Enum(result, variants) = self {
+            return if variants.iter().any(|v| v == member) {
+                Some(*result.clone())
+            } else {
+                None
+            };
+        }
+        for m in globals::MEMBERS {
+            if self.as_ref() != m.name {
+                continue;
+            }
+            let Some(index) = m.members_names.iter().position(|n| n == &member) else {
+                continue;
+            };
+            let mut rs_type_name = m.members_rust_types[index].trim();
+            if let Some(rs_type_name_without_option) = rs_type_name
+                .strip_prefix("Option <")
+                .and_then(|t| t.strip_suffix('>'))
+            {
+                rs_type_name = rs_type_name_without_option.trim();
+            }
+            return Some(
+                Self::from_rust_string(rs_type_name)
+                    .unwrap_or_else(|| panic!("Could not find type! {m:?}.{member}")),
+            );
+        }
+        None
     }
 
     pub const fn from_rust_string(rust_string: &str) -> Option<Self> {
@@ -130,8 +150,16 @@ impl Type {
             Some(Self::Label)
         } else if const_str::compare!(==, rust_string, "Image") {
             Some(Self::Image)
+        } else if const_str::compare!(==, rust_string, "ObjectFit") {
+            Some(Self::ObjectFit)
         } else if const_str::compare!(==, rust_string, "PathBuf") {
             Some(Self::Path)
+        } else if const_str::compare!(==, rust_string, "TextAlign") {
+            Some(Self::TextAlign)
+        } else if const_str::compare!(==, rust_string, "HorizontalAlignment") {
+            Some(Self::HAlign)
+        } else if const_str::compare!(==, rust_string, "VerticalAlignment") {
+            Some(Self::VAlign)
         } else {
             None
         }

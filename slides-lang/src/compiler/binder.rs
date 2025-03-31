@@ -63,11 +63,14 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         }
         BoundNodeKind::ElementStatement(element_statement) => {
             println!(
-                "Style {} for {:?}",
+                "CustomElement {} for {:?}",
                 context
                     .string_interner
                     .resolve_variable(element_statement.name),
-                context.type_interner.resolve(element_statement.type_)
+                context
+                    .type_interner
+                    .resolve(element_statement.type_)
+                    .unwrap()
             );
             for statement in &element_statement.body {
                 debug_bound_node(statement, context, format!("{indent}    "));
@@ -85,7 +88,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         BoundNodeKind::FunctionCall(function_call) => {
             println!(
                 "FunctionCall: {:?}",
-                context.type_interner.resolve(statement.type_)
+                context.type_interner.resolve(statement.type_).unwrap()
             );
             debug_bound_node(&function_call.base, context, format!("{indent}    "));
             for arg in &function_call.arguments {
@@ -96,7 +99,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
             println!(
                 "Variable {}: {:?}",
                 context.string_interner.resolve_variable(variable.id),
-                context.type_interner.resolve(variable.type_)
+                context.type_interner.resolve(variable.type_).unwrap()
             );
         }
         BoundNodeKind::Literal(value) => {
@@ -142,7 +145,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         BoundNodeKind::Conversion(conversion) => {
             println!(
                 "Conversion to {:?} (Kind {:?})",
-                context.type_interner.resolve(statement.type_),
+                context.type_interner.resolve(statement.type_).unwrap(),
                 conversion.kind
             );
             debug_bound_node(&conversion.base, context, format!("{indent}    "));
@@ -446,65 +449,65 @@ fn parse_single_line_string(text: &str, replace_escapisms: bool) -> Value {
     Value::String(result)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ConversionKind {
     Implicit,
     TypedString,
 }
 
-#[derive(Debug, strum::EnumString)]
+#[derive(Debug, strum::EnumString, Clone, Copy)]
 pub enum StylingType {
     Label,
     Image,
     Slide,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StylingStatement {
     pub name: VariableId,
     pub type_: StylingType,
     pub body: Vec<BoundNode>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AssignmentStatement {
     pub lhs: Box<BoundNode>,
     pub value: Box<BoundNode>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ElementStatement {
     pub name: VariableId,
     pub type_: TypeId,
     pub body: Vec<BoundNode>,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 
 pub struct FunctionCall {
     pub base: Box<BoundNode>,
     pub arguments: Vec<BoundNode>,
     pub function_type: FunctionType,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 
 pub struct SlideStatement {
     pub name: VariableId,
     pub body: Vec<BoundNode>,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 
 pub struct VariableDeclaration {
     pub variable: VariableId,
     pub value: Box<BoundNode>,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 
 pub struct MemberAccess {
     pub base: Box<BoundNode>,
     pub member: SymbolUsize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 
 pub struct Conversion {
     pub base: Box<BoundNode>,
@@ -512,7 +515,7 @@ pub struct Conversion {
     pub target: TypeId,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PostInitialization {
     pub base: Box<BoundNode>,
     pub dict: Box<BoundNode>,
@@ -520,7 +523,7 @@ pub struct PostInitialization {
 
 summum! {
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BoundNodeKind {
     Error(()),
     StylingStatement(StylingStatement),
@@ -537,7 +540,7 @@ pub enum BoundNodeKind {
     PostInitialization(PostInitialization),
 }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct BoundNode {
     base: Option<SyntaxNodeKind>,
@@ -860,12 +863,13 @@ fn bind_parameter_block(
             .kind
             .try_as_parameter()
             .expect("Parameter blocks are made of parameter");
-        let type_name = parameter.type_.text(&context.loaded_files);
-        let type_name = context.string_interner.create_or_get(type_name);
+        let type_name_str = parameter.type_.text(&context.loaded_files);
+        let type_name = context.string_interner.create_or_get(type_name_str);
         let type_ = match binder.look_up_type_by_name(type_name) {
             Some(type_) => type_,
             None => {
                 // TODO: Diagnostics
+                panic!("Found no type named {type_name_str}");
                 TypeId::ERROR
             }
         };
@@ -891,21 +895,27 @@ fn bind_post_initialization(
     let base = bind_node(*post_initialization.expression, binder, context);
     let mut dict = bind_node(*post_initialization.dict, binder, context);
     for (entry, entry_type) in dict.kind.as_mut_dict() {
-        if let Some(target) = context
+        let member = context.string_interner.create_or_get(&entry);
+        let base_type = context
             .type_interner
             .resolve(base.type_)
             .unwrap_or(&Type::Error)
-            .field_type(entry.as_str())
-        {
+            .clone();
+        let mut base = base.clone();
+        if let Some(target) = access_member(
+            entry_type.location,
+            binder,
+            context,
+            // TODO: This is iffy, but it is also very much not clear what
+            // should happen here!
+            &mut base,
+            member,
+            base_type,
+        ) {
             let mut fallback = BoundNode::error(entry_type.location);
             std::mem::swap(entry_type, &mut fallback);
-            *entry_type = bind_conversion(
-                fallback,
-                context.type_interner.get_or_intern(target),
-                ConversionKind::Implicit,
-                binder,
-                context,
-            )
+            *entry_type =
+                bind_conversion(fallback, target, ConversionKind::Implicit, binder, context)
         } else {
             context.diagnostics.report_unknown_member(
                 dict.location,
@@ -927,28 +937,68 @@ fn bind_member_access(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
-    let base = bind_node(*member_access.base, binder, context);
+    let mut base = bind_node(*member_access.base, binder, context);
     let member = member_access.member.text(&context.loaded_files);
-    if let Some(type_) = context
+    let member = context.string_interner.create_or_get(member);
+    let base_type = context
         .type_interner
         .resolve(base.type_)
         .unwrap_or(&Type::Error)
-        .field_type(member)
-    {
-        let member = context.string_interner.create_or_get(member);
-        let type_ = context.type_interner.get_or_intern(type_);
-        BoundNode::member_access(location, base, member, type_)
-    } else {
-        context.diagnostics.report_unknown_member(
-            member_access.member.location,
-            &context
-                .type_interner
-                .resolve(base.type_)
-                .unwrap_or(&Type::Error),
-            member,
-        );
-        BoundNode::error(location)
+        .clone();
+    let Some(member_type) = access_member(
+        member_access.member.location,
+        binder,
+        context,
+        &mut base,
+        member,
+        base_type,
+    ) else {
+        return BoundNode::error(location);
+    };
+    BoundNode::member_access(location, base, member, member_type)
+}
+
+fn access_member(
+    error_location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+    base: &mut BoundNode,
+    member: SymbolUsize,
+    base_type: Type,
+) -> Option<TypeId> {
+    let mut types_to_check = vec![base_type];
+    let mut visited = Vec::new();
+    while let Some(base_type) = types_to_check.pop() {
+        if visited.contains(&base_type) {
+            continue;
+        } else {
+            visited.push(base_type.clone());
+        }
+        if let Some(type_) = base_type.field_type(context.string_interner.resolve(member)) {
+            let type_ = context.type_interner.get_or_intern(type_);
+            let mut fallback = BoundNode::error(base.location);
+            std::mem::swap(base, &mut fallback);
+            *base = bind_conversion(
+                fallback,
+                context.type_interner.get_or_intern(base_type),
+                ConversionKind::Implicit,
+                binder,
+                context,
+            );
+            return Some(type_);
+        }
+        types_to_check
+            .extend_from_slice(base_type.get_available_conversions(ConversionKind::Implicit));
     }
+    context.diagnostics.report_unknown_member(
+        error_location,
+        &context
+            .type_interner
+            .resolve(base.type_)
+            .unwrap_or(&Type::Error),
+        context.string_interner.resolve(member),
+    );
+    None
 }
 
 fn bind_dict(
@@ -1059,6 +1109,10 @@ fn bind_conversion(
         ConversionKind::Implicit => match context.type_interner.resolve_types([base.type_, target])
         {
             [Type::Color, Type::Background] => {}
+            [
+                Type::Label | Type::Image | Type::CustomElement(_),
+                Type::Element,
+            ] => {}
             [Type::Error, _] => {
                 return BoundNode::error(base.location);
             }

@@ -1,4 +1,5 @@
 use convert_case::{Case, Casing};
+use struct_field_names_as_array::FieldNamesAsSlice;
 
 use crate::Result;
 use std::{any::type_name, fmt::Display, ops::Deref};
@@ -67,7 +68,7 @@ impl ToCss for DynamicElementStyling {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, struct_field_names_as_array::FieldNamesAsSlice)]
 pub struct BaseElementStyling {
     background: Background,
 }
@@ -238,7 +239,7 @@ impl TextAlign {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, FieldNamesAsSlice)]
 pub struct LabelStyling {
     text_color: Option<Color>,
     text_align: TextAlign,
@@ -269,6 +270,10 @@ impl ElementStyling<LabelStyling> {
     pub fn set_text_color(&mut self, text_color: Color) {
         self.specific.text_color = Some(text_color);
     }
+
+    pub fn set_text_align(&mut self, text_align: TextAlign) {
+        self.specific.text_align = text_align;
+    }
 }
 
 impl ToCss for LabelStyling {
@@ -280,6 +285,9 @@ impl ToCss for LabelStyling {
         }
         if self.font != Font::Unspecified {
             writeln!(result, "font-family: {};", self.font).expect("infallible");
+        }
+        if self.text_align != TextAlign::Unspecified {
+            writeln!(result, "font-family: {};", self.text_align.as_css()).expect("infallible");
         }
         if result.is_empty() {
             None
@@ -347,7 +355,7 @@ pub trait SlidesEnum: ::strum::VariantNames {
 
 impl SlidesEnum for ObjectFit {}
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, FieldNamesAsSlice)]
 pub struct ImageStyling {
     object_fit: ObjectFit,
 }

@@ -5,11 +5,11 @@ styling blue_bg(Label):
 styling default(Slide):
     background = rgb(120, 160, 180);
 
-element image_with_caption(img: Image, caption: string):
+element image_with_caption(img: Image, caption: String):
     img = img {
+        object_fit: ObjectFit.Cover,
         valign: VAlign.Stretch,
         halign: HAlign.Stretch,
-        object_fit: ObjectFit.Cover,
     };
     let captionLabel = label(caption) {
         text_color: c"white",

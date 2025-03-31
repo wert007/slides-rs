@@ -1,7 +1,7 @@
 use super::lexer::{self, Token, TokenKind, Trivia, debug_tokens};
 use crate::{Context, FileId, Files, Location};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StylingStatement {
     pub styling_keyword: Token,
     pub name: Token,
@@ -12,13 +12,13 @@ pub struct StylingStatement {
     pub body: Vec<SyntaxNode>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExpressionStatement {
     pub expression: Box<SyntaxNode>,
     pub semicolon: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VariableDeclaration {
     pub let_keyword: Token,
     pub name: Token,
@@ -27,7 +27,7 @@ pub struct VariableDeclaration {
     pub semicolon: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SlideStatement {
     pub slide_keyword: Token,
     pub name: Token,
@@ -35,14 +35,14 @@ pub struct SlideStatement {
     pub body: Vec<SyntaxNode>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MemberAccess {
     pub base: Box<SyntaxNode>,
     pub period: Token,
     pub member: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AssignmentStatement {
     pub lhs: Box<SyntaxNode>,
     pub equals: Token,
@@ -50,7 +50,7 @@ pub struct AssignmentStatement {
     pub semicolon: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 
 pub struct FunctionCall {
     pub base: Box<SyntaxNode>,
@@ -59,51 +59,51 @@ pub struct FunctionCall {
     pub rparen: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TypedString {
     pub type_: Token,
     pub string: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DictEntry {
     pub identifier: Token,
     pub colon: Token,
     pub value: Box<SyntaxNode>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Dict {
     pub lbrace: Token,
     pub entries: Vec<(SyntaxNode, Option<Token>)>,
     pub rbrace: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InferredMember {
     pub period: Token,
     pub member: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PostInitialization {
     pub expression: Box<SyntaxNode>,
     pub dict: Box<SyntaxNode>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Parameter {
     pub identifier: Token,
     pub colon: Token,
     pub type_: Token,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParameterBlock {
     pub lparen: Token,
     pub parameters: Vec<(SyntaxNode, Option<Token>)>,
     pub rparen: Token,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ElementStatement {
     pub element_keyword: Token,
     pub name: Token,
@@ -112,7 +112,7 @@ pub struct ElementStatement {
     pub body: Vec<SyntaxNode>,
 }
 
-#[derive(strum::EnumTryAs, Debug, strum::AsRefStr)]
+#[derive(strum::EnumTryAs, Debug, strum::AsRefStr, Clone)]
 pub enum SyntaxNodeKind {
     Error(bool),
     StylingStatement(StylingStatement),
@@ -134,7 +134,7 @@ pub enum SyntaxNodeKind {
     ParameterBlock(ParameterBlock),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SyntaxNode {
     pub location: Location,
     pub kind: SyntaxNodeKind,
