@@ -4,6 +4,7 @@ use crate::SlidesEnum;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Positioning {
+    z_value: Option<usize>,
     vertical_alignment: VerticalAlignment,
     horizontal_alignment: HorizontalAlignment,
     margin: Thickness,
@@ -13,6 +14,7 @@ pub struct Positioning {
 impl Positioning {
     pub fn new() -> Self {
         Self {
+            z_value: None,
             vertical_alignment: VerticalAlignment::Top,
             horizontal_alignment: HorizontalAlignment::Left,
             margin: Thickness::UNSPECIFIED,
@@ -47,27 +49,28 @@ impl Positioning {
         self.margin.right + self.padding.right
     }
 
-    pub(crate) fn to_css_style(&self) -> Option<String> {
+    pub(crate) fn to_css_style(&self) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         let mut translate = (0.0, 0.0);
 
         match self.vertical_alignment {
             VerticalAlignment::Top => {
-                writeln!(result, "top: {};", self.margin.top).expect("infallible");
+                writeln!(result, "top: {};", self.margin.top.or_zero()).expect("infallible");
             }
             VerticalAlignment::Center => {
                 writeln!(result, "top: 50%;").expect("infallible");
                 translate.1 = -50.0;
             }
             VerticalAlignment::Bottom => {
-                writeln!(result, "bottom: {};", self.margin.bottom).expect("infallible");
+                writeln!(result, "bottom: {};", self.margin.bottom.or_zero()).expect("infallible");
             }
             VerticalAlignment::Stretch => {
                 writeln!(
                     result,
                     "top: {};\nbottom: {};\nheight: 100%;",
-                    self.margin.top, self.margin.bottom
+                    self.margin.top.or_zero(),
+                    self.margin.bottom.or_zero()
                 )
                 .expect("infallible");
             }
@@ -75,20 +78,21 @@ impl Positioning {
 
         match self.horizontal_alignment {
             HorizontalAlignment::Left => {
-                writeln!(result, "left: {};", self.margin.left).expect("infallible");
+                writeln!(result, "left: {};", self.margin.left.or_zero()).expect("infallible");
             }
             HorizontalAlignment::Center => {
                 writeln!(result, "left: 50%;").expect("infallible");
                 translate.0 = -50.0;
             }
             HorizontalAlignment::Right => {
-                writeln!(result, "right: {};", self.margin.right).expect("infallible");
+                writeln!(result, "right: {};", self.margin.right.or_zero()).expect("infallible");
             }
             HorizontalAlignment::Stretch => {
                 writeln!(
                     result,
                     "left: {};\nbottom: {};\nwidth: 100%;",
-                    self.margin.left, self.margin.right
+                    self.margin.left.or_zero(),
+                    self.margin.right.or_zero()
                 )
                 .expect("infallible");
             }
@@ -107,11 +111,11 @@ impl Positioning {
             writeln!(result, "padding: {};", self.padding).expect("infallible");
         }
 
-        if result.is_empty() {
-            None
-        } else {
-            Some(result)
+        if let Some(z_value) = self.z_value {
+            writeln!(result, "z-index: {z_value};").expect("infallible");
         }
+
+        result
     }
 
     pub fn with_alignment_stretch(mut self) -> Positioning {
@@ -198,6 +202,13 @@ impl StyleUnit {
         match self {
             StyleUnit::Unspecified => StyleUnit::Pixel(px),
             StyleUnit::Pixel(spx) => StyleUnit::Pixel(spx + px),
+        }
+    }
+
+    fn or_zero(&self) -> StyleUnit {
+        match self {
+            Self::Unspecified => StyleUnit::Pixel(0.0),
+            normal => *normal,
         }
     }
 }

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use convert_case::Casing;
-use slides_rs_core::Presentation;
+use slides_rs_core::{CustomElement, ElementRefMut, Presentation, TextAlign};
 use string_interner::symbol::SymbolUsize;
 use summum_types::summum;
 use typing::{FunctionType, Type, TypeId, TypeInterner};
@@ -118,10 +118,14 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         }
         BoundNodeKind::VariableDeclaration(variable_declaration) => {
             println!(
-                "Variable Declaration {}",
+                "Variable Declaration {}: {:?}",
                 context
                     .string_interner
-                    .resolve_variable(variable_declaration.variable)
+                    .resolve_variable(variable_declaration.variable),
+                context
+                    .type_interner
+                    .resolve(variable_declaration.value.type_)
+                    .unwrap()
             );
             debug_bound_node(
                 &variable_declaration.value,
@@ -337,6 +341,13 @@ impl Binder {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct UserFunctionValue {
+    pub parameters: Vec<VariableId>,
+    pub body: Vec<BoundNode>,
+    pub return_type: TypeId,
+}
+
 summum! {
     #[allow(dead_code)]
     #[derive(Debug, Clone)]
@@ -353,7 +364,10 @@ summum! {
         ObjectFit(slides_rs_core::ObjectFit),
         VerticalAlignment(slides_rs_core::VerticalAlignment),
         HorizontalAlignment(slides_rs_core::HorizontalAlignment),
+        TextAlign(slides_rs_core::TextAlign),
         Dict(HashMap<String, Value>),
+        UserFunction(UserFunctionValue),
+        CustomElement(slides_rs_core::CustomElement),
     }
 }
 
@@ -373,6 +387,9 @@ impl Value {
             Value::Dict(_) => Type::Dict,
             Value::VerticalAlignment(_) => Type::VAlign,
             Value::HorizontalAlignment(_) => Type::HAlign,
+            Value::TextAlign(_) => Type::TextAlign,
+            Value::UserFunction(_) => todo!(),
+            Value::CustomElement(e) => Type::CustomElement(e.type_name().into()),
         }
     }
 
@@ -381,6 +398,15 @@ impl Value {
             parse_multiline_string(text, replace_escapisms)
         } else {
             parse_single_line_string(text, replace_escapisms)
+        }
+    }
+
+    pub fn as_mut_base_element(&mut self) -> slides_rs_core::ElementRefMut {
+        match self {
+            Value::Label(label) => label.as_element_mut(),
+            Value::Image(image) => image.as_element_mut(),
+            Value::CustomElement(custom_element) => custom_element.as_element_mut(),
+            _ => unreachable!("Self is not a base element!"),
         }
     }
 }
@@ -479,6 +505,7 @@ pub struct AssignmentStatement {
 pub struct ElementStatement {
     pub name: VariableId,
     pub type_: TypeId,
+    pub parameters: Vec<VariableId>,
     pub body: Vec<BoundNode>,
 }
 #[derive(Debug, Clone)]
@@ -719,6 +746,7 @@ impl BoundNode {
     fn element_statement(
         location: Location,
         element_type: TypeId,
+        parameters: Vec<VariableId>,
         function_type: TypeId,
         name: VariableId,
         body: Vec<BoundNode>,
@@ -728,6 +756,7 @@ impl BoundNode {
             location,
             kind: BoundNodeKind::ElementStatement(ElementStatement {
                 type_: element_type,
+                parameters,
                 name,
                 body,
             }),
@@ -816,7 +845,7 @@ fn bind_element_statement(
     //     .unwrap_or(Type::Error);
     // TODO
     binder.create_scope();
-    let argument_types = bind_parameter_block(
+    let parameters = bind_parameter_block(
         element_statement
             .parameters
             .kind
@@ -827,9 +856,9 @@ fn bind_element_statement(
         context,
     );
     let function_type = Type::Function(FunctionType {
-        argument_types: argument_types
-            .into_iter()
-            .map(|v| binder.look_up_variable(v).unwrap().type_)
+        argument_types: parameters
+            .iter()
+            .map(|v| binder.look_up_variable(*v).unwrap().type_)
             .collect(),
         return_type: element_type,
     });
@@ -847,7 +876,14 @@ fn bind_element_statement(
     ) else {
         return BoundNode::error(element_statement.name.location);
     };
-    BoundNode::element_statement(location, element_type, function_type, name, body)
+    BoundNode::element_statement(
+        location,
+        element_type,
+        parameters,
+        function_type,
+        name,
+        body,
+    )
 }
 
 fn bind_parameter_block(

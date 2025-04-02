@@ -111,7 +111,7 @@ impl Index<Location> for Files {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 pub struct VariableId(usize);
 
 impl Symbol for VariableId {

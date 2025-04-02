@@ -1,47 +1,57 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use slides_rs_core::{ImageStyling, LabelStyling, Slide, SlideStyling};
 
 use super::binder::{BoundAst, BoundNode, BoundNodeKind, Value};
-use crate::Context;
+use crate::{Context, VariableId, compiler::binder::UserFunctionValue};
 
 pub mod functions;
 mod slide;
 mod style;
 
 struct Scope {
-    variables: HashMap<String, Value>,
+    variables: BTreeMap<VariableId, Value>,
 }
 
 impl Scope {
     pub fn global() -> Self {
         Self {
-            variables: HashMap::new(),
+            variables: BTreeMap::new(),
         }
     }
     pub fn new() -> Self {
         Self {
-            variables: HashMap::new(),
+            variables: BTreeMap::new(),
         }
     }
 
-    fn set_variable(&mut self, name: String, value: Value) {
+    fn set_variable(&mut self, name: VariableId, value: Value) {
         self.variables.insert(name, value);
     }
 
-    fn get_variable_mut(&mut self, name: &str) -> Option<&mut Value> {
-        self.variables.get_mut(name)
+    fn get_variable(&self, name: VariableId) -> Option<&Value> {
+        self.variables.get(&name)
+    }
+
+    fn get_variable_mut(&mut self, name: VariableId) -> Option<&mut Value> {
+        self.variables.get_mut(&name)
     }
 }
 
 struct Evaluator {
     scopes: Vec<Scope>,
+    accumulator: Value,
 }
 impl Evaluator {
     fn new() -> Self {
         Self {
             scopes: vec![Scope::global()],
+            accumulator: Value::Integer(0),
         }
+    }
+
+    fn accumulator_mut(&mut self) -> &mut Value {
+        &mut self.accumulator
     }
 
     fn push_scope(&mut self) -> &mut Scope {
@@ -57,15 +67,24 @@ impl Evaluator {
         self.scopes.last_mut().expect("global scope missing")
     }
 
-    fn set_variable(&mut self, name: String, value: Value) {
+    fn set_variable(&mut self, name: VariableId, value: Value) {
         self.current_scope().set_variable(name, value);
     }
 
-    fn get_variable_mut(&mut self, name: &str) -> &mut Value {
+    fn get_variable_mut(&mut self, name: VariableId) -> &mut Value {
         self.scopes
             .iter_mut()
             .rev()
             .filter_map(|s| s.get_variable_mut(name))
+            .next()
+            .expect("Variable exists")
+    }
+
+    fn get_variable(&self, name: VariableId) -> &Value {
+        self.scopes
+            .iter()
+            .rev()
+            .filter_map(|s| s.get_variable(name))
             .next()
             .expect("Variable exists")
     }
@@ -96,8 +115,28 @@ fn evaluate_statement(
         BoundNodeKind::SlideStatement(slide_statement) => {
             evaluate_slide_statement(slide_statement, evaluator, context)
         }
+        BoundNodeKind::ElementStatement(element_statement) => {
+            evaluate_element_statement(element_statement, evaluator, context)
+        }
         err => unreachable!("No Top Level Statement: {err:?}"),
     }
+}
+
+fn evaluate_element_statement(
+    element_statement: super::binder::ElementStatement,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> slides_rs_core::Result<()> {
+    let parameters = element_statement.parameters;
+    evaluator.set_variable(
+        element_statement.name,
+        Value::UserFunction(UserFunctionValue {
+            parameters,
+            body: element_statement.body,
+            return_type: element_statement.type_,
+        }),
+    );
+    Ok(())
 }
 
 fn evaluate_slide_statement(
@@ -153,6 +192,6 @@ fn evaluate_styling_statement(
             context.presentation.add_styling(styling, &name)
         }
     };
-    evaluator.set_variable(name, Value::StyleReference(reference));
+    evaluator.set_variable(styling_statement.name, Value::StyleReference(reference));
     Ok(())
 }

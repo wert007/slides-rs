@@ -7,12 +7,29 @@ use std::{any::type_name, fmt::Display, ops::Deref};
 pub trait ToCss {
     fn class_name(&self) -> String;
 
-    fn to_css_style(&self) -> Option<String>;
+    fn to_css_style(&self) -> String;
 
     fn collect_google_font_references(
         &self,
         fonts: &mut std::collections::HashSet<String>,
     ) -> Result<()>;
+}
+
+impl ToCss for () {
+    fn class_name(&self) -> String {
+        String::new()
+    }
+
+    fn to_css_style(&self) -> String {
+        String::new()
+    }
+
+    fn collect_google_font_references(
+        &self,
+        _fonts: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -45,15 +62,8 @@ impl DynamicElementStyling {
 }
 
 impl ToCss for DynamicElementStyling {
-    fn to_css_style(&self) -> Option<String> {
-        let base = self.base.to_css_style();
-        let specific = self.specific.to_css_style();
-        match (base, specific) {
-            (None, None) => None,
-            (None, it) => it,
-            (it, None) => it,
-            (Some(a), Some(b)) => Some(format!("{a}\n{b}")),
-        }
+    fn to_css_style(&self) -> String {
+        [self.base.to_css_style(), self.specific.to_css_style()].join("\n")
     }
 
     fn collect_google_font_references(
@@ -72,19 +82,20 @@ impl ToCss for DynamicElementStyling {
 pub struct BaseElementStyling {
     background: Background,
 }
+impl BaseElementStyling {
+    pub fn set_background(&mut self, background: Background) {
+        self.background = background;
+    }
+}
 
 impl ToCss for BaseElementStyling {
-    fn to_css_style(&self) -> Option<String> {
+    fn to_css_style(&self) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         if self.background != Background::Unspecified {
             writeln!(result, "background: {};", self.background).expect("infallible");
         }
-        if result.is_empty() {
-            None
-        } else {
-            Some(result)
-        }
+        result
     }
 
     fn collect_google_font_references(
@@ -103,6 +114,21 @@ impl ToCss for BaseElementStyling {
 pub struct ElementStyling<S> {
     base: BaseElementStyling,
     specific: S,
+}
+
+impl<S> ElementStyling<S> {
+    pub fn base_mut(&mut self) -> &mut BaseElementStyling {
+        &mut self.base
+    }
+}
+
+impl ElementStyling<()> {
+    pub fn new_base() -> Self {
+        Self {
+            base: BaseElementStyling::default(),
+            specific: (),
+        }
+    }
 }
 
 impl<S> Deref for ElementStyling<S> {
@@ -140,15 +166,8 @@ impl<S: ToCss + 'static> ElementStyling<S> {
 }
 
 impl<S: ToCss> ToCss for ElementStyling<S> {
-    fn to_css_style(&self) -> Option<String> {
-        let base = self.base.to_css_style();
-        let specific = self.specific.to_css_style();
-        match (base, specific) {
-            (None, None) => None,
-            (None, it) => it,
-            (it, None) => it,
-            (Some(a), Some(b)) => Some(format!("{a}\n{b}")),
-        }
+    fn to_css_style(&self) -> String {
+        [self.base.to_css_style(), self.specific.to_css_style()].join("\n")
     }
 
     fn collect_google_font_references(
@@ -173,9 +192,10 @@ impl SlideStyling {
 }
 
 impl ToCss for SlideStyling {
-    fn to_css_style(&self) -> Option<String> {
-        None
+    fn to_css_style(&self) -> String {
+        String::new()
     }
+
     fn collect_google_font_references(
         &self,
         _: &mut std::collections::HashSet<String>,
@@ -277,7 +297,7 @@ impl ElementStyling<LabelStyling> {
 }
 
 impl ToCss for LabelStyling {
-    fn to_css_style(&self) -> Option<String> {
+    fn to_css_style(&self) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         if let Some(text_color) = self.text_color {
@@ -289,11 +309,7 @@ impl ToCss for LabelStyling {
         if self.text_align != TextAlign::Unspecified {
             writeln!(result, "font-family: {};", self.text_align.as_css()).expect("infallible");
         }
-        if result.is_empty() {
-            None
-        } else {
-            Some(result)
-        }
+        result
     }
 
     fn collect_google_font_references(
@@ -378,17 +394,13 @@ impl ElementStyling<ImageStyling> {
 }
 
 impl ToCss for ImageStyling {
-    fn to_css_style(&self) -> Option<String> {
+    fn to_css_style(&self) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         if self.object_fit != ObjectFit::Unspecified {
             writeln!(result, "object-fit: {};", self.object_fit.as_css()).expect("infallible");
         }
-        if result.is_empty() {
-            None
-        } else {
-            Some(result)
-        }
+        result
     }
 
     fn collect_google_font_references(

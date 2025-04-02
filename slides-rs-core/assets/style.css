@@ -28,7 +28,8 @@ ol {
 }
 
 .label,
-.image {
+.image,
+.custom-element {
     position: absolute;
 }
 

@@ -9,7 +9,9 @@ use super::WebRenderable;
 
 #[derive(Debug, Clone)]
 pub struct Image {
-    id: Option<String>,
+    z_index: usize,
+    parent_id: String,
+    id: String,
     source: ImageSource,
     positioning: Positioning,
     styling: ElementStyling<ImageStyling>,
@@ -45,7 +47,9 @@ impl Display for ImageSource {
 impl Image {
     pub fn new(source: ImageSource) -> Self {
         Self {
-            id: None,
+            z_index: 0,
+            parent_id: String::new(),
+            id: String::new(),
             source,
             positioning: Positioning::new(),
             styling: ImageStyling::new(),
@@ -75,22 +79,22 @@ impl Image {
     pub fn positioning_mut(&mut self) -> &mut Positioning {
         &mut self.positioning
     }
+
+    pub fn as_element_mut(&mut self) -> super::ElementRefMut<'_> {
+        super::ElementRefMut::Image(self)
+    }
 }
 
 impl WebRenderable for Image {
     fn output_to_html<W: std::io::Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
-        let id = self.id.expect("id should have been set here!");
+        let id = format!("{}-{}", self.parent_id, self.id);
         let style_positioning = self.positioning.to_css_style();
         let style_styling = self.styling.to_css_style();
-        let style = match (style_positioning, style_styling) {
-            (None, None) => None,
-            (None, b) => b,
-            (a, None) => a,
-            (Some(a), Some(b)) => Some(format!("{a}\n{b}")),
-        };
-        if let Some(style) = style {
-            writeln!(emitter.raw_css(), "#{id} {{\n{style}\n}}")?;
-        }
+        writeln!(
+            emitter.raw_css(),
+            "#{id} {{\nz-index: {};\n{style_positioning}\n{style_styling}\n}}",
+            self.z_index
+        )?;
         self.source.add_files(emitter)?;
         writeln!(
             emitter.raw_html(),
@@ -101,17 +105,20 @@ impl WebRenderable for Image {
     }
 
     fn set_fallback_id(&mut self, id: String) {
-        self.id.get_or_insert(id);
+        if self.id.is_empty() {
+            self.id = id;
+        }
     }
 
     fn set_id(&mut self, id: String) {
-        self.id = Some(id);
+        self.id = id;
     }
 
     fn set_parent_id(&mut self, id: String) {
-        self.id = Some(format!(
-            "{id}-{}",
-            self.id.as_ref().expect("call set_fallback_id before")
-        ));
+        self.parent_id = id;
+    }
+
+    fn set_z_index(&mut self, z_index: usize) {
+        self.z_index = z_index;
     }
 }

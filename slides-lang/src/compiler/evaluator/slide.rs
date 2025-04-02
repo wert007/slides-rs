@@ -1,10 +1,10 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use slides_rs_core::{Background, Color, Label, Slide, WebRenderable};
+use slides_rs_core::{Background, Color, CustomElement, Label, Slide, WebRenderable};
 use string_interner::symbol::SymbolUsize;
 
-use crate::Context;
 use crate::compiler::binder::{self, BoundNode, BoundNodeKind, Value, typing::Type};
+use crate::{Context, VariableId};
 
 use super::Evaluator;
 
@@ -16,23 +16,30 @@ pub fn evaluate_to_slide(
 ) -> slides_rs_core::Result<Slide> {
     evaluator.push_scope();
     evaluator.set_variable(
-        "background".into(),
+        context.string_interner.create_or_get_variable("background"),
         Value::Background(Background::Unspecified),
     );
     for statement in body {
-        evalute_statement(statement, &mut slide, evaluator, context)?;
+        evaluate_statement(statement, &mut slide, evaluator, context)?;
     }
 
     let scope = evaluator.drop_scope();
     for (name, value) in scope.variables {
         match value {
             Value::Label(mut label) => {
-                label.set_id(name);
+                let name = context.string_interner.resolve_variable(name);
+                label.set_id(name.into());
                 slide = slide.add_label(label);
             }
             Value::Image(mut image) => {
-                image.set_id(name);
+                let name = context.string_interner.resolve_variable(name);
+                image.set_id(name.into());
                 slide = slide.add_image(image);
+            }
+            Value::CustomElement(mut custom_element) => {
+                let name = context.string_interner.resolve_variable(name);
+                custom_element.set_id(name.into());
+                slide = slide.add_custom_element(custom_element);
             }
 
             _ => {}
@@ -41,7 +48,7 @@ pub fn evaluate_to_slide(
     Ok(slide)
 }
 
-fn evalute_statement(
+fn evaluate_statement(
     statement: BoundNode,
     slide: &mut Slide,
     evaluator: &mut Evaluator,
@@ -73,12 +80,10 @@ fn evaluate_variable_declaration(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
-    let name = context
-        .string_interner
-        .resolve_variable(variable_declaration.variable)
-        .to_string();
     let value = evaluate_expression(*variable_declaration.value, slide, evaluator, context);
-    evaluator.set_variable(name, value);
+    // dbg!(&value);
+    evaluator.set_variable(variable_declaration.variable, value);
+    dbg!(evaluator.get_variable(variable_declaration.variable));
     Ok(())
 }
 
@@ -89,49 +94,63 @@ fn evaluate_assignment(
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     let value = evaluate_expression(*assignment_statement.value, slide, evaluator, context);
-    let target = resolve_assignment_target(*assignment_statement.lhs, evaluator, context);
-    assign(slide, value, target, context);
+    assign_to(*assignment_statement.lhs, slide, value, evaluator, context);
     Ok(())
 }
 
-fn assign(slide: &mut Slide, value: Value, target: AssignmentTarget<'_>, context: &mut Context) {
-    match target {
-        AssignmentTarget::Variable(target, name) => match name.as_str() {
-            "background" => {
-                slide.styling_mut().set_background(value.into_background());
+fn assign_to(
+    node: BoundNode,
+    slide: &mut Slide,
+    value: Value,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) {
+    match node.kind {
+        BoundNodeKind::VariableReference(variable) => {
+            evaluator.set_variable(variable.id, value);
+        }
+        BoundNodeKind::MemberAccess(member_access) => {
+            let member = member_access.member;
+            assign_member(
+                *member_access.base,
+                slide,
+                member,
+                value,
+                evaluator,
+                context,
+            );
+        }
+        BoundNodeKind::Conversion(conversion) => todo!(),
+        _ => {
+            unreachable!("Not assignable!")
+        }
+    }
+}
+
+fn assign_member(
+    base: BoundNode,
+    slide: &mut Slide,
+    member: SymbolUsize,
+    value: Value,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) {
+    match base.kind {
+        BoundNodeKind::Conversion(conversion) => {
+            // TODO: Honour conversion!
+            assign_member(*conversion.base, slide, member, value, evaluator, context);
+        }
+        BoundNodeKind::VariableReference(variable) => {
+            let base = evaluator.get_variable_mut(variable.id);
+            let base_type = base.infer_type();
+            match base_type {
+                Type::Element | Type::Label | Type::Image | Type::CustomElement(_) => {
+                    assign_to_slide_type(base_type, base, member, value, slide, context);
+                }
+                missing => unreachable!("Missing {missing:?}"),
             }
-            _ => {
-                *target = value;
-            }
-        },
-        AssignmentTarget::Member(base, member) => match context.string_interner.resolve(member) {
-            "text_color" => {
-                base.as_mut_label()
-                    .element_styling_mut()
-                    .set_text_color(value.into_color());
-            }
-            "object_fit" => {
-                base.as_mut_image()
-                    .element_styling_mut()
-                    .set_object_fit(value.into_object_fit());
-            }
-            "valign" => {
-                base.as_mut_image()
-                    .positioning_mut()
-                    .set_vertical_alignment(value.into_vertical_alignment());
-            }
-            "halign" => {
-                base.as_mut_image()
-                    .positioning_mut()
-                    .set_horizontal_alignment(value.into_horizontal_alignment());
-            }
-            "background" => {
-                base.as_mut_label()
-                    .element_styling_mut()
-                    .set_background(value.into_background());
-            }
-            err => todo!("Handle member {err}",),
-        },
+        }
+        missing => unreachable!("Missing {missing:?}"),
     }
 }
 
@@ -145,7 +164,7 @@ fn evaluate_expression(
         BoundNodeKind::FunctionCall(function_call) => {
             evaluate_function_call(function_call, slide, evaluator, context)
         }
-        BoundNodeKind::VariableReference(variable) => todo!(),
+        BoundNodeKind::VariableReference(variable) => evaluator.get_variable(variable.id).clone(),
         BoundNodeKind::Literal(value) => value,
         BoundNodeKind::Dict(dict) => evaluate_dict(dict, slide, evaluator, context),
         BoundNodeKind::MemberAccess(member_access) => {
@@ -181,6 +200,7 @@ fn evaluate_post_initialization(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
+    let base_type = post_initialization.base.type_;
     let mut base = evaluate_expression(*post_initialization.base, slide, evaluator, context);
     let dict = evaluate_expression(*post_initialization.dict, slide, evaluator, context);
     let dict = dict.into_dict();
@@ -188,14 +208,72 @@ fn evaluate_post_initialization(
 
     for (member, value) in dict {
         let member = context.string_interner.create_or_get(&member);
-        assign(
-            slide,
-            value,
-            AssignmentTarget::Member(&mut base, member),
-            context,
-        );
+        let base_type = context.type_interner.resolve(base_type).unwrap().clone();
+        match base_type {
+            Type::Element | Type::Label | Type::CustomElement(_) | Type::Image => {
+                assign_to_slide_type(base_type, &mut base, member, value, slide, context)
+            }
+            _ => {
+                todo!();
+            }
+        }
+        // assign_member(base, slide, member, value, evaluator, context);
+        // assign_member(slide, value, member, &mut base, evaluator, context)
+        // assign(
+        //     slide,
+        //     value,
+        //     AssignmentTarget::Member(member),
+        //     evaluator,
+        //     context,
+        // );
     }
+    // let mut base = Value::Integer(0);
+    // std::mem::swap(&mut base, evaluator.accumulator_mut());
     base
+}
+
+fn assign_to_slide_type(
+    base_type: Type,
+    base: &mut Value,
+    member: SymbolUsize,
+    value: Value,
+    slide: &mut Slide,
+    context: &mut Context,
+) {
+    let member = context.string_interner.resolve(member);
+    match member {
+        "valign" => {
+            base.as_mut_base_element()
+                .positioning_mut()
+                .set_vertical_alignment(value.into_vertical_alignment());
+        }
+        "halign" => {
+            base.as_mut_base_element()
+                .positioning_mut()
+                .set_horizontal_alignment(value.into_horizontal_alignment());
+        }
+        "background" => {
+            base.as_mut_base_element()
+                .element_styling_mut()
+                .set_background(value.into_background());
+        }
+        "object_fit" => {
+            base.as_mut_image()
+                .element_styling_mut()
+                .set_object_fit(value.into_object_fit());
+        }
+        "text_color" => {
+            base.as_mut_label()
+                .element_styling_mut()
+                .set_text_color(value.into_color());
+        }
+        "text_align" => {
+            base.as_mut_label()
+                .element_styling_mut()
+                .set_text_align(value.into_text_align());
+        }
+        missing => unreachable!("Missing Member {missing}"),
+    }
 }
 
 fn evaluate_member_access(
@@ -214,33 +292,11 @@ fn evaluate_member_access(
             &Type::ObjectFit => Value::ObjectFit(variant.parse().expect("Valid variant")),
             &Type::HAlign => Value::HorizontalAlignment(variant.parse().expect("Valid variant")),
             &Type::VAlign => Value::VerticalAlignment(variant.parse().expect("Valid variant")),
+            &Type::TextAlign => Value::TextAlign(variant.parse().expect("Valid variant")),
             _ => unreachable!("Type {enum_type:?} is not an enum!"),
         }
     } else {
         todo!()
-    }
-}
-
-fn evaluate_expression_mut<'a>(
-    expression: BoundNode,
-    evaluator: &'a mut Evaluator,
-    context: &mut Context,
-) -> &'a mut crate::compiler::binder::Value {
-    match expression.kind {
-        BoundNodeKind::FunctionCall(function_call) => {
-            todo!()
-        }
-        BoundNodeKind::VariableReference(variable) => {
-            let name = context.string_interner.resolve_variable(variable.id);
-            evaluator.get_variable_mut(name)
-        }
-        BoundNodeKind::Literal(_) => unreachable!("Can never be mutable!"),
-        BoundNodeKind::Dict(items) => todo!(),
-        BoundNodeKind::MemberAccess(member_access) => todo!(),
-        BoundNodeKind::Conversion(conversion) => {
-            todo!()
-        }
-        _ => unreachable!("Only statements can be evaluated!"),
     }
 }
 
@@ -256,11 +312,79 @@ fn evaluate_function_call(
         .map(|a| evaluate_expression(a, slide, evaluator, context))
         .collect();
     let function_name = extract_function_name(*function_call.base, context);
-    (binder::globals::FUNCTIONS
+    match binder::globals::FUNCTIONS
         .iter()
         .find(|f| f.name == function_name.as_str())
-        .expect("Unknown Function")
-        .call)(arguments)
+    {
+        Some(it) => (it.call)(arguments),
+        None => {
+            let value = evaluator
+                .get_variable_mut(
+                    context
+                        .string_interner
+                        .create_or_get_variable(&function_name),
+                )
+                .clone();
+            evaluate_user_function(
+                value.as_user_function().clone(),
+                arguments,
+                slide,
+                evaluator,
+                context,
+            )
+        }
+    }
+}
+
+fn evaluate_user_function(
+    user_function: binder::UserFunctionValue,
+    arguments: Vec<Value>,
+    slide: &mut Slide,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> Value {
+    let scope = evaluator.push_scope();
+    for (parameter, value) in user_function.parameters.into_iter().zip(arguments) {
+        scope.set_variable(parameter, value);
+    }
+    for statement in user_function.body {
+        evaluate_statement(statement, slide, evaluator, context).unwrap();
+    }
+
+    let scope = evaluator.drop_scope();
+    let mut elements = Vec::new();
+    for (name, value) in scope.variables {
+        match value {
+            Value::Label(mut label) => {
+                let name = context.string_interner.resolve_variable(name);
+                label.set_id(name.into());
+                label.set_z_index(slide.next_z_index());
+                elements.push(label.into());
+            }
+            Value::Image(mut image) => {
+                let name = context.string_interner.resolve_variable(name);
+                image.set_id(name.into());
+                image.set_z_index(slide.next_z_index());
+                elements.push(image.into());
+            }
+            Value::CustomElement(mut element) => {
+                let name = context.string_interner.resolve_variable(name);
+                element.set_id(name.into());
+                element.set_z_index(slide.next_z_index());
+                elements.push(element.into());
+            }
+
+            _ => {}
+        }
+    }
+
+    let type_name = context
+        .type_interner
+        .resolve(user_function.return_type)
+        .unwrap()
+        .try_as_custom_element_ref()
+        .unwrap();
+    Value::CustomElement(CustomElement::new(type_name, elements))
 }
 
 fn extract_function_name(base: BoundNode, context: &mut Context) -> String {
@@ -301,30 +425,12 @@ fn evaluate_conversion(
             Value::String(text) => Value::Label(Label::new(text)),
             _ => unreachable!("Impossible conversion!"),
         },
-        _ => todo!(),
-    }
-}
-
-enum AssignmentTarget<'a> {
-    Variable(&'a mut Value, String),
-    Member(&'a mut Value, SymbolUsize),
-}
-
-fn resolve_assignment_target<'a, 'b>(
-    lhs: BoundNode,
-    evaluator: &'a mut Evaluator,
-    context: &'b mut Context,
-) -> AssignmentTarget<'a> {
-    match lhs.kind {
-        BoundNodeKind::VariableReference(variable) => {
-            let name = context.string_interner.resolve_variable(variable.id);
-            dbg!(name);
-            AssignmentTarget::Variable(evaluator.get_variable_mut(name), name.into())
-        }
-        BoundNodeKind::MemberAccess(member_access) => {
-            let value = evaluate_expression_mut(*member_access.base, evaluator, context);
-            AssignmentTarget::Member(value, member_access.member)
-        }
-        err => unreachable!("Cannot assign to {err:?}"),
+        Type::Element => match base {
+            Value::Label(label) => todo!(),
+            Value::Image(image) => todo!(),
+            Value::CustomElement(custom_element) => todo!(),
+            _ => unreachable!("Impossible conversion!"),
+        },
+        unknown => todo!("{unknown:?}"),
     }
 }

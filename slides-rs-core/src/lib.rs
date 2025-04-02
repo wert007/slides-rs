@@ -91,9 +91,10 @@ impl Presentation {
         }
 
         for styling in self.stylings {
-            let Some(css) = styling.to_css_style() else {
+            let css = styling.to_css_style();
+            if css.is_empty() {
                 continue;
-            };
+            }
             writeln!(emitter.raw_css(), ".{} {{", styling.name())?;
             writeln!(emitter.raw_css(), "{css}")?;
             writeln!(emitter.raw_css(), "}}")?;
@@ -123,6 +124,7 @@ pub struct Slide {
     id: Option<String>,
     elements: Vec<Element>,
     styling: ElementStyling<SlideStyling>,
+    current_z_index: usize,
 }
 
 impl Slide {
@@ -131,6 +133,7 @@ impl Slide {
             id: None,
             elements: Vec::new(),
             styling: SlideStyling::new(),
+            current_z_index: 0,
         }
     }
 
@@ -152,7 +155,7 @@ impl Slide {
     fn output_to_html<W: Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
         let id = self.id.expect("id should have been set here!");
         let style = self.styling.to_css_style();
-        if let Some(style) = style {
+        if !style.is_empty() {
             writeln!(emitter.raw_css(), "#{id} {{ {style} }}")?;
         }
         writeln!(emitter.raw_html(), "<section id=\"{id}\" class=\"slide\">")?;
@@ -183,5 +186,16 @@ impl Slide {
 
     pub fn styling_mut(&mut self) -> &mut ElementStyling<SlideStyling> {
         &mut self.styling
+    }
+
+    pub fn add_custom_element(mut self, custom_element: CustomElement) -> Slide {
+        self.elements.push(custom_element.into());
+        self
+    }
+
+    pub fn next_z_index(&mut self) -> usize {
+        let result = self.current_z_index;
+        self.current_z_index += 1;
+        result
     }
 }

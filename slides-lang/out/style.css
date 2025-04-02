@@ -28,7 +28,8 @@ ol {
 }
 
 .label,
-.image {
+.image,
+.custom-element {
     position: absolute;
 }
 
@@ -49,3 +50,67 @@ ol {
     width: 100%;
 }
 
+#intro { 
+ }
+#intro-i {
+            z-index: 0;
+            top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;
+bottom: 0px;
+width: 100%;
+
+            
+
+        }
+#intro-i-i_img {
+z-index: 0;
+top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;
+bottom: 0px;
+width: 100%;
+
+
+object-fit: cover;
+
+}
+#intro-i-i_captionLabel {
+z-index: 1;
+bottom: 0px;
+right: 0px;
+
+
+color: rgb(255, 255, 255, 1);
+font-family: right;
+}
+#intro-lbl {
+z-index: 0;
+top: 0px;
+left: 0px;
+
+background: rgb(97, 97, 97, 1);
+
+color: rgb(255, 255, 255, 1);
+}
+#hello { 
+ }
+#hello-a {
+z-index: 0;
+top: 0px;
+left: 0px;
+
+background: rgb(255, 0, 255, 1);
+
+color: rgb(0, 128, 0, 1);
+}
+.blue_bg {
+
+
+}
+.default {
+
+
+}

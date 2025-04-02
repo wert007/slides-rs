@@ -32,7 +32,9 @@ impl Display for FormattedText {
 
 #[derive(Debug, Clone)]
 pub struct Label {
-    id: Option<String>,
+    z_index: usize,
+    parent_id: String,
+    id: String,
     text: FormattedText,
     positioning: Positioning,
     styling: ElementStyling<LabelStyling>,
@@ -48,18 +50,12 @@ impl WebRenderable for Label {
     }
 
     fn output_to_html<W: std::io::Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
-        let id = self.id.expect("id should have been set here!");
+        let id = format!("{}-{}", self.parent_id, self.id);
         let style_positioning = self.positioning.to_css_style();
         let style_styling = self.styling.to_css_style();
-        let style = match (style_positioning, style_styling) {
-            (None, None) => None,
-            (None, b) => b,
-            (a, None) => a,
-            (Some(a), Some(b)) => Some(format!("{a}\n{b}")),
-        };
-        if let Some(style) = style {
-            writeln!(emitter.raw_css(), "#{id} {{\n{style}\n}}")?;
-        }
+        writeln!(emitter.raw_css(), "#{id} {{\nz-index: {};", self.z_index)?;
+        writeln!(emitter.raw_css(), "{style_positioning}")?;
+        writeln!(emitter.raw_css(), "{style_styling}}}")?;
         writeln!(
             emitter.raw_html(),
             "<div id=\"{id}\" class=\"label{}\">",
@@ -74,25 +70,30 @@ impl WebRenderable for Label {
     }
 
     fn set_fallback_id(&mut self, id: String) {
-        self.id.get_or_insert(id);
+        if self.id.is_empty() {
+            self.id = id;
+        }
     }
 
     fn set_id(&mut self, id: String) {
-        self.id = Some(id);
+        self.id = id;
     }
 
     fn set_parent_id(&mut self, id: String) {
-        self.id = Some(format!(
-            "{id}-{}",
-            self.id.as_ref().expect("call set_fallback_id before")
-        ));
+        self.parent_id = id;
+    }
+
+    fn set_z_index(&mut self, z_index: usize) {
+        self.z_index = z_index;
     }
 }
 
 impl Label {
     pub fn new(text: impl Into<FormattedText>) -> Self {
         Self {
-            id: None,
+            z_index: 0,
+            parent_id: String::new(),
+            id: String::new(),
             text: text.into(),
             positioning: Positioning::new(),
             styling: LabelStyling::new(),
@@ -117,5 +118,13 @@ impl Label {
 
     pub fn element_styling_mut(&mut self) -> &mut ElementStyling<LabelStyling> {
         &mut self.styling
+    }
+
+    pub fn as_element_mut(&mut self) -> super::ElementRefMut {
+        super::ElementRefMut::Label(self)
+    }
+
+    pub fn positioning_mut(&mut self) -> &mut Positioning {
+        &mut self.positioning
     }
 }
