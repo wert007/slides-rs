@@ -104,19 +104,30 @@ impl Presentation {
         Ok(())
     }
 
-    pub fn add_styling<S: ToCss + 'static>(
-        &mut self,
-        styling: ElementStyling<S>,
-        name: impl Into<String>,
-    ) -> StylingReference {
-        let name = name.into();
-        self.stylings.push(styling.to_dynamic(name.clone()));
-        unsafe { StylingReference::from_raw(name) }
-    }
+    // pub fn add_styling<S: ToCss + 'static>(
+    //     &mut self,
+    //     styling: ElementStyling<S>,
+    //     name: impl Into<String>,
+    // ) -> StylingReference {
+    //     let name = name.into();
+    //     let name = if name == "default" {
+    //         S::class_name(&styling)
+    //     } else {
+    //         name
+    //     };
+    //     self.stylings.push(styling.to_dynamic(name.clone()));
+    //     unsafe { StylingReference::from_raw(name) }
+    // }
 
-    pub fn set_default_style<S: ToCss + 'static>(&mut self, styling: ElementStyling<S>) {
-        let name = styling.class_name();
-        self.stylings.push(styling.to_dynamic(name));
+    // pub fn set_default_style<S: ToCss + 'static>(&mut self, styling: ElementStyling<S>) {
+    //     let name = styling.class_name();
+    //     self.stylings.push(styling.to_dynamic(name));
+    // }
+
+    pub fn add_dynamic_styling(&mut self, styling: DynamicElementStyling) -> StylingReference {
+        let name = styling.name().to_owned();
+        self.stylings.push(styling);
+        unsafe { StylingReference::from_raw(name) }
     }
 }
 

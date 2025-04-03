@@ -1,14 +1,86 @@
 use slides_rs_core::{ElementStyling, ToCss};
 
 use super::Evaluator;
-use crate::Context;
-use crate::compiler::binder::BoundNode;
+use crate::compiler::binder::{BoundNode, BoundNodeKind, Value};
+use crate::{Context, VariableId};
 
-pub fn evaluate_to_styling<S: ToCss + 'static>(
-    init_value: ElementStyling<S>,
-    body: Vec<BoundNode>,
+pub fn evaluate_to_styling(body: Vec<BoundNode>, evaluator: &mut Evaluator, context: &mut Context) {
+    for statement in body {
+        evaluate_statement(statement, evaluator, context);
+    }
+}
+
+fn evaluate_statement(statement: BoundNode, evaluator: &mut Evaluator, context: &mut Context) {
+    match statement.kind {
+        BoundNodeKind::AssignmentStatement(assignment_statement) => {
+            evaluate_assignment_statement(assignment_statement, evaluator, context)
+        }
+        BoundNodeKind::FunctionCall(function_call) => todo!(),
+        BoundNodeKind::VariableReference(variable) => todo!(),
+        BoundNodeKind::Literal(value) => todo!(),
+        BoundNodeKind::VariableDeclaration(variable_declaration) => {
+            todo!()
+        }
+        BoundNodeKind::Dict(items) => todo!(),
+        BoundNodeKind::MemberAccess(member_access) => todo!(),
+        BoundNodeKind::Conversion(conversion) => todo!(),
+        BoundNodeKind::PostInitialization(post_initialization) => todo!(),
+        _ => unreachable!(),
+    }
+}
+
+fn evaluate_assignment_statement(
+    assignment_statement: crate::compiler::binder::AssignmentStatement,
     evaluator: &mut Evaluator,
     context: &mut Context,
-) -> slides_rs_core::ElementStyling<S> {
-    init_value
+) {
+    let value: Value =
+        super::slide::evaluate_expression(*assignment_statement.value, evaluator, context);
+    assign_to(*assignment_statement.lhs, value, evaluator, context);
+}
+
+fn assign_to(lhs: BoundNode, value: Value, evaluator: &mut Evaluator, context: &mut Context) {
+    match lhs.kind {
+        BoundNodeKind::VariableReference(variable) => {
+            assign_to_field(variable.id, value, evaluator, context);
+        }
+        BoundNodeKind::MemberAccess(member_access) => todo!(),
+        BoundNodeKind::Conversion(conversion) => todo!(),
+        _ => unreachable!(),
+    }
+}
+
+fn assign_to_field(
+    name: VariableId,
+    value: Value,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) {
+    match context.string_interner.resolve_variable(name) {
+        "font" => {
+            evaluator
+                .styling
+                .as_mut()
+                .expect("")
+                .as_label_mut()
+                .set_font(value.into_font());
+        }
+        "text_color" => {
+            evaluator
+                .styling
+                .as_mut()
+                .expect("")
+                .as_label_mut()
+                .set_text_color(value.into_color());
+        }
+        "background" => {
+            evaluator
+                .styling
+                .as_mut()
+                .expect("")
+                .as_base_mut()
+                .set_background(value.into_background());
+        }
+        name => unreachable!("UNknown {name}"),
+    }
 }

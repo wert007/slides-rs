@@ -74,6 +74,7 @@ pub enum Type {
     HAlign,
     VAlign,
     TextAlign,
+    Font,
     Function(FunctionType),
     Slide,
     Element,
@@ -156,6 +157,8 @@ impl Type {
             Some(Self::Path)
         } else if const_str::compare!(==, rust_string, "TextAlign") {
             Some(Self::TextAlign)
+        } else if const_str::compare!(==, rust_string, "Font") {
+            Some(Self::Font)
         } else if const_str::compare!(==, rust_string, "HorizontalAlignment") {
             Some(Self::HAlign)
         } else if const_str::compare!(==, rust_string, "VerticalAlignment") {

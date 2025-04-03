@@ -1,9 +1,11 @@
 use convert_case::{Case, Casing};
+use enum_dispatch::enum_dispatch;
 use struct_field_names_as_array::FieldNamesAsSlice;
 
 use crate::Result;
 use std::{any::type_name, fmt::Display, ops::Deref};
 
+#[enum_dispatch]
 pub trait ToCss {
     fn class_name(&self) -> String;
 
@@ -49,15 +51,46 @@ impl Display for StylingReference {
     }
 }
 
+#[enum_dispatch(ToCss)]
+pub enum Styling {
+    Label(LabelStyling),
+    Image(ImageStyling),
+    Slide(SlideStyling),
+    CustomElement(()),
+}
+
 pub struct DynamicElementStyling {
     name: String,
     base: BaseElementStyling,
-    specific: Box<dyn ToCss>,
+    specific: Styling,
 }
 
 impl DynamicElementStyling {
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn as_base_mut(&mut self) -> &mut BaseElementStyling {
+        &mut self.base
+    }
+
+    pub fn as_label_mut(&mut self) -> &mut LabelStyling {
+        match &mut self.specific {
+            Styling::Label(label_styling) => label_styling,
+            _ => unreachable!("Expected Label"),
+        }
+    }
+    pub fn as_image_mut(&mut self) -> &mut ImageStyling {
+        match &mut self.specific {
+            Styling::Image(image_styling) => image_styling,
+            _ => unreachable!("Expected Image"),
+        }
+    }
+    pub fn as_slide_mut(&mut self) -> &mut SlideStyling {
+        match &mut self.specific {
+            Styling::Slide(slide_styling) => slide_styling,
+            _ => unreachable!("Expected Slide"),
+        }
     }
 }
 
@@ -152,14 +185,6 @@ impl<S: ToCss + 'static> ElementStyling<S> {
         }
     }
 
-    pub fn to_dynamic(self, name: String) -> DynamicElementStyling {
-        DynamicElementStyling {
-            name,
-            base: self.base,
-            specific: Box::new(self.specific),
-        }
-    }
-
     pub fn set_background(&mut self, background: Background) {
         self.base.background = background;
     }
@@ -182,7 +207,65 @@ impl<S: ToCss> ToCss for ElementStyling<S> {
     }
 }
 
-#[derive(Debug, Default)]
+impl ElementStyling<LabelStyling> {
+    pub fn to_dynamic(self, name: String) -> DynamicElementStyling {
+        let name = if name == "default" {
+            self.class_name()
+        } else {
+            name
+        };
+        DynamicElementStyling {
+            name,
+            base: self.base,
+            specific: self.specific.into(),
+        }
+    }
+}
+
+impl ElementStyling<ImageStyling> {
+    pub fn to_dynamic(self, name: String) -> DynamicElementStyling {
+        let name = if name == "default" {
+            self.class_name()
+        } else {
+            name
+        };
+        DynamicElementStyling {
+            name,
+            base: self.base,
+            specific: self.specific.into(),
+        }
+    }
+}
+impl ElementStyling<SlideStyling> {
+    pub fn to_dynamic(self, name: String) -> DynamicElementStyling {
+        let name = if name == "default" {
+            self.class_name()
+        } else {
+            name
+        };
+        DynamicElementStyling {
+            name,
+            base: self.base,
+            specific: self.specific.into(),
+        }
+    }
+}
+impl ElementStyling<()> {
+    pub fn to_dynamic(self, name: String) -> DynamicElementStyling {
+        let name = if name == "default" {
+            self.class_name()
+        } else {
+            name
+        };
+        DynamicElementStyling {
+            name,
+            base: self.base,
+            specific: self.specific.into(),
+        }
+    }
+}
+
+#[derive(Debug, Default, FieldNamesAsSlice)]
 pub struct SlideStyling {}
 
 impl SlideStyling {
@@ -276,6 +359,20 @@ impl LabelStyling {
     }
 }
 
+impl LabelStyling {
+    pub fn set_text_color(&mut self, text_color: Color) {
+        self.text_color = Some(text_color);
+    }
+
+    pub fn set_text_align(&mut self, text_align: TextAlign) {
+        self.text_align = text_align;
+    }
+
+    pub fn set_font(&mut self, font: Font) {
+        self.font = font;
+    }
+}
+
 impl ElementStyling<LabelStyling> {
     pub fn with_text_color(mut self, text_color: Color) -> Self {
         self.specific.text_color = Some(text_color);
@@ -307,7 +404,7 @@ impl ToCss for LabelStyling {
             writeln!(result, "font-family: {};", self.font).expect("infallible");
         }
         if self.text_align != TextAlign::Unspecified {
-            writeln!(result, "font-family: {};", self.text_align.as_css()).expect("infallible");
+            writeln!(result, "text-align: {};", self.text_align.as_css()).expect("infallible");
         }
         result
     }

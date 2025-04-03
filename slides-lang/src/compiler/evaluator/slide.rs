@@ -9,21 +9,21 @@ use crate::{Context, VariableId};
 use super::Evaluator;
 
 pub fn evaluate_to_slide(
-    mut slide: Slide,
     body: Vec<BoundNode>,
     evaluator: &mut Evaluator,
     context: &mut Context,
-) -> slides_rs_core::Result<Slide> {
+) -> slides_rs_core::Result<()> {
     evaluator.push_scope();
     evaluator.set_variable(
         context.string_interner.create_or_get_variable("background"),
         Value::Background(Background::Unspecified),
     );
     for statement in body {
-        evaluate_statement(statement, &mut slide, evaluator, context)?;
+        evaluate_statement(statement, evaluator, context)?;
     }
 
     let scope = evaluator.drop_scope();
+    let mut slide = evaluator.slide.take().expect("There should be a slide!");
     for (name, value) in scope.variables {
         match value {
             Value::Label(mut label) => {
@@ -45,18 +45,18 @@ pub fn evaluate_to_slide(
             _ => {}
         }
     }
-    Ok(slide)
+    evaluator.slide = Some(slide);
+    Ok(())
 }
 
 fn evaluate_statement(
     statement: BoundNode,
-    slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     match statement.kind {
         BoundNodeKind::AssignmentStatement(assignment_statement) => {
-            evaluate_assignment(assignment_statement, slide, evaluator, context)
+            evaluate_assignment(assignment_statement, evaluator, context)
         }
         BoundNodeKind::FunctionCall(_)
         | BoundNodeKind::VariableReference(_)
@@ -64,11 +64,11 @@ fn evaluate_statement(
         | BoundNodeKind::Dict(_)
         | BoundNodeKind::MemberAccess(_)
         | BoundNodeKind::Conversion(_) => {
-            evaluate_expression(statement, slide, evaluator, context);
+            evaluate_expression(statement, evaluator, context);
             Ok(())
         }
         BoundNodeKind::VariableDeclaration(variable_declaration) => {
-            evaluate_variable_declaration(variable_declaration, slide, evaluator, context)
+            evaluate_variable_declaration(variable_declaration, evaluator, context)
         }
         _ => unreachable!("Internal Compiler Error"),
     }
@@ -76,49 +76,32 @@ fn evaluate_statement(
 
 fn evaluate_variable_declaration(
     variable_declaration: crate::compiler::binder::VariableDeclaration,
-    slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
-    let value = evaluate_expression(*variable_declaration.value, slide, evaluator, context);
-    // dbg!(&value);
+    let value = evaluate_expression(*variable_declaration.value, evaluator, context);
     evaluator.set_variable(variable_declaration.variable, value);
-    dbg!(evaluator.get_variable(variable_declaration.variable));
     Ok(())
 }
 
 fn evaluate_assignment(
     assignment_statement: crate::compiler::binder::AssignmentStatement,
-    slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
-    let value = evaluate_expression(*assignment_statement.value, slide, evaluator, context);
-    assign_to(*assignment_statement.lhs, slide, value, evaluator, context);
+    let value = evaluate_expression(*assignment_statement.value, evaluator, context);
+    assign_to(*assignment_statement.lhs, value, evaluator, context);
     Ok(())
 }
 
-fn assign_to(
-    node: BoundNode,
-    slide: &mut Slide,
-    value: Value,
-    evaluator: &mut Evaluator,
-    context: &mut Context,
-) {
+fn assign_to(node: BoundNode, value: Value, evaluator: &mut Evaluator, context: &mut Context) {
     match node.kind {
         BoundNodeKind::VariableReference(variable) => {
             evaluator.set_variable(variable.id, value);
         }
         BoundNodeKind::MemberAccess(member_access) => {
             let member = member_access.member;
-            assign_member(
-                *member_access.base,
-                slide,
-                member,
-                value,
-                evaluator,
-                context,
-            );
+            assign_member(*member_access.base, member, value, evaluator, context);
         }
         BoundNodeKind::Conversion(conversion) => todo!(),
         _ => {
@@ -129,7 +112,6 @@ fn assign_to(
 
 fn assign_member(
     base: BoundNode,
-    slide: &mut Slide,
     member: SymbolUsize,
     value: Value,
     evaluator: &mut Evaluator,
@@ -138,14 +120,14 @@ fn assign_member(
     match base.kind {
         BoundNodeKind::Conversion(conversion) => {
             // TODO: Honour conversion!
-            assign_member(*conversion.base, slide, member, value, evaluator, context);
+            assign_member(*conversion.base, member, value, evaluator, context);
         }
         BoundNodeKind::VariableReference(variable) => {
             let base = evaluator.get_variable_mut(variable.id);
             let base_type = base.infer_type();
             match base_type {
                 Type::Element | Type::Label | Type::Image | Type::CustomElement(_) => {
-                    assign_to_slide_type(base_type, base, member, value, slide, context);
+                    assign_to_slide_type(base_type, base, member, value, context);
                 }
                 missing => unreachable!("Missing {missing:?}"),
             }
@@ -154,27 +136,27 @@ fn assign_member(
     }
 }
 
-fn evaluate_expression(
+pub(super) fn evaluate_expression(
     expression: BoundNode,
-    slide: &mut Slide,
+    // slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> crate::compiler::binder::Value {
     match expression.kind {
         BoundNodeKind::FunctionCall(function_call) => {
-            evaluate_function_call(function_call, slide, evaluator, context)
+            evaluate_function_call(function_call, evaluator, context)
         }
         BoundNodeKind::VariableReference(variable) => evaluator.get_variable(variable.id).clone(),
         BoundNodeKind::Literal(value) => value,
-        BoundNodeKind::Dict(dict) => evaluate_dict(dict, slide, evaluator, context),
+        BoundNodeKind::Dict(dict) => evaluate_dict(dict, evaluator, context),
         BoundNodeKind::MemberAccess(member_access) => {
             evaluate_member_access(member_access, evaluator, context)
         }
         BoundNodeKind::Conversion(conversion) => {
-            evaluate_conversion(conversion, slide, evaluator, context)
+            evaluate_conversion(conversion, evaluator, context)
         }
         BoundNodeKind::PostInitialization(post_initialization) => {
-            evaluate_post_initialization(post_initialization, slide, evaluator, context)
+            evaluate_post_initialization(post_initialization, evaluator, context)
         }
         _ => unreachable!("Only statements can be evaluated!"),
     }
@@ -182,13 +164,13 @@ fn evaluate_expression(
 
 fn evaluate_dict(
     dict: Vec<(String, BoundNode)>,
-    slide: &mut Slide,
+    // slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
     let mut result = HashMap::new();
     for (member, node) in dict {
-        let value = evaluate_expression(node, slide, evaluator, context);
+        let value = evaluate_expression(node, evaluator, context);
         result.insert(member, value);
     }
     result.into()
@@ -196,13 +178,13 @@ fn evaluate_dict(
 
 fn evaluate_post_initialization(
     post_initialization: binder::PostInitialization,
-    slide: &mut Slide,
+    // slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
     let base_type = post_initialization.base.type_;
-    let mut base = evaluate_expression(*post_initialization.base, slide, evaluator, context);
-    let dict = evaluate_expression(*post_initialization.dict, slide, evaluator, context);
+    let mut base = evaluate_expression(*post_initialization.base, evaluator, context);
+    let dict = evaluate_expression(*post_initialization.dict, evaluator, context);
     let dict = dict.into_dict();
     // let value = evaluate_expression_mut(*member_access.base, evaluator, context);
 
@@ -211,7 +193,7 @@ fn evaluate_post_initialization(
         let base_type = context.type_interner.resolve(base_type).unwrap().clone();
         match base_type {
             Type::Element | Type::Label | Type::CustomElement(_) | Type::Image => {
-                assign_to_slide_type(base_type, &mut base, member, value, slide, context)
+                assign_to_slide_type(base_type, &mut base, member, value, context)
             }
             _ => {
                 todo!();
@@ -237,7 +219,6 @@ fn assign_to_slide_type(
     base: &mut Value,
     member: SymbolUsize,
     value: Value,
-    slide: &mut Slide,
     context: &mut Context,
 ) {
     let member = context.string_interner.resolve(member);
@@ -302,14 +283,14 @@ fn evaluate_member_access(
 
 fn evaluate_function_call(
     function_call: crate::compiler::binder::FunctionCall,
-    slide: &mut Slide,
+    // slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
     let arguments: Vec<Value> = function_call
         .arguments
         .into_iter()
-        .map(|a| evaluate_expression(a, slide, evaluator, context))
+        .map(|a| evaluate_expression(a, evaluator, context))
         .collect();
     let function_name = extract_function_name(*function_call.base, context);
     match binder::globals::FUNCTIONS
@@ -328,7 +309,6 @@ fn evaluate_function_call(
             evaluate_user_function(
                 value.as_user_function().clone(),
                 arguments,
-                slide,
                 evaluator,
                 context,
             )
@@ -339,7 +319,7 @@ fn evaluate_function_call(
 fn evaluate_user_function(
     user_function: binder::UserFunctionValue,
     arguments: Vec<Value>,
-    slide: &mut Slide,
+    // slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
@@ -348,11 +328,12 @@ fn evaluate_user_function(
         scope.set_variable(parameter, value);
     }
     for statement in user_function.body {
-        evaluate_statement(statement, slide, evaluator, context).unwrap();
+        evaluate_statement(statement, evaluator, context).unwrap();
     }
 
     let scope = evaluator.drop_scope();
     let mut elements = Vec::new();
+    let mut slide = evaluator.slide.take().expect("slide");
     for (name, value) in scope.variables {
         match value {
             Value::Label(mut label) => {
@@ -377,6 +358,7 @@ fn evaluate_user_function(
             _ => {}
         }
     }
+    evaluator.slide = Some(slide);
 
     let type_name = context
         .type_interner
@@ -399,11 +381,10 @@ fn extract_function_name(base: BoundNode, context: &mut Context) -> String {
 
 fn evaluate_conversion(
     conversion: crate::compiler::binder::Conversion,
-    slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
-    let base = evaluate_expression(*conversion.base, slide, evaluator, context);
+    let base = evaluate_expression(*conversion.base, evaluator, context);
     match context
         .type_interner
         .resolve(conversion.target)

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use slides_rs_core::{
-    BaseElementStyling, HorizontalAlignment, ImageStyling, LabelStyling, ObjectFit, SlidesEnum,
-    TextAlign, VerticalAlignment,
+    BaseElementStyling, HorizontalAlignment, ImageStyling, LabelStyling, ObjectFit, SlideStyling,
+    SlidesEnum, TextAlign, VerticalAlignment,
 };
 
 include!(concat!(env!("OUT_DIR"), "/global_functions.rs"));
@@ -49,10 +49,11 @@ impl MemberDeclarations {
     }
 }
 
-pub const MEMBERS: [MemberDeclarations; 4] = [
+pub const MEMBERS: [MemberDeclarations; 5] = [
     MemberDeclarations::rename::<LabelStyling>("Label"),
     MemberDeclarations::rename::<ImageStyling>("Image"),
     MemberDeclarations::rename::<BaseElementStyling>("Element"),
+    MemberDeclarations::rename::<SlideStyling>("Slide"),
     MemberDeclarations {
         name: "Element",
         members_names: &["valign", "halign"],

@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 
-use slides_rs_core::{ImageStyling, LabelStyling, Slide, SlideStyling};
+use slides_rs_core::{DynamicElementStyling, ImageStyling, LabelStyling, Slide, SlideStyling};
 
 use super::binder::{BoundAst, BoundNode, BoundNodeKind, Value};
 use crate::{Context, VariableId, compiler::binder::UserFunctionValue};
@@ -40,18 +40,16 @@ impl Scope {
 
 struct Evaluator {
     scopes: Vec<Scope>,
-    accumulator: Value,
+    slide: Option<Slide>,
+    styling: Option<DynamicElementStyling>,
 }
 impl Evaluator {
     fn new() -> Self {
         Self {
             scopes: vec![Scope::global()],
-            accumulator: Value::Integer(0),
+            slide: None,
+            styling: None,
         }
-    }
-
-    fn accumulator_mut(&mut self) -> &mut Value {
-        &mut self.accumulator
     }
 
     fn push_scope(&mut self) -> &mut Scope {
@@ -149,8 +147,11 @@ fn evaluate_slide_statement(
             .string_interner
             .resolve_variable(slide_statement.name),
     );
-    let slide = slide::evaluate_to_slide(slide, slide_statement.body, evaluator, context)?;
-    context.presentation.add_slide(slide);
+    evaluator.slide = Some(slide);
+    slide::evaluate_to_slide(slide_statement.body, evaluator, context)?;
+    context
+        .presentation
+        .add_slide(evaluator.slide.take().expect("there to be slide"));
     Ok(())
 }
 
@@ -163,35 +164,15 @@ fn evaluate_styling_statement(
         .string_interner
         .resolve_variable(styling_statement.name)
         .to_owned();
-    let reference = match styling_statement.type_ {
-        super::binder::StylingType::Label => {
-            let styling = style::evaluate_to_styling(
-                LabelStyling::new(),
-                styling_statement.body,
-                evaluator,
-                context,
-            );
-            context.presentation.add_styling(styling, &name)
-        }
-        super::binder::StylingType::Image => {
-            let styling = style::evaluate_to_styling(
-                ImageStyling::new(),
-                styling_statement.body,
-                evaluator,
-                context,
-            );
-            context.presentation.add_styling(styling, &name)
-        }
-        super::binder::StylingType::Slide => {
-            let styling = style::evaluate_to_styling(
-                SlideStyling::new(),
-                styling_statement.body,
-                evaluator,
-                context,
-            );
-            context.presentation.add_styling(styling, &name)
-        }
+    let styling = match styling_statement.type_ {
+        super::binder::StylingType::Label => LabelStyling::new().to_dynamic(name.clone()),
+        super::binder::StylingType::Image => ImageStyling::new().to_dynamic(name.clone()),
+        super::binder::StylingType::Slide => SlideStyling::new().to_dynamic(name.clone()),
     };
+    evaluator.styling = Some(styling);
+    style::evaluate_to_styling(styling_statement.body, evaluator, context);
+    let styling = evaluator.styling.take().expect("styilng");
+    let reference = context.presentation.add_dynamic_styling(styling);
     evaluator.set_variable(styling_statement.name, Value::StyleReference(reference));
     Ok(())
 }

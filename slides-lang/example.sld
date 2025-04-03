@@ -40,8 +40,20 @@ slide hello:
          - to have a nice markdown support
          - which should be all that's needed for text. probably!
     """ {
-        text_color: c"green",
-        background: c"fuchsia",
+        valign: VAlign.Center,
+        halign: HAlign.Center,
+    };
+
+slide code:
+    let a = l"""
+        ```rust
+        fn main() {
+            println!("Hello World!");
+        }
+        ```
+    """ {
+        valign: VAlign.Center,
+        halign: HAlign.Center,
     };
 
 // Last line comment! Would be trivia of eof!

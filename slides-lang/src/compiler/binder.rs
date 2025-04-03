@@ -365,6 +365,7 @@ summum! {
         VerticalAlignment(slides_rs_core::VerticalAlignment),
         HorizontalAlignment(slides_rs_core::HorizontalAlignment),
         TextAlign(slides_rs_core::TextAlign),
+        Font(slides_rs_core::Font),
         Dict(HashMap<String, Value>),
         UserFunction(UserFunctionValue),
         CustomElement(slides_rs_core::CustomElement),
@@ -388,6 +389,7 @@ impl Value {
             Value::VerticalAlignment(_) => Type::VAlign,
             Value::HorizontalAlignment(_) => Type::HAlign,
             Value::TextAlign(_) => Type::TextAlign,
+            Value::Font(_) => Type::Font,
             Value::UserFunction(_) => todo!(),
             Value::CustomElement(e) => Type::CustomElement(e.type_name().into()),
         }
@@ -1251,8 +1253,14 @@ fn bind_styling_statement(
     context: &mut Context,
 ) -> BoundNode {
     let type_ = styling_statement.type_.text(&context.loaded_files);
-    let type_ = match type_ {
-        "Label" | "Slide" | "Image" => StylingType::try_from(type_).unwrap(),
+    let (type_, members) = match type_ {
+        "Label" | "Slide" | "Image" => (
+            StylingType::try_from(type_).unwrap(),
+            globals::MEMBERS
+                .into_iter()
+                .find(|m| m.name == type_)
+                .unwrap_or_else(|| panic!("should be valid, but found {type_}")),
+        ),
         _ => {
             context
                 .diagnostics
@@ -1273,33 +1281,31 @@ fn bind_styling_statement(
         )
         .unwrap();
 
-    match type_ {
-        StylingType::Label => {
-            let text_color = context.string_interner.create_or_get_variable("text_color");
+    for (member_name, member_type) in
+        members
+            .members_names
+            .into_iter()
+            .zip(members.members_rust_types.into_iter().map(|t| {
+                let mut t = *t;
+                if let Some(rs_type_name_without_option) =
+                    t.strip_prefix("Option <").and_then(|t| t.strip_suffix('>'))
+                {
+                    t = rs_type_name_without_option.trim();
+                }
 
-            let color_type = context.type_interner.get_or_intern(Type::Color);
-            binder
-                .expect_register_variable_id(
-                    text_color,
-                    color_type,
-                    styling_statement.name.location,
-                    context,
-                )
-                .unwrap();
-        }
-        StylingType::Image => {
-            let object_fit = context.string_interner.create_or_get_variable("object_fit");
-            let object_fit_type = context.type_interner.get_or_intern(Type::ObjectFit);
-            binder
-                .expect_register_variable_id(
-                    object_fit,
-                    object_fit_type,
-                    styling_statement.name.location,
-                    context,
-                )
-                .unwrap();
-        }
-        StylingType::Slide => {}
+                Type::from_rust_string(t).unwrap_or_else(|| panic!("valid type, found {t}"))
+            }))
+    {
+        let variable = context.string_interner.create_or_get_variable(&member_name);
+        let type_id = context.type_interner.get_or_intern(member_type);
+        binder
+            .expect_register_variable_id(
+                variable,
+                type_id,
+                styling_statement.name.location,
+                context,
+            )
+            .unwrap();
     }
 
     let mut body = Vec::with_capacity(styling_statement.body.len());
@@ -1313,12 +1319,18 @@ fn bind_styling_statement(
 
     // Bind name last to check the body for errors!
     let styling_type = context.type_interner.get_or_intern(Type::Styling);
-    let Some(name) = binder.expect_register_variable_token(
-        styling_statement.name,
-        styling_type,
-        styling_statement.name.location,
-        context,
-    ) else {
+    let name = &context.loaded_files[styling_statement.name.location];
+
+    let Some(name) = (if name == "default" {
+        Some(context.string_interner.create_or_get_variable("default"))
+    } else {
+        binder.expect_register_variable_token(
+            styling_statement.name,
+            styling_type,
+            styling_statement.name.location,
+            context,
+        )
+    }) else {
         return BoundNode::error(styling_statement.name.location);
     };
     BoundNode::styling_statement(styling_statement, location, name, type_, body)

@@ -84,7 +84,7 @@ right: 0px;
 
 
 color: rgb(255, 255, 255, 1);
-font-family: right;
+text-align: right;
 }
 #intro-lbl {
 z-index: 0;
@@ -99,18 +99,34 @@ color: rgb(255, 255, 255, 1);
  }
 #hello-a {
 z-index: 0;
-top: 0px;
-left: 0px;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
 
-background: rgb(255, 0, 255, 1);
 
-color: rgb(0, 128, 0, 1);
+}
+#code { 
+ }
+#code-a {
+z-index: 0;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+
+
 }
 .blue_bg {
 
+color: rgb(255, 255, 255, 1);
 
 }
-.default {
+.slide {
+background: rgb(120, 160, 180, 1);
 
+
+}
+.label {
+
+font-family: "Quicksand";
 
 }
