@@ -1,9 +1,14 @@
+import p"./assets/highlight.head.html";
+
 // My file!
 styling blue_bg(Label):
     text_color = c"white";
 
 styling default(Slide):
     background = rgb(120, 160, 180);
+
+styling default(Label):
+    font = gfont("Quicksand");
 
 element image_with_caption(img: Image, caption: String):
     img = img {

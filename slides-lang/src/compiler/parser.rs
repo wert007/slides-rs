@@ -111,6 +111,12 @@ pub struct ElementStatement {
     pub colon: Token,
     pub body: Vec<SyntaxNode>,
 }
+#[derive(Debug, Clone)]
+pub struct ImportStatement {
+    pub import_keyword: Token,
+    pub path: Box<SyntaxNode>,
+    pub semicolon: Token,
+}
 
 #[derive(strum::EnumTryAs, Debug, strum::AsRefStr, Clone)]
 pub enum SyntaxNodeKind {
@@ -118,6 +124,7 @@ pub enum SyntaxNodeKind {
     StylingStatement(StylingStatement),
     SlideStatement(SlideStatement),
     ElementStatement(ElementStatement),
+    ImportStatement(ImportStatement),
     ExpressionStatement(ExpressionStatement),
     VariableDeclaration(VariableDeclaration),
     AssignmentStatement(AssignmentStatement),
@@ -392,6 +399,18 @@ impl SyntaxNode {
             }),
         }
     }
+
+    fn import_statement(import_keyword: Token, path: SyntaxNode, semicolon: Token) -> SyntaxNode {
+        let location = Location::combine(import_keyword.location, semicolon.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::ImportStatement(ImportStatement {
+                import_keyword,
+                path: Box::new(path),
+                semicolon,
+            }),
+        }
+    }
 }
 
 pub struct Ast {
@@ -530,6 +549,10 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
                 debug_syntax_node(parameter, files, format!("{indent}    "));
             }
         }
+        SyntaxNodeKind::ImportStatement(import_statement) => {
+            println!("Import");
+            debug_syntax_node(&import_statement.path, files, format!("{indent}    "));
+        }
     }
 }
 
@@ -615,6 +638,7 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
         TokenKind::SlideKeyword => parse_slide_statement(parser, context),
         TokenKind::StylingKeyword => parse_styling_statement(parser, context),
         TokenKind::ElementKeyword => parse_element_statement(parser, context),
+        TokenKind::ImportKeyword => parse_import_statement(parser, context),
         _ => {
             context
                 .diagnostics
@@ -622,6 +646,15 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
             SyntaxNode::error(*parser.current_token(), false)
         }
     }
+}
+
+fn parse_import_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let import_keyword = parser.match_token(TokenKind::ImportKeyword);
+    let type_ = parser.match_token(TokenKind::Identifier);
+    let string = parser.match_token(TokenKind::String);
+    let path = SyntaxNode::typed_string(type_, string);
+    let semicolon = parser.match_token(TokenKind::SingleChar(';'));
+    SyntaxNode::import_statement(import_keyword, path, semicolon)
 }
 
 fn parse_element_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {

@@ -20,6 +20,7 @@ impl TypeId {
     pub const ERROR: TypeId = TypeId(0);
     pub const VOID: TypeId = TypeId(1);
     pub const DICT: TypeId = TypeId(5);
+    pub const PATH: TypeId = TypeId(18);
 }
 
 pub struct TypeInterner {
@@ -33,6 +34,7 @@ impl TypeInterner {
         debug_assert_eq!(result.get_or_intern(Type::Error), TypeId::ERROR);
         debug_assert_eq!(result.get_or_intern(Type::Void), TypeId::VOID);
         debug_assert_eq!(result.get_or_intern(Type::Dict), TypeId::DICT);
+        debug_assert_eq!(result.get_or_intern(Type::Path), TypeId::PATH);
         result
     }
 

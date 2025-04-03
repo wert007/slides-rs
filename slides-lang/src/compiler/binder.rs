@@ -76,6 +76,9 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 debug_bound_node(statement, context, format!("{indent}    "));
             }
         }
+        BoundNodeKind::ImportStatement(path) => {
+            println!("Import {}", path.display());
+        }
         BoundNodeKind::AssignmentStatement(assignment_statement) => {
             println!("Assignment");
             debug_bound_node(&assignment_statement.lhs, context, format!("{indent}    "));
@@ -558,6 +561,7 @@ pub enum BoundNodeKind {
     StylingStatement(StylingStatement),
     AssignmentStatement(AssignmentStatement),
     ElementStatement(ElementStatement),
+    ImportStatement(PathBuf),
     FunctionCall(FunctionCall),
     VariableReference(Variable),
     Literal(Value),
@@ -765,6 +769,15 @@ impl BoundNode {
             type_: function_type,
         }
     }
+
+    fn import(path: PathBuf, location: Location) -> BoundNode {
+        BoundNode {
+            base: None,
+            location,
+            kind: BoundNodeKind::ImportStatement(path),
+            type_: TypeId::VOID,
+        }
+    }
 }
 
 pub struct BoundAst {
@@ -790,6 +803,9 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         }
         SyntaxNodeKind::ElementStatement(element_statement) => {
             bind_element_statement(element_statement, statement.location, binder, context)
+        }
+        SyntaxNodeKind::ImportStatement(import_statement) => {
+            bind_import_statement(import_statement, statement.location, binder, context)
         }
         SyntaxNodeKind::ExpressionStatement(expression_statement) => {
             let mut result = bind_node(*expression_statement.expression, binder, context);
@@ -820,6 +836,37 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         }
         unsupported => unreachable!("Not supported: {}", unsupported.as_ref()),
     }
+}
+
+fn bind_import_statement(
+    import_statement: parser::ImportStatement,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    let path = bind_node(*import_statement.path, binder, context);
+    if path.type_ != TypeId::PATH {
+        // TODO: Argument must be path!
+        return BoundNode::error(location);
+    }
+    let Ok(path) = path.kind.try_into_conversion() else {
+        // TODO: Argument must be literal!
+        return BoundNode::error(location);
+    };
+    let Ok(literal) = path.base.kind.try_into_literal() else {
+        // TODO: Argument must be literal!
+        return BoundNode::error(location);
+    };
+    let Ok(string) = literal.try_into_string() else {
+        // TODO: Argument must be string! Should never get to here probably!
+        return BoundNode::error(location);
+    };
+    let path = PathBuf::from(string);
+    if !path.exists() {
+        // TODO: Path must be existing at compile time!
+        return BoundNode::error(location);
+    }
+    BoundNode::import(path, location)
 }
 
 fn bind_element_statement(

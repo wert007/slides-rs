@@ -1,4 +1,9 @@
-use std::{collections::HashSet, io::Write, marker::PhantomData, path::PathBuf};
+use std::{
+    collections::{HashMap, HashSet},
+    io::Write,
+    marker::PhantomData,
+    path::PathBuf,
+};
 
 pub type Result<T> = std::result::Result<T, error::SlidesError>;
 
@@ -32,6 +37,7 @@ impl<T> Index<T> {
 pub struct Presentation {
     slides: Vec<Slide>,
     stylings: Vec<DynamicElementStyling>,
+    extern_texts: HashMap<FilePlacement, String>,
 }
 
 impl Presentation {
@@ -39,6 +45,7 @@ impl Presentation {
         Self {
             slides: Vec::new(),
             stylings: Vec::new(),
+            extern_texts: HashMap::new(),
         }
     }
 
@@ -80,6 +87,10 @@ impl Presentation {
             )?;
         }
 
+        if let Some(text) = self.extern_texts.get(&FilePlacement::HtmlHead) {
+            writeln!(emitter.raw_html(), "{text}")?;
+        }
+
         writeln!(
             emitter.raw_html(),
             r#"</head>
@@ -104,31 +115,30 @@ impl Presentation {
         Ok(())
     }
 
-    // pub fn add_styling<S: ToCss + 'static>(
-    //     &mut self,
-    //     styling: ElementStyling<S>,
-    //     name: impl Into<String>,
-    // ) -> StylingReference {
-    //     let name = name.into();
-    //     let name = if name == "default" {
-    //         S::class_name(&styling)
-    //     } else {
-    //         name
-    //     };
-    //     self.stylings.push(styling.to_dynamic(name.clone()));
-    //     unsafe { StylingReference::from_raw(name) }
-    // }
-
-    // pub fn set_default_style<S: ToCss + 'static>(&mut self, styling: ElementStyling<S>) {
-    //     let name = styling.class_name();
-    //     self.stylings.push(styling.to_dynamic(name));
-    // }
-
     pub fn add_dynamic_styling(&mut self, styling: DynamicElementStyling) -> StylingReference {
         let name = styling.name().to_owned();
         self.stylings.push(styling);
         unsafe { StylingReference::from_raw(name) }
     }
+
+    pub fn add_extern_file(
+        &mut self,
+        placement: FilePlacement,
+        path: impl Into<PathBuf>,
+    ) -> std::io::Result<()> {
+        use std::fmt::Write;
+        let path = path.into();
+        let file = std::fs::read_to_string(&path)?;
+        let mut extern_text = self.extern_texts.entry(placement).or_default();
+        writeln!(extern_text, "<!-- From {} -->", path.display()).expect("infallible");
+        writeln!(extern_text, "{file}\n").expect("infallible");
+        Ok(())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub enum FilePlacement {
+    HtmlHead,
 }
 
 pub struct Slide {

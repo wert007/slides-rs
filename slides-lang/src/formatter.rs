@@ -321,6 +321,9 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::ElementStatement(element_statement) => {
             format_element_statement(element_statement, formatter, context)
         }
+        SyntaxNodeKind::ImportStatement(import_statement) => {
+            todo!()
+        }
         SyntaxNodeKind::ExpressionStatement(expression_statement) => {
             format_expression_statement(expression_statement, formatter, context)
         }

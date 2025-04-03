@@ -9,6 +9,7 @@ pub enum TokenKind {
     SlideKeyword,
     StylingKeyword,
     ElementKeyword,
+    ImportKeyword,
     LetKeyword,
     Number,
     SingleChar(char),
@@ -119,6 +120,7 @@ impl Token {
                 "slide" => TokenKind::SlideKeyword,
                 "styling" => TokenKind::StylingKeyword,
                 "element" => TokenKind::ElementKeyword,
+                "import" => TokenKind::ImportKeyword,
                 _ => TokenKind::Identifier,
             };
         }

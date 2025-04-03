@@ -1,6 +1,8 @@
 use std::collections::{BTreeMap, HashMap};
 
-use slides_rs_core::{DynamicElementStyling, ImageStyling, LabelStyling, Slide, SlideStyling};
+use slides_rs_core::{
+    DynamicElementStyling, FilePlacement, ImageStyling, LabelStyling, Slide, SlideStyling,
+};
 
 use super::binder::{BoundAst, BoundNode, BoundNodeKind, Value};
 use crate::{Context, VariableId, compiler::binder::UserFunctionValue};
@@ -116,8 +118,55 @@ fn evaluate_statement(
         BoundNodeKind::ElementStatement(element_statement) => {
             evaluate_element_statement(element_statement, evaluator, context)
         }
+        BoundNodeKind::ImportStatement(import_statement) => {
+            evaluate_import_statement(import_statement, evaluator, context)
+        }
         err => unreachable!("No Top Level Statement: {err:?}"),
     }
+}
+
+fn evaluate_import_statement(
+    import_statement: std::path::PathBuf,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> slides_rs_core::Result<()> {
+    let extension = import_statement
+        .extension()
+        .expect("Needs extension")
+        .to_str()
+        .expect("should be string");
+    let path_extensions = import_statement.to_str().unwrap().split('.').rev();
+    enum State {
+        Unknown,
+        HtmlUnknown,
+        HtmlHead,
+    };
+
+    impl State {
+        pub fn is_finished(&self) -> bool {
+            matches!(self, Self::HtmlHead)
+        }
+    }
+    let mut state = State::Unknown;
+    for extension in path_extensions {
+        match extension {
+            "html" => state = State::HtmlUnknown,
+            "head" => state = State::HtmlHead,
+            missing => unreachable!("Missing {missing}"),
+        }
+        if state.is_finished() {
+            break;
+        }
+    }
+    match state {
+        State::HtmlHead => {
+            context
+                .presentation
+                .add_extern_file(FilePlacement::HtmlHead, import_statement)?;
+        }
+        State::Unknown | State::HtmlUnknown => unreachable!(),
+    }
+    Ok(())
 }
 
 fn evaluate_element_statement(
