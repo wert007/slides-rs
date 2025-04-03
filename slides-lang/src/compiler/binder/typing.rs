@@ -20,6 +20,7 @@ impl TypeId {
     pub const ERROR: TypeId = TypeId(0);
     pub const VOID: TypeId = TypeId(1);
     pub const DICT: TypeId = TypeId(5);
+    pub const STYLING: TypeId = TypeId(6);
     pub const PATH: TypeId = TypeId(19);
 }
 
@@ -35,6 +36,7 @@ impl TypeInterner {
         debug_assert_eq!(result.get_or_intern(Type::Void), TypeId::VOID);
         debug_assert_eq!(result.get_or_intern(Type::Dict), TypeId::DICT);
         debug_assert_eq!(result.get_or_intern(Type::Path), TypeId::PATH);
+        debug_assert_eq!(result.get_or_intern(Type::Styling), TypeId::STYLING);
         result
     }
 
@@ -84,6 +86,7 @@ pub enum Type {
     Label,
     Image,
     Path,
+    Thickness,
     Enum(Box<Type>, Vec<String>),
     CustomElement(String),
     Array(TypeId),
@@ -123,13 +126,7 @@ impl Type {
             let Some(index) = m.members_names.iter().position(|n| n == &member) else {
                 continue;
             };
-            let mut rs_type_name = m.members_rust_types[index].trim();
-            if let Some(rs_type_name_without_option) = rs_type_name
-                .strip_prefix("Option <")
-                .and_then(|t| t.strip_suffix('>'))
-            {
-                rs_type_name = rs_type_name_without_option.trim();
-            }
+            let rs_type_name = globals::normalize_type_name(m.members_rust_types[index].trim());
             return Some(
                 Self::from_rust_string(rs_type_name)
                     .unwrap_or_else(|| panic!("Could not find type! {m:?}.{member}")),
@@ -167,6 +164,10 @@ impl Type {
             Some(Self::HAlign)
         } else if const_str::compare!(==, rust_string, "VerticalAlignment") {
             Some(Self::VAlign)
+        } else if const_str::compare!(==, rust_string, "Thickness") {
+            Some(Self::Thickness)
+        } else if const_str::compare!(==, rust_string, "#ArrayOfStyleReferences") {
+            Some(Self::Array(TypeId::STYLING))
         } else {
             None
         }
@@ -177,7 +178,7 @@ impl Type {
             .filter(|t| {
                 !matches!(
                     t,
-                    Type::Enum(..) | Type::Function(_) | Type::CustomElement(_)
+                    Type::Enum(..) | Type::Function(_) | Type::CustomElement(_) | Type::Array(_)
                 )
             })
             .collect()

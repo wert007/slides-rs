@@ -926,17 +926,14 @@ fn bind_element_statement(
         .type_interner
         .get_or_intern(Type::CustomElement(type_name));
 
-    // let type_ = binder
-    //     .register_type(
-    //         format!("TODO"),
-    //         TypeInfo {
-    //             base_type: Type::Element,
-    //             ..Default::default()
-    //         },
-    //     )
-    //     .unwrap_or(Type::Error);
-    // TODO
-    binder.create_scope();
+    let scope = binder.create_scope();
+    for (name, type_) in globals::find_members_by_name("Element") {
+        let id = context.string_interner.create_or_get_variable(name);
+        let type_ = context.type_interner.get_or_intern(type_);
+        scope
+            .try_register_variable(id, type_, element_statement.name.location)
+            .expect("cannot fail");
+    }
     let parameters = bind_parameter_block(
         element_statement
             .parameters
@@ -1348,10 +1345,7 @@ fn bind_styling_statement(
     let (type_, members) = match type_ {
         "Label" | "Slide" | "Image" => (
             StylingType::try_from(type_).unwrap(),
-            globals::MEMBERS
-                .into_iter()
-                .find(|m| m.name == type_)
-                .unwrap_or_else(|| panic!("should be valid, but found {type_}")),
+            globals::find_members_by_name(type_),
         ),
         _ => {
             context
@@ -1362,32 +1356,9 @@ fn bind_styling_statement(
     };
 
     binder.create_scope();
-    let background = context.string_interner.create_or_get_variable("background");
-    let background_type = context.type_interner.get_or_intern(Type::Background);
-    binder
-        .expect_register_variable_id(
-            background,
-            background_type,
-            styling_statement.name.location,
-            context,
-        )
-        .unwrap();
 
-    for (member_name, member_type) in
-        members
-            .members_names
-            .into_iter()
-            .zip(members.members_rust_types.into_iter().map(|t| {
-                let mut t = *t;
-                if let Some(rs_type_name_without_option) =
-                    t.strip_prefix("Option <").and_then(|t| t.strip_suffix('>'))
-                {
-                    t = rs_type_name_without_option.trim();
-                }
-
-                Type::from_rust_string(t).unwrap_or_else(|| panic!("valid type, found {t}"))
-            }))
-    {
+    for (member_name, member_type) in members {
+        dbg!(member_name, &member_type);
         let variable = context.string_interner.create_or_get_variable(&member_name);
         let type_id = context.type_interner.get_or_intern(member_type);
         binder

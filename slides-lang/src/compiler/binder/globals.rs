@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use constcat::concat_slices;
 use slides_rs_core::{
     BaseElementStyling, HorizontalAlignment, ImageStyling, LabelStyling, ObjectFit, SlideStyling,
     SlidesEnum, TextAlign, VerticalAlignment,
@@ -47,16 +48,71 @@ impl MemberDeclarations {
             members_rust_types: T::FIELD_TYPES_AS_SLICE,
         }
     }
+
+    // const fn chain(self, other: Self) -> Self {
+    //     Self { name: self.name, members_names: concat_slices!([&'static str]: self.members_names, other.members_names), members_rust_types: () }
+    // }
 }
 
-pub const MEMBERS: [MemberDeclarations; 5] = [
+macro_rules! chain_member_decls {
+    ($a:expr, $b:expr) => {
+        MemberDeclarations { name: $a.name, members_names: concat_slices!([&'static str]: $a.members_names, $b.members_names), members_rust_types: concat_slices!([&'static str]: $a.members_rust_types, $b.members_rust_types) }
+
+    };
+}
+
+macro_rules! default_element {
+    ($name:literal) => {
+        chain_member_decls!(
+            MemberDeclarations::rename::<BaseElementStyling>($name),
+            MemberDeclarations {
+                name: $name,
+                members_names: &["valign", "halign", "styles", "margin"],
+                members_rust_types: &[
+                    "VerticalAlignment",
+                    "HorizontalAlignment",
+                    "#ArrayOfStyleReferences",
+                    "Thickness"
+                ],
+            }
+        )
+    };
+}
+
+pub const MEMBERS: [MemberDeclarations; 7] = [
     MemberDeclarations::rename::<LabelStyling>("Label"),
+    default_element!("Label"),
     MemberDeclarations::rename::<ImageStyling>("Image"),
-    MemberDeclarations::rename::<BaseElementStyling>("Element"),
+    default_element!("Image"),
+    default_element!("Element"),
     MemberDeclarations::rename::<SlideStyling>("Slide"),
-    MemberDeclarations {
-        name: "Element",
-        members_names: &["valign", "halign"],
-        members_rust_types: &["VerticalAlignment", "HorizontalAlignment"],
-    },
+    default_element!("Slide"),
 ];
+
+pub(crate) fn normalize_type_name(mut name: &str) -> &str {
+    if let Some(rs_type_name_without_option) = name
+        .strip_prefix("Option <")
+        .and_then(|t| t.strip_suffix('>'))
+    {
+        name = rs_type_name_without_option.trim();
+    }
+    name
+}
+
+pub(crate) fn find_members_by_name(
+    name: &str,
+) -> impl Iterator<Item = (&'static str, Type)> + 'static {
+    let name = name.to_owned();
+    MEMBERS
+        .iter()
+        .filter(move |m| m.name == name)
+        .flat_map(|m| {
+            m.members_names
+                .iter()
+                .copied()
+                .zip(m.members_rust_types.iter().map(|r| {
+                    Type::from_rust_string(normalize_type_name(r))
+                        .unwrap_or_else(|| panic!("{r} should exist"))
+                }))
+        })
+}
