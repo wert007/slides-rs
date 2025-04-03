@@ -20,7 +20,7 @@ impl TypeId {
     pub const ERROR: TypeId = TypeId(0);
     pub const VOID: TypeId = TypeId(1);
     pub const DICT: TypeId = TypeId(5);
-    pub const PATH: TypeId = TypeId(18);
+    pub const PATH: TypeId = TypeId(19);
 }
 
 pub struct TypeInterner {
@@ -77,6 +77,7 @@ pub enum Type {
     VAlign,
     TextAlign,
     Font,
+    StyleUnit,
     Function(FunctionType),
     Slide,
     Element,
@@ -85,6 +86,7 @@ pub enum Type {
     Path,
     Enum(Box<Type>, Vec<String>),
     CustomElement(String),
+    Array(TypeId),
 }
 
 impl Type {

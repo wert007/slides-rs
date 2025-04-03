@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::Add};
+use std::{fmt::Display, num::ParseFloatError, ops::Add, str::FromStr};
 
 use crate::SlidesEnum;
 
@@ -195,6 +195,10 @@ pub enum StyleUnit {
     Unspecified,
     #[strum(to_string = "{0}px")]
     Pixel(f64),
+    #[strum(to_string = "{0}pt")]
+    Point(f64),
+    #[strum(to_string = "{0}%")]
+    Percent(f64),
 }
 
 impl StyleUnit {
@@ -202,6 +206,8 @@ impl StyleUnit {
         match self {
             StyleUnit::Unspecified => StyleUnit::Pixel(px),
             StyleUnit::Pixel(spx) => StyleUnit::Pixel(spx + px),
+            StyleUnit::Point(pt) => todo!(),
+            StyleUnit::Percent(percent) => todo!(),
         }
     }
 
@@ -220,6 +226,33 @@ impl Add for StyleUnit {
         match rhs {
             StyleUnit::Unspecified => self,
             StyleUnit::Pixel(px) => self.add_pixel(px),
+            StyleUnit::Point(pt) => todo!(),
+            StyleUnit::Percent(percent) => todo!(),
         }
+    }
+}
+
+#[derive(Debug)]
+pub enum StyleUnitParseError {
+    ParseFloatError(ParseFloatError),
+    UnknownUnits,
+}
+
+impl FromStr for StyleUnit {
+    type Err = StyleUnitParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let split_index = s
+            .chars()
+            .take_while(|c| c.is_ascii_digit() || *c == '.')
+            .count();
+        let (number, unit) = s.split_at(split_index);
+        let number = f64::from_str(number).map_err(|e| StyleUnitParseError::ParseFloatError(e))?;
+        Ok(match unit {
+            "%" => StyleUnit::Percent(number),
+            "px" => StyleUnit::Pixel(number),
+            "pt" => StyleUnit::Point(number),
+            _ => return Err(StyleUnitParseError::UnknownUnits),
+        })
     }
 }

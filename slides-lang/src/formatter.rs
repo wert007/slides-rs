@@ -356,6 +356,7 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::Error(false) => Ok(()),
         SyntaxNodeKind::DictEntry(dict_entry) => format_dict_entry(dict_entry, formatter, context),
         SyntaxNodeKind::Dict(dict) => format_dict(dict, formatter, context),
+        SyntaxNodeKind::Array(array) => todo!(),
         SyntaxNodeKind::InferredMember(inferred_member) => todo!(),
         SyntaxNodeKind::PostInitialization(post_initialization) => {
             format_post_initialization(post_initialization, formatter, context)

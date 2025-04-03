@@ -8,7 +8,7 @@ styling default(Slide):
     background = rgb(120, 160, 180);
 
 styling default(Label):
-    font = gfont("Quicksand");
+    font = gfont("Roboto");
 
 element image_with_caption(img: Image, caption: String):
     img = img {

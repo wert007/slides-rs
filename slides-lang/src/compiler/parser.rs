@@ -80,6 +80,13 @@ pub struct Dict {
 }
 
 #[derive(Debug, Clone)]
+pub struct Array {
+    pub lbracket: Token,
+    pub entries: Vec<(SyntaxNode, Option<Token>)>,
+    pub rbracket: Token,
+}
+
+#[derive(Debug, Clone)]
 pub struct InferredMember {
     pub period: Token,
     pub member: Token,
@@ -135,6 +142,7 @@ pub enum SyntaxNodeKind {
     TypedString(TypedString),
     DictEntry(DictEntry),
     Dict(Dict),
+    Array(Array),
     InferredMember(InferredMember),
     PostInitialization(PostInitialization),
     Parameter(Parameter),
@@ -324,6 +332,22 @@ impl SyntaxNode {
                 lbrace,
                 entries,
                 rbrace,
+            }),
+        }
+    }
+
+    fn array(
+        lbracket: Token,
+        entries: Vec<(SyntaxNode, Option<Token>)>,
+        rbracket: Token,
+    ) -> SyntaxNode {
+        let location = Location::combine(lbracket.location, rbracket.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::Array(Array {
+                lbracket,
+                entries,
+                rbracket,
             }),
         }
     }
@@ -552,6 +576,12 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
         SyntaxNodeKind::ImportStatement(import_statement) => {
             println!("Import");
             debug_syntax_node(&import_statement.path, files, format!("{indent}    "));
+        }
+        SyntaxNodeKind::Array(array) => {
+            println!("Array");
+            for (entry, _) in &array.entries {
+                debug_syntax_node(entry, files, format!("{indent}    "));
+            }
         }
     }
 }
@@ -819,9 +849,23 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
                 SyntaxNode::variable_reference(parser.next_token())
             }
         }
-        TokenKind::Number => SyntaxNode::literal(parser.next_token()),
+        TokenKind::Number => {
+            let number = parser.next_token();
+            if parser.current_token().kind == TokenKind::Identifier
+                || parser.current_token().kind == TokenKind::SingleChar('%')
+            {
+                let unit = parser.next_token();
+                match Token::combine(number, unit, TokenKind::StyleUnitLiteral) {
+                    Ok(token) => SyntaxNode::literal(token),
+                    Err(err) => SyntaxNode::error(err, true),
+                }
+            } else {
+                SyntaxNode::literal(number)
+            }
+        }
         TokenKind::String => SyntaxNode::literal(parser.next_token()),
         TokenKind::SingleChar('{') => parse_dict(parser, context),
+        TokenKind::SingleChar('[') => parse_array(parser, context),
         TokenKind::SingleChar('.') => parse_inferred_member(parser, context),
         _ => {
             debug_tokens(&parser.tokens[parser.index..], &context.loaded_files);
@@ -863,18 +907,39 @@ fn parse_dict(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     SyntaxNode::dict(lbrace, entries, rbrace)
 }
 
+fn parse_array(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let lbracket = parser.match_token(TokenKind::SingleChar('['));
+    let mut entries = Vec::new();
+    while parser.current_token().kind != TokenKind::SingleChar(']')
+        && parser.current_token().kind != TokenKind::Eof
+    {
+        let position = parser.position();
+        let value = parse_expression(parser, context);
+        let optional_comma = parser.try_match_token(TokenKind::SingleChar(','));
+
+        entries.push((value, optional_comma));
+        if let Some(consumed) = parser.ensure_consume(position) {
+            entries.push((SyntaxNode::error(consumed, true), None));
+        }
+    }
+    let rbracket = parser.match_token(TokenKind::SingleChar(']'));
+    SyntaxNode::array(lbracket, entries, rbracket)
+}
+
 fn parse_dict_identifier(parser: &mut Parser, _: &mut Context) -> Token {
     let mut identifier = parser.match_token(TokenKind::Identifier);
     while parser.current_token().kind == TokenKind::SingleChar('-') {
         // TODO: Ensure that `foo - bar` is not a valid dict identifier
         // TODO: Ensure that `foo-2` is parsed correctly!
-        let _minus_token = parser.match_token(TokenKind::SingleChar('-'));
+        let minus_token = parser.match_token(TokenKind::SingleChar('-'));
+        identifier = match Token::combine(identifier, minus_token, TokenKind::Identifier) {
+            Ok(it) => it,
+            Err(it) => it,
+        };
         let identifier_part = parser.match_token(TokenKind::Identifier);
-
-        identifier = Token {
-            location: Location::combine(identifier.location, identifier_part.location),
-            kind: TokenKind::Identifier,
-            trivia: identifier.trivia,
+        identifier = match Token::combine(identifier, identifier_part, TokenKind::Identifier) {
+            Ok(it) => it,
+            Err(it) => it,
         };
     }
     identifier

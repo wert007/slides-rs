@@ -15,6 +15,7 @@ pub enum TokenKind {
     SingleChar(char),
     String,
     Error,
+    StyleUnitLiteral,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Trivia {
@@ -128,6 +129,32 @@ impl Token {
 
     pub fn text<'a, 'b: 'a>(&'a self, files: &'b Files) -> &'a str {
         &files[self.location]
+    }
+
+    pub(crate) fn combine(a: Token, b: Token, kind: TokenKind) -> Result<Token, Token> {
+        let location = Location::combine(a.location, b.location);
+        if a.location.end() != b.location.start {
+            // TODO: This would loose data:
+            // ```sld
+            // 12 // Hello
+            // %
+            // ```
+            Err(Token {
+                location,
+                kind: TokenKind::Error,
+                trivia: a.trivia,
+            })
+        } else {
+            Ok(Token {
+                location,
+                kind,
+                trivia: Trivia {
+                    leading_comments: a.trivia.leading_comments,
+                    trailing_comments: b.trivia.trailing_comments,
+                    leading_blank_line: a.trivia.leading_blank_line,
+                },
+            })
+        }
     }
 }
 
@@ -399,6 +426,6 @@ pub fn debug_tokens(tokens: &[Token], files: &Files) {
 fn is_token(char: char) -> bool {
     matches!(
         char,
-        ':' | ';' | '=' | '(' | ')' | '.' | ',' | '{' | '}' | '[' | ']'
+        ':' | ';' | '=' | '(' | ')' | '.' | ',' | '{' | '}' | '[' | ']' | '%'
     )
 }

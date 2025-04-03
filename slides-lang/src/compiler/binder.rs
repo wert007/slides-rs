@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use convert_case::Casing;
-use slides_rs_core::{CustomElement, ElementRefMut, Presentation, TextAlign};
+use slides_rs_core::{CustomElement, ElementRefMut, Presentation, StyleUnit, TextAlign};
 use string_interner::symbol::SymbolUsize;
 use summum_types::summum;
 use typing::{FunctionType, Type, TypeId, TypeInterner};
@@ -140,6 +140,12 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
             println!("Dict:");
             for (name, entry) in items {
                 debug_bound_node(entry, context, format!("{indent}    {name}: "));
+            }
+        }
+        BoundNodeKind::Array(items) => {
+            println!("Array:");
+            for entry in items {
+                debug_bound_node(entry, context, format!("{indent}    "));
             }
         }
         BoundNodeKind::MemberAccess(member_access) => {
@@ -369,6 +375,7 @@ summum! {
         HorizontalAlignment(slides_rs_core::HorizontalAlignment),
         TextAlign(slides_rs_core::TextAlign),
         Font(slides_rs_core::Font),
+        StyleUnit(slides_rs_core::StyleUnit),
         Dict(HashMap<String, Value>),
         UserFunction(UserFunctionValue),
         CustomElement(slides_rs_core::CustomElement),
@@ -393,6 +400,7 @@ impl Value {
             Value::HorizontalAlignment(_) => Type::HAlign,
             Value::TextAlign(_) => Type::TextAlign,
             Value::Font(_) => Type::Font,
+            Value::StyleUnit(_) => Type::StyleUnit,
             Value::UserFunction(_) => todo!(),
             Value::CustomElement(e) => Type::CustomElement(e.type_name().into()),
         }
@@ -568,6 +576,7 @@ pub enum BoundNodeKind {
     SlideStatement(SlideStatement),
     VariableDeclaration(VariableDeclaration),
     Dict(Vec<(String, BoundNode)>),
+    Array(Vec<BoundNode>),
     MemberAccess(MemberAccess),
     Conversion(Conversion),
     PostInitialization(PostInitialization),
@@ -778,6 +787,15 @@ impl BoundNode {
             type_: TypeId::VOID,
         }
     }
+
+    fn array(entries: Vec<BoundNode>, location: Location, type_: TypeId) -> BoundNode {
+        BoundNode {
+            base: None,
+            location,
+            kind: BoundNodeKind::Array(entries),
+            type_,
+        }
+    }
 }
 
 pub struct BoundAst {
@@ -831,10 +849,35 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         }
         SyntaxNodeKind::Error(consumed) => BoundNode::syntax_error(statement.location, consumed),
         SyntaxNodeKind::Dict(dict) => bind_dict(dict, statement.location, binder, context),
+        SyntaxNodeKind::Array(array) => bind_array(array, statement.location, binder, context),
         SyntaxNodeKind::PostInitialization(post_initialization) => {
             bind_post_initialization(post_initialization, statement.location, binder, context)
         }
         unsupported => unreachable!("Not supported: {}", unsupported.as_ref()),
+    }
+}
+
+fn bind_array(
+    array: parser::Array,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    let mut entries = Vec::with_capacity(array.entries.len());
+    let mut inner_type = TypeId::ERROR;
+    for (entry, _) in array.entries {
+        let entry = bind_node(entry, binder, context);
+        if inner_type == TypeId::ERROR {
+            inner_type = entry.type_;
+        }
+        entries.push(entry);
+    }
+    if inner_type == TypeId::ERROR {
+        // TODO: Array is under specified
+        BoundNode::error(location)
+    } else {
+        let type_ = context.type_interner.get_or_intern(Type::Array(inner_type));
+        BoundNode::array(entries, location, type_)
     }
 }
 
@@ -1094,10 +1137,9 @@ fn bind_dict(
 ) -> BoundNode {
     let mut entries = Vec::with_capacity(dict.entries.len());
     for (entry, _) in dict.entries {
-        let entry = entry
-            .kind
-            .try_as_dict_entry()
-            .expect("should not have parsed");
+        let Some(entry) = entry.kind.try_as_dict_entry() else {
+            continue;
+        };
         let key = entry.identifier.text(&context.loaded_files).to_string();
         let value = bind_node(*entry.value, binder, context);
         entries.push((key, value));
@@ -1234,6 +1276,9 @@ fn bind_literal(
             }
         }
         super::lexer::TokenKind::String => Value::parse_string_literal(text, true),
+        super::lexer::TokenKind::StyleUnitLiteral => {
+            Value::StyleUnit(text.parse().expect("lexer filtered"))
+        }
         err => unreachable!("This is a unhandled literal {err:?}"),
     };
     let type_ = context.type_interner.get_or_intern(value.infer_type());
