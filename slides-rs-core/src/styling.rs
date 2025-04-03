@@ -2,7 +2,7 @@ use convert_case::{Case, Casing};
 use enum_dispatch::enum_dispatch;
 use struct_field_names_as_array::FieldNamesAsSlice;
 
-use crate::Result;
+use crate::{Result, StyleUnit};
 use std::{any::type_name, fmt::Display, ops::Deref};
 
 #[enum_dispatch]
@@ -347,6 +347,7 @@ pub struct LabelStyling {
     text_color: Option<Color>,
     text_align: TextAlign,
     font: Font,
+    font_size: StyleUnit,
 }
 
 impl LabelStyling {
@@ -355,6 +356,7 @@ impl LabelStyling {
             text_color: None,
             text_align: TextAlign::Unspecified,
             font: Font::Unspecified,
+            font_size: StyleUnit::Unspecified,
         })
     }
 }
@@ -370,6 +372,10 @@ impl LabelStyling {
 
     pub fn set_font(&mut self, font: Font) {
         self.font = font;
+    }
+
+    pub fn set_font_size(&mut self, font_size: StyleUnit) {
+        self.font_size = font_size;
     }
 }
 

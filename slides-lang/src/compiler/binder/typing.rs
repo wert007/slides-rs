@@ -168,6 +168,8 @@ impl Type {
             Some(Self::Thickness)
         } else if const_str::compare!(==, rust_string, "#ArrayOfStyleReferences") {
             Some(Self::Array(TypeId::STYLING))
+        } else if const_str::compare!(==, rust_string, "StyleUnit") {
+            Some(Self::StyleUnit)
         } else {
             None
         }
