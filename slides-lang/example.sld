@@ -20,10 +20,7 @@ element image_with_caption(img: Image, caption: String):
 
 slide intro:
     background = rgb(255, 127, 127);
-    let i = image_with_caption(
-        image(p"./assets/mountain.jpg"),
-        "Mountain, 2024, pixabay"
-    ) {
+    let i = image_with_caption(image(p"./assets/mountain.jpg"), "Mountain, 2024, pixabay") {
         valign: VAlign.Stretch,
         halign: HAlign.Stretch,
     };

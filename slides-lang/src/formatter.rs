@@ -8,6 +8,7 @@ use crate::{
     Context,
     compiler::{
         self,
+        binder::Value,
         lexer::{Token, TokenKind},
         parser::{SyntaxNodeKind, debug_ast},
     },
@@ -331,7 +332,7 @@ fn format_node<W: Write + fmt::Debug>(
         }
         SyntaxNodeKind::Literal(token) | SyntaxNodeKind::VariableReference(token) => {
             if matches!(token.kind, TokenKind::String) {
-                formatter.emit_token(token, &context.loaded_files, TokenConfig::STRING)
+                format_string(token, formatter, context)
             } else {
                 formatter.emit_token(token, &context.loaded_files, TokenConfig::TRIMMED)
             }
@@ -356,17 +357,93 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::PostInitialization(post_initialization) => {
             format_post_initialization(post_initialization, formatter, context)
         }
-        SyntaxNodeKind::Parameter(parameter) => todo!(),
-        SyntaxNodeKind::ParameterBlock(parameter_block) => todo!(),
+        SyntaxNodeKind::Parameter(parameter) => format_parameter(parameter, formatter, context),
+        SyntaxNodeKind::ParameterBlock(parameter_block) => {
+            format_parameter_block(parameter_block, formatter, context)
+        }
     }
+}
+
+fn format_parameter<W: Write + fmt::Debug>(
+    parameter: compiler::parser::Parameter,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> std::result::Result<(), std::io::Error> {
+    formatter.emit_token(
+        parameter.identifier,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    formatter.emit_token(
+        parameter.colon,
+        &context.loaded_files,
+        TokenConfig::TRAILING_SPACE,
+    )?;
+    formatter.emit_token(
+        parameter.type_,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    Ok(())
+}
+
+fn format_parameter_block<W: Write + fmt::Debug>(
+    parameter_block: compiler::parser::ParameterBlock,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> Result<()> {
+    formatter.emit_token(
+        parameter_block.lparen,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    for (parameter, comma) in parameter_block.parameters {
+        format_node(parameter, formatter, context)?;
+        if let Some(comma) = comma {
+            formatter.emit_token(comma, &context.loaded_files, TokenConfig::TRAILING_SPACE)?;
+        }
+    }
+    formatter.emit_token(
+        parameter_block.rparen,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    Ok(())
 }
 
 fn format_element_statement<W: Write + fmt::Debug>(
     element_statement: compiler::parser::ElementStatement,
     formatter: &mut Formatter<W>,
     context: &mut Context,
-) -> std::result::Result<(), std::io::Error> {
-    todo!()
+) -> Result<()> {
+    formatter.emit_token(
+        element_statement.element_keyword,
+        &context.loaded_files,
+        TokenConfig {
+            leading_blank_line: true,
+            trailing_space: true,
+            ..Default::default()
+        },
+    )?;
+    formatter.emit_token(
+        element_statement.name,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+
+    format_node(*element_statement.parameters, formatter, context)?;
+
+    formatter.emit_token(
+        element_statement.colon,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    formatter.indent += 4;
+    for statement in element_statement.body {
+        format_node(statement, formatter, context)?;
+    }
+    formatter.indent -= 4;
+    Ok(())
 }
 
 fn format_expression_statement<W: Write + fmt::Debug>(
@@ -389,7 +466,7 @@ fn format_dict_entry<W: Write + fmt::Debug>(
     dict_entry: compiler::parser::DictEntry,
     formatter: &mut Formatter<W>,
     context: &mut Context,
-) -> std::result::Result<(), std::io::Error> {
+) -> Result<()> {
     formatter.ensure_indent()?;
     formatter.emit_token(
         dict_entry.identifier,
@@ -525,6 +602,32 @@ fn format_slide_statement<W: Write + fmt::Debug>(
     Ok(())
 }
 
+fn format_string<W: Write + fmt::Debug>(
+    token: Token,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> Result<()> {
+    let string =
+        Value::parse_string_literal(token.text(&context.loaded_files), false).into_string();
+    formatter.ensure_indent()?;
+    if string.contains('\n') {
+        writeln!(formatter, "\"\"\"")?;
+        formatter.indent += 4;
+        formatter.ensure_indent()?;
+    } else {
+        write!(formatter, "\"")?;
+    }
+    write!(formatter, "{}", string)?;
+    if string.contains('\n') {
+        formatter.indent -= 4;
+        formatter.ensure_indent()?;
+        write!(formatter, "\n\"\"\"")?;
+    } else {
+        write!(formatter, "\"")?;
+    }
+    Ok(())
+}
+
 fn format_typed_string<W: Write + fmt::Debug>(
     typed_string: compiler::parser::TypedString,
     formatter: &mut Formatter<W>,
@@ -536,11 +639,13 @@ fn format_typed_string<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::default(),
     )?;
-    formatter.emit_token(
-        typed_string.string,
-        &context.loaded_files,
-        TokenConfig::STRING,
-    )?;
+    format_string(typed_string.string, formatter, context)?;
+
+    // formatter.emit_token(
+    //     typed_string.string,
+    //     &context.loaded_files,
+    //     TokenConfig::STRING,
+    // )?;
     Ok(())
 }
 
