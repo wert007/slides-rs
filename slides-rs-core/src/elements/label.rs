@@ -1,18 +1,26 @@
 use std::fmt::Display;
 
+use ::markdown::Constructs;
+
 use crate::{
     ElementStyling, LabelStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
 };
 
 use super::{WebRenderable, WebRenderableContext};
 
+mod markdown;
+
 #[derive(Debug, Clone)]
 pub struct FormattedText {
     text: String,
 }
+
 impl FormattedText {
     fn render_to_html<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
-        writeln!(w, "{}", markdown::to_html(&self.text))?;
+        markdown::render_markdown(
+            w,
+            markdown::to_mdast(&self.text, &markdown::SLIDE_MARKDOWN_PARSE_OPTIONS).unwrap(),
+        )?;
         Ok(())
     }
 }

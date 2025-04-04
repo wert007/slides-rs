@@ -89,9 +89,10 @@ z-index: 0;
 right: 0px; left: unset;
 z-index: 1;
  }
-#code-bg-lbl {
+#code-bg-lbl, #code-bg-lbl .label-text {
 color: rgb(255, 255, 255, 1);
-#code-bg-lbl }
+}
+
 #threads {  }
 #threads {  }
 #threads-bg { top: 0px;
@@ -116,9 +117,10 @@ z-index: 0;
 right: 0px; left: unset;
 z-index: 1;
  }
-#threads-bg-lbl {
+#threads-bg-lbl, #threads-bg-lbl .label-text {
 color: rgb(255, 255, 255, 1);
-#threads-bg-lbl }
+}
+
 #frozen {  }
 #frozen {  }
 #frozen-bg { top: 0px;
@@ -143,9 +145,10 @@ z-index: 0;
 right: 0px; left: unset;
 z-index: 1;
  }
-#frozen-bg-lbl {
+#frozen-bg-lbl, #frozen-bg-lbl .label-text {
 color: rgb(255, 255, 255, 1);
-#frozen-bg-lbl }
+}
+
 #title {  }
 #title {  }
 #title-title { bottom: 50%; top: unset;
@@ -153,33 +156,38 @@ left: 0px;
 right: 0px;
 width: 100%;
  }
-#title-title {
+#title-title, #title-title .label-text {
 text-align: center;
 font-size: 52pt;
-#title-title }
+}
+
 #title-subtitle { top: 50%; bottom: unset;
 left: 15%;
 right: 15%;
 width: 70%;
  }
-#title-subtitle {
+#title-subtitle, #title-subtitle .label-text {
 text-align: center;
 font-size: 28pt;
-#title-subtitle }
+}
+
 #toc {  }
 #toc {  }
 #toc-toc {  }
-#toc-toc {
-#toc-toc }
+#toc-toc, #toc-toc .label-text {
+}
+
 #toc-page {  }
-#toc-page {
-#toc-page }
+#toc-page, #toc-page .label-text {
+}
+
 #example {  }
 #example {  }
 #example-text {  }
-#example-text {
+#example-text, #example-text .label-text {
 color: rgb(255, 255, 255, 1);
-#example-text }
+}
+
 #example-bg { top: 0px;
 bottom: 0px;
 height: 100%;
@@ -203,32 +211,36 @@ filter: brightness(0.4);
 right: 0px; left: unset;
 z-index: 1;
  }
-#example-bg-lbl {
+#example-bg-lbl, #example-bg-lbl .label-text {
 color: rgb(255, 255, 255, 1);
-#example-bg-lbl }
+}
+
 #example-page {  }
-#example-page {
+#example-page, #example-page .label-text {
 color: rgb(255, 255, 255, 1);
-#example-page }
+}
+
 #one_sided_sync {  }
 #one_sided_sync {  }
 #one_sided_sync-text {  }
-#one_sided_sync-text {
-#one_sided_sync-text }
+#one_sided_sync-text, #one_sided_sync-text .label-text {
+}
+
 #one_sided_sync-page {  }
-#one_sided_sync-page {
+#one_sided_sync-page, #one_sided_sync-page .label-text {
 color: rgb(255, 255, 255, 1);
-#one_sided_sync-page }
+}
+
 .label {  }
+.label .label-text {
+color: rgb(89, 89, 89, 1);
+}
+
 .label {
 color: rgb(0, 0, 0, 1);
 font-family: "Roboto";
-.label }
-.label p,
-.label ul,
-.label ol {
-color: rgb(89, 89, 89, 1);
 }
+
 .slide { padding: 10% 10% 10% 10%;
 background: rgb(243, 243, 243, 1);
  }
@@ -237,6 +249,7 @@ background: rgb(243, 243, 243, 1);
 left: 50%; right: unset;
 transform: translate(-50%, 0%);
  }
-.page_number {
+.page_number, .page_number .label-text {
 text-align: center;
-.page_number }
+}
+

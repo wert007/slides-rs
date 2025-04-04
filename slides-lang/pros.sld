@@ -80,9 +80,6 @@ slide toc:
     let page = l"1" { styles: [page_number]};
 
 slide example:
-    let bg = image_with_caption(image(p"./pros-assets/car-repair.jpg") {
-        filter: brightness(0.4),
-    }, "Bild von emkanicepic auf Pixabay");
 
     let text = l"""
         # Beispiel
@@ -94,6 +91,10 @@ slide example:
             - Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation
             - Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks
     """ { text_color: c"white"};
+
+    let bg = image_with_caption(image(p"./pros-assets/car-repair.jpg") {
+        filter: brightness(0.4),
+    }, "Bild von emkanicepic auf Pixabay");
 
     let page = l"2" { text_color: c"white", styles: [page_number]};
 

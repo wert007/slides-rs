@@ -577,8 +577,6 @@ impl LabelStyling {
     }
 
     pub fn set_text_styling(&mut self, text: TextStyling) {
-        dbg!(&self.text, &text);
-
         self.text = text;
     }
 }
@@ -632,7 +630,14 @@ impl ToCss for LabelStyling {
         selector: &str,
         w: &mut dyn Write,
     ) -> std::io::Result<()> {
-        writeln!(w, "{selector} {{")?;
+        if self.text != TextStyling::default() {
+            writeln!(w, "{selector} .label-text {{")?;
+            self.text.output_css_statements(w)?;
+            writeln!(w, "}}\n")?;
+            writeln!(w, "{selector} {{")?;
+        } else {
+            writeln!(w, "{selector}, {selector} .label-text {{")?;
+        }
         if let Some(text_color) = self.text_color {
             writeln!(w, "color: {text_color};").expect("infallible");
         }
@@ -645,17 +650,8 @@ impl ToCss for LabelStyling {
         if self.font_size != StyleUnit::Unspecified {
             writeln!(w, "font-size: {};", self.font_size).expect("infallible");
         }
-        writeln!(w, "{selector} }}")?;
+        writeln!(w, "}}\n")?;
 
-        dbg!(&self.text);
-
-        if self.text != TextStyling::default() {
-            writeln!(w, "{selector} p,")?;
-            writeln!(w, "{selector} ul,")?;
-            writeln!(w, "{selector} ol {{")?;
-            self.text.output_css_statements(w)?;
-            writeln!(w, "}}")?;
-        }
         Ok(())
     }
 

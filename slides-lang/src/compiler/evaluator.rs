@@ -242,7 +242,6 @@ fn evaluate_styling_statement(
             .set_text_styling(Arc::unwrap_or_clone(value.clone().into_text_styling()).into_inner());
     }
     evaluator.drop_scope();
-    dbg!(&styling);
     let reference = context.presentation.add_dynamic_styling(styling);
     evaluator.set_variable(styling_statement.name, Value::StyleReference(reference));
     Ok(())

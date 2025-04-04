@@ -10,6 +10,7 @@ const-str = "0.6.2"
 constcat = "0.6.0"
 convert_case = "0.8.0"
 enum_dispatch = "0.3.13"
+html-escape = "0.2.13"
 slides-rs-core = { version = "0.1.0", path = "../slides-rs-core" }
 string-interner = "0.19.0"
 struct-field-names-as-array = { version = "0.3.0", path = "../struct_field_names_as_array/struct-field-names-as-array" }
