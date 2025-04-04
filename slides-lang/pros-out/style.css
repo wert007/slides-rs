@@ -10,6 +10,10 @@ h6 {
     margin: 0;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 ul,
 ol {
     margin: 0;
@@ -53,57 +57,107 @@ ol {
 #code { 
  }
 #code-bg {
-            
+            top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;ight: 0px;
+width: 100%;
+
 
         }
 #code-bg-img {
+top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;ight: 0px;
+width: 100%;
+z-index: 0;
 
 object-fit: cover;
 
 }
 #code-bg-lbl {
+bottom: 0px; top: unset;
+right: 0px; left: unset;
+z-index: 1;
 
 color: rgb(255, 255, 255, 1);
 }
 #threads { 
  }
 #threads-bg {
-            
+            top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;ight: 0px;
+width: 100%;
+
 
         }
 #threads-bg-img {
+top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;ight: 0px;
+width: 100%;
+z-index: 0;
 
 object-fit: cover;
 
 }
 #threads-bg-lbl {
+bottom: 0px; top: unset;
+right: 0px; left: unset;
+z-index: 1;
 
 color: rgb(255, 255, 255, 1);
 }
 #frozen { 
  }
 #frozen-bg {
-            
+            top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;ight: 0px;
+width: 100%;
+
 
         }
 #frozen-bg-img {
+top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;ight: 0px;
+width: 100%;
+z-index: 0;
 
 object-fit: cover;
 
 }
 #frozen-bg-lbl {
+bottom: 0px; top: unset;
+right: 0px; left: unset;
+z-index: 1;
 
 color: rgb(255, 255, 255, 1);
 }
 #title { 
  }
 #title-title {
+bottom: 50%; top: unset;
+left: 0px;ight: 0px;
+width: 100%;
 
 text-align: center;
+font-size: 52pt;
 }
 #title-subtitle {
+top: 50%; bottom: unset;
+left: 0px;ight: 0px;
+width: 100%;
 
 text-align: center;
+font-size: 28pt;
 }
 #toc { 
  }
@@ -116,15 +170,29 @@ text-align: center;
 #example { 
  }
 #example-bg {
-            
+            top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;ight: 0px;
+width: 100%;
+
 
         }
 #example-bg-img {
+top: 0px;
+bottom: 0px;
+height: 100%;
+left: 0px;ight: 0px;
+width: 100%;
+z-index: 0;
 
 object-fit: cover;
 
 }
 #example-bg-lbl {
+bottom: 0px; top: unset;
+right: 0px; left: unset;
+z-index: 1;
 
 color: rgb(255, 255, 255, 1);
 }
@@ -146,15 +214,20 @@ color: rgb(255, 255, 255, 1);
 }
 .label {
 
+color: rgb(0, 0, 0, 1);
 font-family: "Roboto";
 
 }
 .slide {
+padding: 10% 10% 10% 10%;
 background: rgb(243, 243, 243, 1);
 
 
 }
 .page_number {
+bottom: 0px; top: unset;
+left: 50%; right: unset;
+transform: translate(-50%, 0%);
 
 text-align: center;
 

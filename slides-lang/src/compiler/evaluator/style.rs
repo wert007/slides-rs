@@ -89,6 +89,12 @@ fn assign_to_field(
                 .as_base_mut()
                 .set_background(value.into_background());
         }
+        "margin" => {
+            styling.as_base_mut().set_margin(value.into_thickness());
+        }
+        "padding" => {
+            styling.as_base_mut().set_padding(value.into_thickness());
+        }
         name => unreachable!("UNknown {name}"),
     }
 }

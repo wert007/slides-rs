@@ -136,6 +136,7 @@ use crate::SlidesEnum;
 #[derive(Debug, Clone, Copy, strum::VariantNames, strum::EnumString, Default)]
 pub enum VerticalAlignment {
     #[default]
+    Unset,
     Top,
     Center,
     Bottom,
@@ -147,6 +148,7 @@ impl SlidesEnum for VerticalAlignment {}
 #[derive(Debug, Clone, Copy, strum::VariantNames, strum::EnumString, Default)]
 pub enum HorizontalAlignment {
     #[default]
+    Unset,
     Left,
     Center,
     Right,
@@ -207,7 +209,7 @@ impl StyleUnit {
         }
     }
 
-    fn or_zero(&self) -> StyleUnit {
+    pub fn or_zero(&self) -> StyleUnit {
         match self {
             Self::Unspecified => StyleUnit::Pixel(0.0),
             normal => *normal,

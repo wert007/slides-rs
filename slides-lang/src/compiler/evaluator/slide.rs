@@ -1,6 +1,8 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use slides_rs_core::{Background, Color, CustomElement, Label, Slide, Thickness, WebRenderable};
+use slides_rs_core::{
+    Background, Color, CustomElement, ElementStyling, Label, Slide, Thickness, WebRenderable,
+};
 use string_interner::symbol::SymbolUsize;
 
 use crate::compiler::binder::{self, BoundNode, BoundNodeKind, Value, typing::Type};
@@ -368,8 +370,24 @@ fn evaluate_user_function(
 
     let scope = evaluator.drop_scope();
     let mut elements = Vec::new();
+    let mut styling = ElementStyling::new_base();
     let mut slide = evaluator.slide.take().expect("slide");
     for (name, value) in scope.variables {
+        match context.string_interner.resolve_variable(name) {
+            "halign" => {
+                styling
+                    .base_mut()
+                    .set_horizontal_alignment(value.into_horizontal_alignment());
+                continue;
+            }
+            "valign" => {
+                styling
+                    .base_mut()
+                    .set_vertical_alignment(value.into_vertical_alignment());
+                continue;
+            }
+            _ => {}
+        }
         match value {
             Value::Label(mut label) => {
                 let name = context.string_interner.resolve_variable(name);
@@ -401,7 +419,7 @@ fn evaluate_user_function(
         .unwrap()
         .try_as_custom_element_ref()
         .unwrap();
-    Value::CustomElement(CustomElement::new(type_name, elements))
+    Value::CustomElement(CustomElement::new(type_name, elements).with_element_styling(styling))
 }
 
 fn extract_function_name(base: BoundNode, context: &mut Context) -> String {

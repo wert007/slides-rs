@@ -34,6 +34,7 @@ impl<T> Index<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct Presentation {
     slides: Vec<Slide>,
     stylings: Vec<DynamicElementStyling>,
@@ -141,6 +142,7 @@ pub enum FilePlacement {
     HtmlHead,
 }
 
+#[derive(Debug)]
 pub struct Slide {
     id: Option<String>,
     elements: Vec<Element>,

@@ -1,10 +1,11 @@
 styling default(Label):
     font = gfont("Roboto");
-    // header.text_color = c"black";
+    text_color = c"black";
     // text.text_color = c"#595959";
 
 styling default(Slide):
     background = c"#f3f3f3";
+    padding = {top: 10%, right: 10%, bottom: 10%, left: 10%};
 
 element image_with_caption(img: Image, caption: String):
     img = img {
@@ -39,6 +40,7 @@ slide title:
         text_align: TextAlign.Center,
         font_size: 52pt,
         valign: VAlign.Bottom,
+        halign: HAlign.Stretch,
         margin: {
             bottom: 50%,
         }
@@ -47,6 +49,7 @@ slide title:
         text_align: TextAlign.Center,
         font_size: 28pt,
         valign: VAlign.Top,
+        halign: HAlign.Stretch,
         margin: {
             top: 50%,
         }

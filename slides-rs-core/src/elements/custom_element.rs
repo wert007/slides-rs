@@ -36,6 +36,11 @@ impl CustomElement {
         &mut self.styling
     }
 
+    pub fn with_element_styling(mut self, styling: ElementStyling<()>) -> Self {
+        self.styling = styling;
+        self
+    }
+
     pub fn add_styling(&mut self, reference: StylingReference) {
         self.stylings.push(reference);
     }

@@ -99,6 +99,7 @@ pub fn create_presentation_from_ast(
     for statement in ast.statements {
         evaluate_statement(statement, &mut evaluator, context)?;
     }
+    // dbg!(&context.presentation);
     Ok(())
 }
 
@@ -130,17 +131,12 @@ fn evaluate_import_statement(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
-    let extension = import_statement
-        .extension()
-        .expect("Needs extension")
-        .to_str()
-        .expect("should be string");
     let path_extensions = import_statement.to_str().unwrap().split('.').rev();
     enum State {
         Unknown,
         HtmlUnknown,
         HtmlHead,
-    };
+    }
 
     impl State {
         pub fn is_finished(&self) -> bool {

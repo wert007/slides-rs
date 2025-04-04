@@ -51,6 +51,7 @@ impl Display for StylingReference {
     }
 }
 
+#[derive(Debug)]
 #[enum_dispatch(ToCss)]
 pub enum Styling {
     Label(LabelStyling),
@@ -59,6 +60,7 @@ pub enum Styling {
     CustomElement(()),
 }
 
+#[derive(Debug)]
 pub struct DynamicElementStyling {
     name: String,
     base: BaseElementStyling,
@@ -150,6 +152,87 @@ impl ToCss for BaseElementStyling {
     fn to_css_style(&self) -> String {
         use std::fmt::Write;
         let mut result = String::new();
+        let mut translate = (0.0, 0.0);
+
+        match self.valign {
+            VerticalAlignment::Unset => {}
+            VerticalAlignment::Top => {
+                writeln!(result, "top: {}; bottom: unset;", self.margin.top.or_zero())
+                    .expect("infallible");
+            }
+            VerticalAlignment::Center => {
+                writeln!(result, "top: 50%; bottom: unset;").expect("infallible");
+                translate.1 = -50.0;
+            }
+            VerticalAlignment::Bottom => {
+                writeln!(
+                    result,
+                    "bottom: {}; top: unset;",
+                    self.margin.bottom.or_zero()
+                )
+                .expect("infallible");
+            }
+            VerticalAlignment::Stretch => {
+                writeln!(
+                    result,
+                    "top: {};\nbottom: {};\nheight: 100%;",
+                    self.margin.top.or_zero(),
+                    self.margin.bottom.or_zero()
+                )
+                .expect("infallible");
+            }
+        }
+
+        match self.halign {
+            HorizontalAlignment::Unset => {}
+            HorizontalAlignment::Left => {
+                writeln!(
+                    result,
+                    "left: {}; right: unset;",
+                    self.margin.left.or_zero()
+                )
+                .expect("infallible");
+            }
+            HorizontalAlignment::Center => {
+                writeln!(result, "left: 50%; right: unset;").expect("infallible");
+                translate.0 = -50.0;
+            }
+            HorizontalAlignment::Right => {
+                writeln!(
+                    result,
+                    "right: {}; left: unset;",
+                    self.margin.right.or_zero()
+                )
+                .expect("infallible");
+            }
+            HorizontalAlignment::Stretch => {
+                writeln!(
+                    result,
+                    "left: {};\right: {};\nwidth: 100%;",
+                    self.margin.left.or_zero(),
+                    self.margin.right.or_zero()
+                )
+                .expect("infallible");
+            }
+        }
+
+        if translate != (0.0, 0.0) {
+            writeln!(
+                result,
+                "transform: translate({}%, {}%);",
+                translate.0, translate.1
+            )
+            .expect("infallible");
+        }
+
+        if self.padding != Thickness::default() {
+            writeln!(result, "padding: {};", self.padding).expect("infallible");
+        }
+
+        if let Some(z_index) = self.z_index {
+            writeln!(result, "z-index: {z_index};").expect("infallible");
+        }
+
         if self.background != Background::Unspecified {
             writeln!(result, "background: {};", self.background).expect("infallible");
         }
@@ -440,6 +523,9 @@ impl ToCss for LabelStyling {
         }
         if self.text_align != TextAlign::Unspecified {
             writeln!(result, "text-align: {};", self.text_align.as_css()).expect("infallible");
+        }
+        if self.font_size != StyleUnit::Unspecified {
+            writeln!(result, "font-size: {};", self.font_size).expect("infallible");
         }
         result
     }
