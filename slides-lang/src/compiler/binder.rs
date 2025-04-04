@@ -500,7 +500,7 @@ pub enum ConversionKind {
     TypedString,
 }
 
-#[derive(Debug, strum::EnumString, Clone, Copy)]
+#[derive(Debug, strum::EnumString, Clone, Copy, PartialEq, Eq)]
 pub enum StylingType {
     Label,
     Image,
@@ -1106,7 +1106,9 @@ fn access_member(
         } else {
             visited.push(base_type.clone());
         }
-        if let Some(type_) = base_type.field_type(context.string_interner.resolve(member)) {
+        let member = context.string_interner.resolve(member);
+        dbg!(&base_type, member);
+        if let Some(type_) = base_type.field_type(member) {
             let type_ = context.type_interner.get_or_intern(type_);
             let mut fallback = BoundNode::error(base.location);
             std::mem::swap(base, &mut fallback);

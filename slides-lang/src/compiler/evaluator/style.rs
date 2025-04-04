@@ -44,7 +44,9 @@ fn assign_to(lhs: BoundNode, value: Value, evaluator: &mut Evaluator, context: &
         BoundNodeKind::VariableReference(variable) => {
             assign_to_field(variable.id, value, evaluator, context);
         }
-        BoundNodeKind::MemberAccess(member_access) => todo!(),
+        BoundNodeKind::MemberAccess(member_access) => {
+            todo!()
+        }
         BoundNodeKind::Conversion(conversion) => todo!(),
         _ => unreachable!(),
     }

@@ -1,7 +1,15 @@
 styling default(Label):
     font = gfont("Roboto");
     text_color = c"black";
-    // text.text_color = c"#595959";
+    // h1
+    // h2
+    // h3
+    // h4
+    // h5
+    // h6
+    // code
+    // text
+    text.text_color = c"#595959";
 
 styling default(Slide):
     background = c"#f3f3f3";

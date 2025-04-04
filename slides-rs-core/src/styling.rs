@@ -3,11 +3,21 @@ use enum_dispatch::enum_dispatch;
 use struct_field_names_as_array::FieldNamesAsSlice;
 
 use crate::{HorizontalAlignment, Result, StyleUnit, Thickness, VerticalAlignment};
-use std::{any::type_name, fmt::Display, ops::Deref};
+use std::{any::type_name, fmt::Display, io::Write, ops::Deref};
 
 #[enum_dispatch]
 pub trait ToCss {
     fn class_name(&self) -> String;
+
+    fn to_css_rule(
+        &self,
+        layout: ToCssLayout,
+        selector: &str,
+        w: &mut dyn Write,
+    ) -> std::io::Result<()> {
+        let style = self.to_css_style(layout);
+        writeln!(w, "{selector} {{ {style} }}")
+    }
 
     fn to_css_style(&self, layout: ToCssLayout) -> String;
 
@@ -461,9 +471,10 @@ impl ToCss for SlideStyling {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, strum::Display, Clone)]
+#[derive(Default, Debug, PartialEq, Eq, strum::Display, Clone)]
 pub enum Font {
     #[strum(to_string = "unset")]
+    #[default]
     Unspecified,
     #[strum(to_string = "\"{0}\"")]
     GoogleFont(String),
@@ -512,8 +523,17 @@ impl TextAlign {
     }
 }
 
+#[derive(Default, Debug, Clone, FieldNamesAsSlice)]
+pub struct TextStyling {
+    text_color: Option<Color>,
+    text_align: TextAlign,
+    font: Font,
+    font_size: StyleUnit,
+}
+
 #[derive(Debug, Clone, FieldNamesAsSlice)]
 pub struct LabelStyling {
+    text: TextStyling,
     text_color: Option<Color>,
     text_align: TextAlign,
     font: Font,
@@ -523,6 +543,7 @@ pub struct LabelStyling {
 impl LabelStyling {
     pub fn new() -> ElementStyling<LabelStyling> {
         ElementStyling::new(Self {
+            text: TextStyling::default(),
             text_color: None,
             text_align: TextAlign::Unspecified,
             font: Font::Unspecified,

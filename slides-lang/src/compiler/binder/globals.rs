@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use constcat::concat_slices;
 use slides_rs_core::{
     BaseElementStyling, HorizontalAlignment, ImageStyling, LabelStyling, ObjectFit, SlideStyling,
-    SlidesEnum, TextAlign, VerticalAlignment,
+    SlidesEnum, TextAlign, TextStyling, VerticalAlignment,
 };
 
 include!(concat!(env!("OUT_DIR"), "/global_functions.rs"));
@@ -74,7 +74,8 @@ macro_rules! default_element {
     };
 }
 
-pub const MEMBERS: [MemberDeclarations; 7] = [
+pub const MEMBERS: [MemberDeclarations; 8] = [
+    MemberDeclarations::rename::<TextStyling>("TextStyling"),
     MemberDeclarations::rename::<LabelStyling>("Label"),
     default_element!("Label"),
     MemberDeclarations::rename::<ImageStyling>("Image"),

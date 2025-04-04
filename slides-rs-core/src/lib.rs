@@ -103,13 +103,11 @@ impl Presentation {
         }
 
         for styling in self.stylings {
-            let css = styling.to_css_style(ToCssLayout::unknown());
-            if css.is_empty() {
-                continue;
-            }
-            writeln!(emitter.raw_css(), ".{} {{", styling.name())?;
-            writeln!(emitter.raw_css(), "{css}")?;
-            writeln!(emitter.raw_css(), "}}")?;
+            styling.to_css_rule(
+                ToCssLayout::unknown(),
+                &format!(".{}", styling.name()),
+                emitter.raw_css(),
+            )?;
         }
         emitter.copy_referenced_files()?;
         writeln!(emitter.raw_html(), "</body></html>")?;
@@ -177,10 +175,8 @@ impl Slide {
 
     fn output_to_html<W: Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
         let id = self.id.expect("id should have been set here!");
-        let style = self.styling.to_css_style(ToCssLayout::unknown());
-        if !style.is_empty() {
-            writeln!(emitter.raw_css(), "#{id} {{ {style} }}")?;
-        }
+        self.styling
+            .to_css_rule(ToCssLayout::unknown(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(emitter.raw_html(), "<section id=\"{id}\" class=\"slide\">")?;
         for (index, mut element) in self.elements.into_iter().enumerate() {
             element.set_fallback_id(format!("element-{index}"));

@@ -92,6 +92,7 @@ pub enum Type {
     CustomElement(String),
     Array(TypeId),
     Filter,
+    TextStyling,
 }
 
 impl Type {
@@ -176,6 +177,8 @@ impl Type {
             Some(Self::Integer)
         } else if const_str::compare!(==, rust_string, "Filter") {
             Some(Self::Filter)
+        } else if const_str::compare!(==, rust_string, "TextStyling") {
+            Some(Self::TextStyling)
         } else {
             None
         }

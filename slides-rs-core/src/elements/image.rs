@@ -81,8 +81,8 @@ impl WebRenderable for Image {
         ctx: WebRenderableContext,
     ) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let style_styling = self.styling.to_css_style(ctx.layout);
-        writeln!(emitter.raw_css(), "#{id} {{\n{style_styling}\n}}",)?;
+        self.styling
+            .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         self.source.add_files(emitter)?;
         writeln!(
             emitter.raw_html(),

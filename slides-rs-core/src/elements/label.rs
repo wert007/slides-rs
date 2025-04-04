@@ -52,9 +52,8 @@ impl WebRenderable for Label {
         ctx: WebRenderableContext,
     ) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let style_styling = self.styling.to_css_style(ctx.layout);
-        writeln!(emitter.raw_css(), "#{id} {{")?;
-        writeln!(emitter.raw_css(), "{style_styling}}}")?;
+        self.styling
+            .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         // TODO: Maybe in future all text is gonna be inside of svg to allow
         // seemless scaling.
         writeln!(

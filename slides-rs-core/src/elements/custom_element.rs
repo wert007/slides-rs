@@ -53,13 +53,8 @@ impl WebRenderable for CustomElement {
         ctx: WebRenderableContext,
     ) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let style = self.styling.to_css_style(ctx.layout);
-        writeln!(
-            emitter.raw_css(),
-            r#"#{id} {{
-            {style}
-        }}"#,
-        )?;
+        self.styling
+            .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         writeln!(
             emitter.raw_html(),
             "<div id=\"{id}\" class=\"custom-element {} {}\">",
