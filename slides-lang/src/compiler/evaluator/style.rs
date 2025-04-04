@@ -3,6 +3,7 @@ use slides_rs_core::{ElementStyling, ToCss};
 use super::Evaluator;
 use super::value::Value;
 use crate::compiler::binder::{BoundNode, BoundNodeKind};
+use crate::compiler::evaluator::slide::evaluate_expression;
 use crate::{Context, VariableId};
 
 pub fn evaluate_to_styling(body: Vec<BoundNode>, evaluator: &mut Evaluator, context: &mut Context) {
@@ -46,7 +47,15 @@ fn assign_to(lhs: BoundNode, value: Value, evaluator: &mut Evaluator, context: &
             assign_to_field(variable.id, value, evaluator, context);
         }
         BoundNodeKind::MemberAccess(member_access) => {
-            todo!()
+            let base = evaluate_expression(*member_access.base, evaluator, context);
+            let member = context.string_interner.resolve(member_access.member);
+            match member {
+                "text_color" => base
+                    .as_text_styling()
+                    .borrow_mut()
+                    .set_text_color(value.into_color()),
+                missing => unreachable!("Missing member {missing}"),
+            }
         }
         BoundNodeKind::Conversion(conversion) => todo!(),
         _ => unreachable!(),

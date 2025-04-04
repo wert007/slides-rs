@@ -61,7 +61,7 @@ impl Display for StylingReference {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, strum::Display)]
 #[enum_dispatch(ToCss)]
 pub enum Styling {
     Label(LabelStyling),
@@ -89,30 +89,36 @@ impl DynamicElementStyling {
     pub fn as_label_mut(&mut self) -> &mut LabelStyling {
         match &mut self.specific {
             Styling::Label(label_styling) => label_styling,
-            _ => unreachable!("Expected Label"),
+            unexpected => unreachable!("Expected Label, found {unexpected}"),
         }
     }
     pub fn as_image_mut(&mut self) -> &mut ImageStyling {
         match &mut self.specific {
             Styling::Image(image_styling) => image_styling,
-            _ => unreachable!("Expected Image"),
+            unexpected => unreachable!("Expected Image, found {unexpected}"),
         }
     }
     pub fn as_slide_mut(&mut self) -> &mut SlideStyling {
         match &mut self.specific {
             Styling::Slide(slide_styling) => slide_styling,
-            _ => unreachable!("Expected Slide"),
+            unexpected => unreachable!("Expected Slide, found {unexpected}"),
         }
     }
 }
 
 impl ToCss for DynamicElementStyling {
+    fn to_css_rule(
+        &self,
+        layout: ToCssLayout,
+        selector: &str,
+        w: &mut dyn Write,
+    ) -> std::io::Result<()> {
+        self.base.to_css_rule(layout, selector, w)?;
+        self.specific.to_css_rule(layout, selector, w)?;
+        Ok(())
+    }
     fn to_css_style(&self, layout: ToCssLayout) -> String {
-        [
-            self.base.to_css_style(layout),
-            self.specific.to_css_style(layout),
-        ]
-        .join("\n")
+        unreachable!("PANIC");
     }
 
     fn collect_google_font_references(
@@ -367,12 +373,18 @@ impl ToCssLayout {
 }
 
 impl<S: ToCss> ToCss for ElementStyling<S> {
+    fn to_css_rule(
+        &self,
+        layout: ToCssLayout,
+        selector: &str,
+        w: &mut dyn Write,
+    ) -> std::io::Result<()> {
+        self.base.to_css_rule(layout, selector, w)?;
+        self.specific.to_css_rule(layout, selector, w)?;
+        Ok(())
+    }
     fn to_css_style(&self, layout: ToCssLayout) -> String {
-        [
-            self.base.to_css_style(layout),
-            self.specific.to_css_style(layout),
-        ]
-        .join("\n")
+        unreachable!("PANIC");
     }
 
     fn collect_google_font_references(
@@ -523,12 +535,25 @@ impl TextAlign {
     }
 }
 
-#[derive(Default, Debug, Clone, FieldNamesAsSlice)]
+#[derive(Default, Debug, Clone, FieldNamesAsSlice, PartialEq)]
 pub struct TextStyling {
     text_color: Option<Color>,
     text_align: TextAlign,
     font: Font,
     font_size: StyleUnit,
+}
+
+impl TextStyling {
+    pub fn set_text_color(&mut self, text_color: Color) {
+        self.text_color = Some(text_color);
+    }
+
+    fn output_css_statements(&self, w: &mut dyn Write) -> std::io::Result<()> {
+        if let Some(text_color) = self.text_color {
+            writeln!(w, "color: {text_color};")?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, FieldNamesAsSlice)]
@@ -549,6 +574,12 @@ impl LabelStyling {
             font: Font::Unspecified,
             font_size: StyleUnit::Unspecified,
         })
+    }
+
+    pub fn set_text_styling(&mut self, text: TextStyling) {
+        dbg!(&self.text, &text);
+
+        self.text = text;
     }
 }
 
@@ -595,7 +626,41 @@ impl ElementStyling<LabelStyling> {
 }
 
 impl ToCss for LabelStyling {
+    fn to_css_rule(
+        &self,
+        layout: ToCssLayout,
+        selector: &str,
+        w: &mut dyn Write,
+    ) -> std::io::Result<()> {
+        writeln!(w, "{selector} {{")?;
+        if let Some(text_color) = self.text_color {
+            writeln!(w, "color: {text_color};").expect("infallible");
+        }
+        if self.font != Font::Unspecified {
+            writeln!(w, "font-family: {};", self.font).expect("infallible");
+        }
+        if self.text_align != TextAlign::Unspecified {
+            writeln!(w, "text-align: {};", self.text_align.as_css()).expect("infallible");
+        }
+        if self.font_size != StyleUnit::Unspecified {
+            writeln!(w, "font-size: {};", self.font_size).expect("infallible");
+        }
+        writeln!(w, "{selector} }}")?;
+
+        dbg!(&self.text);
+
+        if self.text != TextStyling::default() {
+            writeln!(w, "{selector} p,")?;
+            writeln!(w, "{selector} ul,")?;
+            writeln!(w, "{selector} ol {{")?;
+            self.text.output_css_statements(w)?;
+            writeln!(w, "}}")?;
+        }
+        Ok(())
+    }
+
     fn to_css_style(&self, layout: ToCssLayout) -> String {
+        unreachable!("PANIC!");
         use std::fmt::Write;
         let mut result = String::new();
         if let Some(text_color) = self.text_color {

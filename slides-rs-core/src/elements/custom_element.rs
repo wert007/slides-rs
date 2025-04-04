@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{cell::RefCell, io::Write, sync::Arc};
 
 use crate::{ElementStyling, Result, StylingReference, ToCss, output::PresentationEmitter};
 
@@ -26,10 +26,6 @@ impl CustomElement {
     }
     pub fn type_name(&self) -> &str {
         &self.type_name
-    }
-
-    pub fn as_element_mut(&mut self) -> super::ElementRefMut<'_> {
-        super::ElementRefMut::CustomElement(self)
     }
 
     pub(crate) fn element_styling_mut(&mut self) -> &mut ElementStyling<()> {

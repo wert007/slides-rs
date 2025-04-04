@@ -113,10 +113,6 @@ impl Label {
         &mut self.styling
     }
 
-    pub fn as_element_mut(&mut self) -> super::ElementRefMut {
-        super::ElementRefMut::Label(self)
-    }
-
     pub fn add_styling(&mut self, reference: StylingReference) {
         self.stylings.push(reference);
     }

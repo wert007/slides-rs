@@ -44,7 +44,7 @@ slide frozen:
     let bg = image_with_caption(image(p"./pros-assets/frozen.jpg"), "Bild von adege auf Pixabay");
 
 slide title:
-    let title = l"Einseitige Synchronisation und Deadlocks" {
+    let title = l"# Einseitige Synchronisation und Deadlocks" {
         text_align: TextAlign.Center,
         font_size: 52pt,
         valign: VAlign.Bottom,
@@ -53,7 +53,7 @@ slide title:
             bottom: 50%,
         }
     }
-    let subtitle = l"Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
+    let subtitle = l"## Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
         text_align: TextAlign.Center,
         font_size: 28pt,
         valign: VAlign.Top,

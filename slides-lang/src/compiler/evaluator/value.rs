@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{cell::RefCell, collections::HashMap, path::PathBuf, sync::Arc};
 
 use summum_types::summum;
 
@@ -27,9 +27,9 @@ summum! {
         StyleReference(slides_rs_core::StylingReference),
         Background(slides_rs_core::Background),
         Color(slides_rs_core::Color),
-        Label(slides_rs_core::Label),
+        Label(Arc<RefCell<slides_rs_core::Label>>),
         Path(PathBuf),
-        Image(slides_rs_core::Image),
+        Image(Arc<RefCell<slides_rs_core::Image>>),
         ObjectFit(slides_rs_core::ObjectFit),
         VerticalAlignment(slides_rs_core::VerticalAlignment),
         HorizontalAlignment(slides_rs_core::HorizontalAlignment),
@@ -38,10 +38,11 @@ summum! {
         StyleUnit(slides_rs_core::StyleUnit),
         Dict(HashMap<String, Value>),
         UserFunction(UserFunctionValue),
-        CustomElement(slides_rs_core::CustomElement),
+        CustomElement(Arc<RefCell<slides_rs_core::CustomElement>>),
         Thickness(slides_rs_core::Thickness),
         Array(Vec<Value>),
         Filter(slides_rs_core::Filter),
+        TextStyling(Arc<RefCell<slides_rs_core::TextStyling>>),
     }
 }
 
@@ -65,10 +66,11 @@ impl Value {
             Value::Font(_) => Type::Font,
             Value::StyleUnit(_) => Type::StyleUnit,
             Value::UserFunction(_) => todo!(),
-            Value::CustomElement(e) => Type::CustomElement(e.type_name().into()),
+            Value::CustomElement(e) => Type::CustomElement(e.borrow().type_name().into()),
             Value::Thickness(_) => Type::Thickness,
             Value::Array(_) => unreachable!("Not possible"),
             Value::Filter(_) => Type::Filter,
+            Value::TextStyling(_) => Type::TextStyling,
         }
     }
 
@@ -80,11 +82,13 @@ impl Value {
         }
     }
 
-    pub fn as_mut_base_element(&mut self) -> slides_rs_core::ElementRefMut {
+    pub fn as_mut_base_element(&self) -> slides_rs_core::ElementRefMut {
         match self {
-            Value::Label(label) => label.as_element_mut(),
-            Value::Image(image) => image.as_element_mut(),
-            Value::CustomElement(custom_element) => custom_element.as_element_mut(),
+            Value::Label(label) => slides_rs_core::ElementRefMut::Label(label.clone()),
+            Value::Image(image) => slides_rs_core::ElementRefMut::Image(image.clone()),
+            Value::CustomElement(custom_element) => {
+                slides_rs_core::ElementRefMut::CustomElement(custom_element.clone())
+            }
             _ => unreachable!("Self is not a base element!"),
         }
     }
@@ -152,4 +156,22 @@ fn parse_single_line_string(text: &str, replace_escapisms: bool) -> Value {
         }
     }
     Value::String(result)
+}
+
+impl From<slides_rs_core::Label> for Value {
+    fn from(value: slides_rs_core::Label) -> Self {
+        Self::Label(Arc::new(RefCell::new(value)))
+    }
+}
+
+impl From<slides_rs_core::Image> for Value {
+    fn from(value: slides_rs_core::Image) -> Self {
+        Self::Image(Arc::new(RefCell::new(value)))
+    }
+}
+
+impl From<slides_rs_core::CustomElement> for Value {
+    fn from(value: slides_rs_core::CustomElement) -> Self {
+        Self::CustomElement(Arc::new(RefCell::new(value)))
+    }
 }

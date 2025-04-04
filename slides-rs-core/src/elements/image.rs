@@ -65,10 +65,6 @@ impl Image {
         &mut self.styling
     }
 
-    pub fn as_element_mut(&mut self) -> super::ElementRefMut<'_> {
-        super::ElementRefMut::Image(self)
-    }
-
     pub fn add_styling(&mut self, reference: StylingReference) {
         self.stylings.push(reference);
     }

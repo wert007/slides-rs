@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
 
 use slides_rs_core::{
@@ -44,15 +46,18 @@ pub fn evaluate_to_slide(
             _ => {}
         }
         match value {
-            Value::Label(mut label) => {
+            Value::Label(label) => {
+                let mut label = Arc::unwrap_or_clone(label).into_inner();
                 label.set_id(name.into());
                 slide = slide.add_label(label);
             }
-            Value::Image(mut image) => {
+            Value::Image(image) => {
+                let mut image = Arc::unwrap_or_clone(image).into_inner();
                 image.set_id(name.into());
                 slide = slide.add_image(image);
             }
-            Value::CustomElement(mut custom_element) => {
+            Value::CustomElement(custom_element) => {
+                let mut custom_element = Arc::unwrap_or_clone(custom_element).into_inner();
                 custom_element.set_id(name.into());
                 slide = slide.add_custom_element(custom_element);
             }
@@ -254,59 +259,56 @@ fn assign_to_slide_type(
     match member {
         "valign" => {
             base.as_mut_base_element()
-                .element_styling_mut()
                 .set_vertical_alignment(value.into_vertical_alignment());
         }
         "halign" => {
             base.as_mut_base_element()
-                .element_styling_mut()
                 .set_horizontal_alignment(value.into_horizontal_alignment());
         }
         "margin" => {
             base.as_mut_base_element()
-                .element_styling_mut()
                 .set_margin(value.into_thickness());
         }
         "padding" => {
             base.as_mut_base_element()
-                .element_styling_mut()
                 .set_padding(value.into_thickness());
         }
         "background" => {
             base.as_mut_base_element()
-                .element_styling_mut()
                 .set_background(value.into_background());
         }
-        "object_fit" => {
-            base.as_mut_image()
-                .element_styling_mut()
-                .set_object_fit(value.into_object_fit());
-        }
-        "text_color" => {
-            base.as_mut_label()
-                .element_styling_mut()
-                .set_text_color(value.into_color());
-        }
-        "text_align" => {
-            base.as_mut_label()
-                .element_styling_mut()
-                .set_text_align(value.into_text_align());
-        }
-        "font_size" => {
-            base.as_mut_label()
-                .element_styling_mut()
-                .set_font_size(value.into_style_unit());
-        }
         "filter" => {
-            base.as_mut_base_element()
-                .element_styling_mut()
-                .set_filter(value.into_filter());
+            base.as_mut_base_element().set_filter(value.into_filter());
         }
         "styles" => {
             for value in value.into_array() {
                 base.as_mut_base_element()
                     .add_styling_reference(value.into_style_reference())
             }
+        }
+        "object_fit" => {
+            base.as_mut_image()
+                .borrow_mut()
+                .element_styling_mut()
+                .set_object_fit(value.into_object_fit());
+        }
+        "text_color" => {
+            base.as_mut_label()
+                .borrow_mut()
+                .element_styling_mut()
+                .set_text_color(value.into_color());
+        }
+        "text_align" => {
+            base.as_mut_label()
+                .borrow_mut()
+                .element_styling_mut()
+                .set_text_align(value.into_text_align());
+        }
+        "font_size" => {
+            base.as_mut_label()
+                .borrow_mut()
+                .element_styling_mut()
+                .set_font_size(value.into_style_unit());
         }
         missing => unreachable!("Missing Member {missing}"),
     }
@@ -407,19 +409,22 @@ fn evaluate_user_function(
             _ => {}
         }
         match value {
-            Value::Label(mut label) => {
+            Value::Label(label) => {
+                let mut label = Arc::unwrap_or_clone(label).into_inner();
                 let name = context.string_interner.resolve_variable(name);
                 label.set_id(name.into());
                 label.set_z_index(slide.next_z_index());
                 elements.push(label.into());
             }
-            Value::Image(mut image) => {
+            Value::Image(image) => {
+                let mut image = Arc::unwrap_or_clone(image).into_inner();
                 let name = context.string_interner.resolve_variable(name);
                 image.set_id(name.into());
                 image.set_z_index(slide.next_z_index());
                 elements.push(image.into());
             }
-            Value::CustomElement(mut element) => {
+            Value::CustomElement(element) => {
+                let mut element = Arc::unwrap_or_clone(element).into_inner();
                 let name = context.string_interner.resolve_variable(name);
                 element.set_id(name.into());
                 element.set_z_index(slide.next_z_index());
@@ -437,7 +442,9 @@ fn evaluate_user_function(
         .unwrap()
         .try_as_custom_element_ref()
         .unwrap();
-    Value::CustomElement(CustomElement::new(type_name, elements).with_element_styling(styling))
+    Value::CustomElement(Arc::new(RefCell::new(
+        CustomElement::new(type_name, elements).with_element_styling(styling),
+    )))
 }
 
 fn extract_function_name(base: BoundNode, context: &mut Context) -> String {
@@ -474,7 +481,7 @@ fn evaluate_conversion(
             _ => unreachable!("Impossible converion!"),
         },
         Type::Label => match base {
-            Value::String(text) => Value::Label(Label::new(text)),
+            Value::String(text) => Value::Label(Arc::new(RefCell::new(Label::new(text)))),
             _ => unreachable!("Impossible conversion!"),
         },
         Type::Element => match base {

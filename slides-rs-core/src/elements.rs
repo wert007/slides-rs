@@ -1,4 +1,9 @@
-use std::collections::HashSet;
+use std::{
+    cell::RefCell,
+    collections::HashSet,
+    ops::{Deref, DerefMut},
+    sync::Arc,
+};
 
 use enum_dispatch::enum_dispatch;
 
@@ -47,28 +52,64 @@ pub enum Element {
 
 // #[enum_dispatch(WebRenderable)]
 #[derive(Debug)]
-pub enum ElementRefMut<'a> {
-    Image(&'a mut Image),
-    Label(&'a mut Label),
-    CustomElement(&'a mut CustomElement),
+pub enum ElementRefMut {
+    Image(Arc<RefCell<Image>>),
+    Label(Arc<RefCell<Label>>),
+    CustomElement(Arc<RefCell<CustomElement>>),
 }
 
-impl<'a> ElementRefMut<'a> {
-    pub fn element_styling_mut(&mut self) -> &mut BaseElementStyling {
+impl ElementRefMut {
+    // pub fn element_styling_mut(&mut self) -> &mut BaseElementStyling {
+    //     match self {
+    //         ElementRefMut::Image(image) => image.borrow_mut().element_styling_mut().base_mut(),
+    //         ElementRefMut::Label(label) => label.borrow_mut().element_styling_mut().base_mut(),
+    //         ElementRefMut::CustomElement(custom_element) => {
+    //             custom_element.borrow_mut().element_styling_mut().base_mut()
+    //         }
+    //     }
+    // }
+
+    pub fn apply_to_base_element_styling(&mut self, mut cb: impl FnMut(&mut BaseElementStyling)) {
         match self {
-            ElementRefMut::Image(image) => image.element_styling_mut().base_mut(),
-            ElementRefMut::Label(label) => label.element_styling_mut().base_mut(),
-            ElementRefMut::CustomElement(custom_element) => {
-                custom_element.element_styling_mut().base_mut()
+            ElementRefMut::Image(it) => cb(it.borrow_mut().element_styling_mut().base_mut()),
+            ElementRefMut::Label(it) => cb(it.borrow_mut().element_styling_mut().base_mut()),
+            ElementRefMut::CustomElement(it) => {
+                cb(it.borrow_mut().element_styling_mut().base_mut())
             }
         }
     }
 
     pub fn add_styling_reference(&mut self, reference: StylingReference) {
         match self {
-            ElementRefMut::Image(image) => image.add_styling(reference),
-            ElementRefMut::Label(label) => label.add_styling(reference),
-            ElementRefMut::CustomElement(custom_element) => custom_element.add_styling(reference),
+            ElementRefMut::Image(image) => image.borrow_mut().add_styling(reference),
+            ElementRefMut::Label(label) => label.borrow_mut().add_styling(reference),
+            ElementRefMut::CustomElement(custom_element) => {
+                custom_element.borrow_mut().add_styling(reference)
+            }
         }
+    }
+
+    pub fn set_vertical_alignment(&mut self, value: crate::VerticalAlignment) {
+        self.apply_to_base_element_styling(|base| base.set_vertical_alignment(value));
+    }
+
+    pub fn set_horizontal_alignment(&mut self, value: crate::HorizontalAlignment) {
+        self.apply_to_base_element_styling(|base| base.set_horizontal_alignment(value));
+    }
+
+    pub fn set_margin(&mut self, value: crate::Thickness) {
+        self.apply_to_base_element_styling(|base| base.set_margin(value));
+    }
+
+    pub fn set_padding(&mut self, value: crate::Thickness) {
+        self.apply_to_base_element_styling(|base| base.set_padding(value));
+    }
+
+    pub fn set_background(&mut self, value: crate::Background) {
+        self.apply_to_base_element_styling(|base| base.set_background(value));
+    }
+
+    pub fn set_filter(&mut self, value: crate::Filter) {
+        self.apply_to_base_element_styling(|base| base.set_filter(value));
     }
 }

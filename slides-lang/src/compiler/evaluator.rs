@@ -1,10 +1,11 @@
-use std::collections::BTreeMap;
+use std::{cell::RefCell, collections::BTreeMap, sync::Arc};
 
 use slides_rs_core::{
     DynamicElementStyling, FilePlacement, ImageStyling, LabelStyling, Slide, SlideStyling,
+    TextStyling,
 };
 
-use super::binder::{BoundAst, BoundNode, BoundNodeKind};
+use super::binder::{BoundAst, BoundNode, BoundNodeKind, StylingType};
 use crate::{Context, VariableId};
 
 pub mod functions;
@@ -89,6 +90,14 @@ impl Evaluator {
             .filter_map(|s| s.get_variable(name))
             .next()
             .expect("Variable exists")
+    }
+
+    fn try_get_variable(&self, name: VariableId) -> Option<&Value> {
+        self.scopes
+            .iter()
+            .rev()
+            .filter_map(|s| s.get_variable(name))
+            .next()
     }
 }
 
@@ -217,8 +226,23 @@ fn evaluate_styling_statement(
         super::binder::StylingType::Slide => SlideStyling::new().to_dynamic(name.clone()),
     };
     evaluator.styling = Some(styling);
+    evaluator.push_scope();
+    let name = context.string_interner.create_or_get_variable("text");
+    if styling_statement.type_ == StylingType::Label {
+        evaluator.set_variable(
+            name,
+            Value::TextStyling(Arc::new(RefCell::new(TextStyling::default()))),
+        );
+    }
     style::evaluate_to_styling(styling_statement.body, evaluator, context);
-    let styling = evaluator.styling.take().expect("styilng");
+    let mut styling = evaluator.styling.take().expect("styling");
+    if let Some(value) = evaluator.try_get_variable(name) {
+        styling
+            .as_label_mut()
+            .set_text_styling(Arc::unwrap_or_clone(value.clone().into_text_styling()).into_inner());
+    }
+    evaluator.drop_scope();
+    dbg!(&styling);
     let reference = context.presentation.add_dynamic_styling(styling);
     evaluator.set_variable(styling_statement.name, Value::StyleReference(reference));
     Ok(())
