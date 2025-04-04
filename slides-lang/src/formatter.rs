@@ -8,7 +8,7 @@ use crate::{
     Context,
     compiler::{
         self,
-        binder::Value,
+        evaluator::Value,
         lexer::{Token, TokenKind},
         parser::{SyntaxNodeKind, debug_ast},
     },

@@ -1,15 +1,17 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 use slides_rs_core::{
     DynamicElementStyling, FilePlacement, ImageStyling, LabelStyling, Slide, SlideStyling,
 };
 
-use super::binder::{BoundAst, BoundNode, BoundNodeKind, Value};
-use crate::{Context, VariableId, compiler::binder::UserFunctionValue};
+use super::binder::{BoundAst, BoundNode, BoundNodeKind};
+use crate::{Context, VariableId};
 
 pub mod functions;
 mod slide;
 mod style;
+mod value;
+pub use value::*;
 
 struct Scope {
     variables: BTreeMap<VariableId, Value>,

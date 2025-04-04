@@ -1,7 +1,8 @@
 use slides_rs_core::{ElementStyling, ToCss};
 
 use super::Evaluator;
-use crate::compiler::binder::{BoundNode, BoundNodeKind, Value};
+use super::value::Value;
+use crate::compiler::binder::{BoundNode, BoundNodeKind};
 use crate::{Context, VariableId};
 
 pub fn evaluate_to_styling(body: Vec<BoundNode>, evaluator: &mut Evaluator, context: &mut Context) {

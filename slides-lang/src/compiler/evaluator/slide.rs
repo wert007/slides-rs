@@ -5,10 +5,11 @@ use slides_rs_core::{
 };
 use string_interner::symbol::SymbolUsize;
 
-use crate::compiler::binder::{self, BoundNode, BoundNodeKind, Value, typing::Type};
+use crate::compiler::binder::{self, BoundNode, BoundNodeKind, typing::Type};
 use crate::{Context, VariableId};
 
 use super::Evaluator;
+use super::value::{UserFunctionValue, Value};
 
 pub fn evaluate_to_slide(
     body: Vec<BoundNode>,
@@ -155,7 +156,7 @@ pub(super) fn evaluate_expression(
     // slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
-) -> crate::compiler::binder::Value {
+) -> Value {
     match expression.kind {
         BoundNodeKind::FunctionCall(function_call) => {
             evaluate_function_call(function_call, evaluator, context)
@@ -371,7 +372,7 @@ fn evaluate_function_call(
 }
 
 fn evaluate_user_function(
-    user_function: binder::UserFunctionValue,
+    user_function: UserFunctionValue,
     arguments: Vec<Value>,
     // slide: &mut Slide,
     evaluator: &mut Evaluator,

@@ -1,6 +1,6 @@
 pub mod binder;
 pub mod diagnostics;
-mod evaluator;
+pub mod evaluator;
 pub mod lexer;
 pub mod parser;
 
