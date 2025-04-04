@@ -171,7 +171,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Variable {
     pub id: VariableId,
     pub definition: Location,
@@ -379,6 +379,8 @@ summum! {
         Dict(HashMap<String, Value>),
         UserFunction(UserFunctionValue),
         CustomElement(slides_rs_core::CustomElement),
+        Thickness(slides_rs_core::Thickness),
+        Array(Vec<Value>),
     }
 }
 
@@ -395,7 +397,7 @@ impl Value {
             Value::Path(_) => Type::Path,
             Value::Image(_) => Type::Image,
             Value::ObjectFit(_) => Type::ObjectFit,
-            Value::Dict(_) => Type::Dict,
+            Value::Dict(_) => Type::DynamicDict,
             Value::VerticalAlignment(_) => Type::VAlign,
             Value::HorizontalAlignment(_) => Type::HAlign,
             Value::TextAlign(_) => Type::TextAlign,
@@ -403,6 +405,8 @@ impl Value {
             Value::StyleUnit(_) => Type::StyleUnit,
             Value::UserFunction(_) => todo!(),
             Value::CustomElement(e) => Type::CustomElement(e.type_name().into()),
+            Value::Thickness(_) => Type::Thickness,
+            Value::Array(_) => unreachable!("Not possible"),
         }
     }
 
@@ -707,12 +711,13 @@ impl BoundNode {
         dict: parser::Dict,
         location: Location,
         entries: Vec<(String, BoundNode)>,
+        type_: TypeId,
     ) -> BoundNode {
         BoundNode {
             base: Some(SyntaxNodeKind::Dict(dict)),
             location,
             kind: BoundNodeKind::Dict(entries),
-            type_: TypeId::DICT,
+            type_,
         }
     }
 
@@ -1142,7 +1147,19 @@ fn bind_dict(
         entries.push((key, value));
     }
     dict.entries = Vec::new();
-    BoundNode::dict(dict, location, entries)
+    let types: Vec<Variable> = entries
+        .iter()
+        .map(|(n, b)| {
+            let variable_id = context.string_interner.create_or_get_variable(&n);
+            Variable {
+                id: variable_id,
+                definition: b.location,
+                type_: b.type_,
+            }
+        })
+        .collect();
+    let type_ = context.type_interner.get_or_intern(Type::TypedDict(types));
+    BoundNode::dict(dict, location, entries, type_)
 }
 
 fn bind_variable_declaration(
@@ -1229,9 +1246,32 @@ fn bind_conversion(
     if base.type_ == TypeId::ERROR || base.type_ == target {
         return base;
     }
+    let style_unit_type = context.type_interner.get_or_intern(Type::StyleUnit);
     match conversion_kind {
         ConversionKind::Implicit => match context.type_interner.resolve_types([base.type_, target])
         {
+            [from @ Type::TypedDict(fields), Type::Thickness] => {
+                for field in fields {
+                    if field.type_ != style_unit_type {
+                        context.diagnostics.report_cannot_convert(
+                            context.type_interner.resolve(field.type_).unwrap(),
+                            &Type::StyleUnit,
+                            field.definition,
+                        );
+                        return BoundNode::error(field.definition);
+                    }
+                    if !["top", "bottom", "left", "right"]
+                        .contains(&context.string_interner.resolve_variable(field.id))
+                    {
+                        context.diagnostics.report_cannot_convert(
+                            from,
+                            &Type::StyleUnit,
+                            field.definition,
+                        );
+                        return BoundNode::error(field.definition);
+                    }
+                }
+            }
             [Type::Color, Type::Background] => {}
             [
                 Type::Label | Type::Image | Type::CustomElement(_),

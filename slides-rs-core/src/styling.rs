@@ -2,7 +2,7 @@ use convert_case::{Case, Casing};
 use enum_dispatch::enum_dispatch;
 use struct_field_names_as_array::FieldNamesAsSlice;
 
-use crate::{Result, StyleUnit};
+use crate::{HorizontalAlignment, Result, StyleUnit, Thickness, VerticalAlignment};
 use std::{any::type_name, fmt::Display, ops::Deref};
 
 #[enum_dispatch]
@@ -114,10 +114,35 @@ impl ToCss for DynamicElementStyling {
 #[derive(Debug, Default, Clone, struct_field_names_as_array::FieldNamesAsSlice)]
 pub struct BaseElementStyling {
     background: Background,
+    halign: HorizontalAlignment,
+    valign: VerticalAlignment,
+    margin: Thickness,
+    padding: Thickness,
+    z_index: Option<usize>,
 }
 impl BaseElementStyling {
     pub fn set_background(&mut self, background: Background) {
         self.background = background;
+    }
+
+    pub fn set_horizontal_alignment(&mut self, horizontal_alignment: HorizontalAlignment) {
+        self.halign = horizontal_alignment;
+    }
+
+    pub fn set_vertical_alignment(&mut self, vertical_alignment: VerticalAlignment) {
+        self.valign = vertical_alignment;
+    }
+
+    pub fn set_z_index(&mut self, z_index: usize) {
+        self.z_index = Some(z_index);
+    }
+
+    pub fn set_margin(&mut self, margin: Thickness) {
+        self.margin = margin;
+    }
+
+    pub fn set_padding(&mut self, padding: Thickness) {
+        self.padding = padding;
     }
 }
 
@@ -396,6 +421,10 @@ impl ElementStyling<LabelStyling> {
 
     pub fn set_text_align(&mut self, text_align: TextAlign) {
         self.specific.text_align = text_align;
+    }
+
+    pub fn set_font_size(&mut self, font_size: StyleUnit) {
+        self.specific.font_size = font_size;
     }
 }
 

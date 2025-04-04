@@ -2,139 +2,140 @@ use std::{fmt::Display, num::ParseFloatError, ops::Add, str::FromStr};
 
 use crate::SlidesEnum;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Positioning {
-    z_value: Option<usize>,
-    vertical_alignment: VerticalAlignment,
-    horizontal_alignment: HorizontalAlignment,
-    margin: Thickness,
-    padding: Thickness,
-}
+// #[derive(Debug, Clone, Copy)]
+// pub struct Positioning {
+//     z_value: Option<usize>,
+//     vertical_alignment: VerticalAlignment,
+//     horizontal_alignment: HorizontalAlignment,
+//     margin: Thickness,
+//     padding: Thickness,
+// }
 
-impl Positioning {
-    pub fn new() -> Self {
-        Self {
-            z_value: None,
-            vertical_alignment: VerticalAlignment::Top,
-            horizontal_alignment: HorizontalAlignment::Left,
-            margin: Thickness::UNSPECIFIED,
-            padding: Thickness::UNSPECIFIED,
-        }
-    }
+// impl Positioning {
+//     pub fn new() -> Self {
+//         Self {
+//             z_value: None,
+//             vertical_alignment: VerticalAlignment::Top,
+//             horizontal_alignment: HorizontalAlignment::Left,
+//             margin: Thickness::default(),
+//             padding: Thickness::default(),
+//         }
+//     }
 
-    pub fn with_alignment_center(mut self) -> Self {
-        self.vertical_alignment = VerticalAlignment::Center;
-        self.horizontal_alignment = HorizontalAlignment::Center;
-        self
-    }
+//     pub fn with_alignment_center(mut self) -> Self {
+//         self.vertical_alignment = VerticalAlignment::Center;
+//         self.horizontal_alignment = HorizontalAlignment::Center;
+//         self
+//     }
 
-    pub fn with_padding(mut self, padding: Thickness) -> Self {
-        self.padding = padding;
-        self
-    }
+//     pub fn with_padding(mut self, padding: Thickness) -> Self {
+//         self.padding = padding;
+//         self
+//     }
 
-    pub fn top(&self) -> StyleUnit {
-        self.margin.top + self.padding.top
-    }
+//     pub fn top(&self) -> StyleUnit {
+//         self.margin.top + self.padding.top
+//     }
 
-    pub fn bottom(&self) -> StyleUnit {
-        self.margin.bottom + self.padding.bottom
-    }
+//     pub fn bottom(&self) -> StyleUnit {
+//         self.margin.bottom + self.padding.bottom
+//     }
 
-    pub fn left(&self) -> StyleUnit {
-        self.margin.left + self.padding.left
-    }
+//     pub fn left(&self) -> StyleUnit {
+//         self.margin.left + self.padding.left
+//     }
 
-    pub fn right(&self) -> StyleUnit {
-        self.margin.right + self.padding.right
-    }
+//     pub fn right(&self) -> StyleUnit {
+//         self.margin.right + self.padding.right
+//     }
 
-    pub(crate) fn to_css_style(&self) -> String {
-        use std::fmt::Write;
-        let mut result = String::new();
-        let mut translate = (0.0, 0.0);
+//     pub(crate) fn to_css_style(&self) -> String {
+//         use std::fmt::Write;
+//         let mut result = String::new();
+//         let mut translate = (0.0, 0.0);
 
-        match self.vertical_alignment {
-            VerticalAlignment::Top => {
-                writeln!(result, "top: {};", self.margin.top.or_zero()).expect("infallible");
-            }
-            VerticalAlignment::Center => {
-                writeln!(result, "top: 50%;").expect("infallible");
-                translate.1 = -50.0;
-            }
-            VerticalAlignment::Bottom => {
-                writeln!(result, "bottom: {};", self.margin.bottom.or_zero()).expect("infallible");
-            }
-            VerticalAlignment::Stretch => {
-                writeln!(
-                    result,
-                    "top: {};\nbottom: {};\nheight: 100%;",
-                    self.margin.top.or_zero(),
-                    self.margin.bottom.or_zero()
-                )
-                .expect("infallible");
-            }
-        }
+//         match self.vertical_alignment {
+//             VerticalAlignment::Top => {
+//                 writeln!(result, "top: {};", self.margin.top.or_zero()).expect("infallible");
+//             }
+//             VerticalAlignment::Center => {
+//                 writeln!(result, "top: 50%;").expect("infallible");
+//                 translate.1 = -50.0;
+//             }
+//             VerticalAlignment::Bottom => {
+//                 writeln!(result, "bottom: {};", self.margin.bottom.or_zero()).expect("infallible");
+//             }
+//             VerticalAlignment::Stretch => {
+//                 writeln!(
+//                     result,
+//                     "top: {};\nbottom: {};\nheight: 100%;",
+//                     self.margin.top.or_zero(),
+//                     self.margin.bottom.or_zero()
+//                 )
+//                 .expect("infallible");
+//             }
+//         }
 
-        match self.horizontal_alignment {
-            HorizontalAlignment::Left => {
-                writeln!(result, "left: {};", self.margin.left.or_zero()).expect("infallible");
-            }
-            HorizontalAlignment::Center => {
-                writeln!(result, "left: 50%;").expect("infallible");
-                translate.0 = -50.0;
-            }
-            HorizontalAlignment::Right => {
-                writeln!(result, "right: {};", self.margin.right.or_zero()).expect("infallible");
-            }
-            HorizontalAlignment::Stretch => {
-                writeln!(
-                    result,
-                    "left: {};\nbottom: {};\nwidth: 100%;",
-                    self.margin.left.or_zero(),
-                    self.margin.right.or_zero()
-                )
-                .expect("infallible");
-            }
-        }
+//         match self.horizontal_alignment {
+//             HorizontalAlignment::Left => {
+//                 writeln!(result, "left: {};", self.margin.left.or_zero()).expect("infallible");
+//             }
+//             HorizontalAlignment::Center => {
+//                 writeln!(result, "left: 50%;").expect("infallible");
+//                 translate.0 = -50.0;
+//             }
+//             HorizontalAlignment::Right => {
+//                 writeln!(result, "right: {};", self.margin.right.or_zero()).expect("infallible");
+//             }
+//             HorizontalAlignment::Stretch => {
+//                 writeln!(
+//                     result,
+//                     "left: {};\nbottom: {};\nwidth: 100%;",
+//                     self.margin.left.or_zero(),
+//                     self.margin.right.or_zero()
+//                 )
+//                 .expect("infallible");
+//             }
+//         }
 
-        if translate != (0.0, 0.0) {
-            writeln!(
-                result,
-                "transform: translate({}%, {}%);",
-                translate.0, translate.1
-            )
-            .expect("infallible");
-        }
+//         if translate != (0.0, 0.0) {
+//             writeln!(
+//                 result,
+//                 "transform: translate({}%, {}%);",
+//                 translate.0, translate.1
+//             )
+//             .expect("infallible");
+//         }
 
-        if self.padding != Thickness::UNSPECIFIED {
-            writeln!(result, "padding: {};", self.padding).expect("infallible");
-        }
+//         if self.padding != Thickness::default() {
+//             writeln!(result, "padding: {};", self.padding).expect("infallible");
+//         }
 
-        if let Some(z_value) = self.z_value {
-            writeln!(result, "z-index: {z_value};").expect("infallible");
-        }
+//         if let Some(z_value) = self.z_value {
+//             writeln!(result, "z-index: {z_value};").expect("infallible");
+//         }
 
-        result
-    }
+//         result
+//     }
 
-    pub fn with_alignment_stretch(mut self) -> Positioning {
-        self.vertical_alignment = VerticalAlignment::Stretch;
-        self.horizontal_alignment = HorizontalAlignment::Stretch;
-        self
-    }
+//     pub fn with_alignment_stretch(mut self) -> Positioning {
+//         self.vertical_alignment = VerticalAlignment::Stretch;
+//         self.horizontal_alignment = HorizontalAlignment::Stretch;
+//         self
+//     }
 
-    pub fn set_vertical_alignment(&mut self, vertical_alignment: VerticalAlignment) {
-        self.vertical_alignment = vertical_alignment;
-    }
+//     pub fn set_vertical_alignment(&mut self, vertical_alignment: VerticalAlignment) {
+//         self.vertical_alignment = vertical_alignment;
+//     }
 
-    pub fn set_horizontal_alignment(&mut self, horizontal_alignment: HorizontalAlignment) {
-        self.horizontal_alignment = horizontal_alignment;
-    }
-}
+//     pub fn set_horizontal_alignment(&mut self, horizontal_alignment: HorizontalAlignment) {
+//         self.horizontal_alignment = horizontal_alignment;
+//     }
+// }
 
-#[derive(Debug, Clone, Copy, strum::VariantNames, strum::EnumString)]
+#[derive(Debug, Clone, Copy, strum::VariantNames, strum::EnumString, Default)]
 pub enum VerticalAlignment {
+    #[default]
     Top,
     Center,
     Bottom,
@@ -143,8 +144,9 @@ pub enum VerticalAlignment {
 
 impl SlidesEnum for VerticalAlignment {}
 
-#[derive(Debug, Clone, Copy, strum::VariantNames, strum::EnumString)]
+#[derive(Debug, Clone, Copy, strum::VariantNames, strum::EnumString, Default)]
 pub enum HorizontalAlignment {
+    #[default]
     Left,
     Center,
     Right,
@@ -153,22 +155,15 @@ pub enum HorizontalAlignment {
 
 impl SlidesEnum for HorizontalAlignment {}
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Thickness {
-    left: StyleUnit,
-    top: StyleUnit,
-    right: StyleUnit,
-    bottom: StyleUnit,
+    pub left: StyleUnit,
+    pub top: StyleUnit,
+    pub right: StyleUnit,
+    pub bottom: StyleUnit,
 }
 
 impl Thickness {
-    const UNSPECIFIED: Thickness = Thickness {
-        left: StyleUnit::Unspecified,
-        top: StyleUnit::Unspecified,
-        right: StyleUnit::Unspecified,
-        bottom: StyleUnit::Unspecified,
-    };
-
     pub fn all(value: StyleUnit) -> Thickness {
         Self {
             left: value,
@@ -189,9 +184,10 @@ impl Display for Thickness {
     }
 }
 
-#[derive(Debug, strum::Display, Clone, Copy, PartialEq)]
+#[derive(Debug, strum::Display, Clone, Copy, PartialEq, Default)]
 pub enum StyleUnit {
     #[strum(to_string = "unset")]
+    #[default]
     Unspecified,
     #[strum(to_string = "{0}px")]
     Pixel(f64),

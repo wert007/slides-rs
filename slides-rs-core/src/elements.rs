@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use enum_dispatch::enum_dispatch;
 
-use crate::{BaseElementStyling, Positioning, Result, output::PresentationEmitter};
+use crate::{BaseElementStyling, Result, StylingReference, output::PresentationEmitter};
 
 mod image;
 pub use image::*;
@@ -20,7 +20,10 @@ pub trait WebRenderable {
     fn set_fallback_id(&mut self, id: String);
     fn set_id(&mut self, id: String);
     fn set_parent_id(&mut self, id: String);
-    fn set_z_index(&mut self, z_index: usize);
+    fn element_styling_mut(&mut self) -> &mut BaseElementStyling;
+    fn set_z_index(&mut self, z_index: usize) {
+        self.element_styling_mut().set_z_index(z_index)
+    }
 }
 
 #[enum_dispatch(WebRenderable)]
@@ -40,14 +43,6 @@ pub enum ElementRefMut<'a> {
 }
 
 impl<'a> ElementRefMut<'a> {
-    pub fn positioning_mut(&mut self) -> &mut Positioning {
-        match self {
-            ElementRefMut::Image(image) => image.positioning_mut(),
-            ElementRefMut::Label(label) => label.positioning_mut(),
-            ElementRefMut::CustomElement(custom_element) => custom_element.positioning_mut(),
-        }
-    }
-
     pub fn element_styling_mut(&mut self) -> &mut BaseElementStyling {
         match self {
             ElementRefMut::Image(image) => image.element_styling_mut().base_mut(),
@@ -55,6 +50,14 @@ impl<'a> ElementRefMut<'a> {
             ElementRefMut::CustomElement(custom_element) => {
                 custom_element.element_styling_mut().base_mut()
             }
+        }
+    }
+
+    pub fn add_styling_reference(&mut self, reference: StylingReference) {
+        match self {
+            ElementRefMut::Image(image) => image.add_styling(reference),
+            ElementRefMut::Label(label) => label.add_styling(reference),
+            ElementRefMut::CustomElement(custom_element) => custom_element.add_styling(reference),
         }
     }
 }

@@ -1,29 +1,27 @@
 use std::io::Write;
 
-use crate::{ElementStyling, Positioning, Result, ToCss, output::PresentationEmitter};
+use crate::{ElementStyling, Result, StylingReference, ToCss, output::PresentationEmitter};
 
 use super::{Element, WebRenderable};
 
 #[derive(Debug, Clone)]
 pub struct CustomElement {
-    z_index: usize,
     parent_id: String,
     id: String,
     styling: ElementStyling<()>,
-    positioning: Positioning,
+    stylings: Vec<StylingReference>,
     type_name: String,
     children: Vec<Element>,
 }
 impl CustomElement {
     pub fn new(type_name: impl Into<String>, children: Vec<Element>) -> Self {
         Self {
-            z_index: 0,
             parent_id: String::new(),
             id: String::new(),
             type_name: type_name.into(),
             children,
             styling: ElementStyling::new_base(),
-            positioning: Positioning::new(),
+            stylings: Vec::new(),
         }
     }
     pub fn type_name(&self) -> &str {
@@ -34,33 +32,33 @@ impl CustomElement {
         super::ElementRefMut::CustomElement(self)
     }
 
-    pub fn positioning_mut(&mut self) -> &mut Positioning {
-        &mut self.positioning
-    }
-
     pub(crate) fn element_styling_mut(&mut self) -> &mut ElementStyling<()> {
         &mut self.styling
+    }
+
+    pub fn add_styling(&mut self, reference: StylingReference) {
+        self.stylings.push(reference);
     }
 }
 
 impl WebRenderable for CustomElement {
     fn output_to_html<W: Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let positioning = self.positioning.to_css_style();
         let style = self.styling.to_css_style();
         writeln!(
             emitter.raw_css(),
             r#"#{id} {{
-            z-index: {};
-            {positioning}
             {style}
         }}"#,
-            self.z_index
         )?;
         writeln!(
             emitter.raw_html(),
-            "<div id=\"{id}\" class=\"custom-element {}\">",
-            self.type_name()
+            "<div id=\"{id}\" class=\"custom-element {} {}\">",
+            self.type_name,
+            self.stylings
+                .into_iter()
+                .map(|s| format!(" {s}"))
+                .collect::<String>(),
         )?;
         for element in self.children {
             element.output_to_html(emitter)?;
@@ -92,8 +90,8 @@ impl WebRenderable for CustomElement {
             .for_each(|c| c.set_parent_id(format!("{}-{}", self.parent_id, self.id)));
     }
 
-    fn set_z_index(&mut self, z_index: usize) {
-        self.z_index = z_index;
+    fn element_styling_mut(&mut self) -> &mut crate::BaseElementStyling {
+        self.element_styling_mut().base_mut()
     }
 
     fn collect_google_font_references(

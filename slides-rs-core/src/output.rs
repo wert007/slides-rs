@@ -35,7 +35,7 @@ impl PresentationEmitter<File> {
                 // Make file checks later!
                 continue;
             }
-            to.parent().map(|p| std::fs::create_dir(p)).transpose()?;
+            _ = to.parent().map(|p| std::fs::create_dir(p)).transpose();
             std::fs::copy(file, to)?;
         }
         Ok(())
@@ -58,7 +58,10 @@ impl<W: Write> PresentationEmitter<W> {
     pub fn add_file(&mut self, path: impl Into<PathBuf>) -> std::io::Result<()> {
         let path = path.into();
         if !path.exists() {
-            return Err(std::io::ErrorKind::NotFound.into());
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("File not found: {}", path.display()),
+            ));
         }
         self.referenced_files.push(path);
         Ok(())

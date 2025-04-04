@@ -1,8 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    ElementStyling, LabelStyling, Positioning, Result, StylingReference, ToCss,
-    output::PresentationEmitter,
+    ElementStyling, LabelStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
 };
 
 use super::WebRenderable;
@@ -32,11 +31,9 @@ impl Display for FormattedText {
 
 #[derive(Debug, Clone)]
 pub struct Label {
-    z_index: usize,
     parent_id: String,
     id: String,
     text: FormattedText,
-    positioning: Positioning,
     styling: ElementStyling<LabelStyling>,
     stylings: Vec<StylingReference>,
 }
@@ -51,10 +48,8 @@ impl WebRenderable for Label {
 
     fn output_to_html<W: std::io::Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let style_positioning = self.positioning.to_css_style();
         let style_styling = self.styling.to_css_style();
-        writeln!(emitter.raw_css(), "#{id} {{\nz-index: {};", self.z_index)?;
-        writeln!(emitter.raw_css(), "{style_positioning}")?;
+        writeln!(emitter.raw_css(), "#{id} {{")?;
         writeln!(emitter.raw_css(), "{style_styling}}}")?;
         writeln!(
             emitter.raw_html(),
@@ -83,27 +78,20 @@ impl WebRenderable for Label {
         self.parent_id = id;
     }
 
-    fn set_z_index(&mut self, z_index: usize) {
-        self.z_index = z_index;
+    fn element_styling_mut(&mut self) -> &mut crate::BaseElementStyling {
+        self.styling.base_mut()
     }
 }
 
 impl Label {
     pub fn new(text: impl Into<FormattedText>) -> Self {
         Self {
-            z_index: 0,
             parent_id: String::new(),
             id: String::new(),
             text: text.into(),
-            positioning: Positioning::new(),
             styling: LabelStyling::new(),
             stylings: Vec::new(),
         }
-    }
-
-    pub fn with_positioning(mut self, positioning: Positioning) -> Self {
-        self.positioning = positioning;
-        self
     }
 
     pub fn with_element_styling(mut self, styling: ElementStyling<LabelStyling>) -> Self {
@@ -124,7 +112,7 @@ impl Label {
         super::ElementRefMut::Label(self)
     }
 
-    pub fn positioning_mut(&mut self) -> &mut Positioning {
-        &mut self.positioning
+    pub fn add_styling(&mut self, reference: StylingReference) {
+        self.stylings.push(reference);
     }
 }

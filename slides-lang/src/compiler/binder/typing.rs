@@ -1,6 +1,6 @@
 use strum::IntoEnumIterator;
 
-use super::{ConversionKind, globals};
+use super::{ConversionKind, Variable, globals};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FunctionType {
@@ -20,8 +20,8 @@ impl TypeId {
     pub const ERROR: TypeId = TypeId(0);
     pub const VOID: TypeId = TypeId(1);
     pub const DICT: TypeId = TypeId(5);
-    pub const STYLING: TypeId = TypeId(6);
-    pub const PATH: TypeId = TypeId(19);
+    pub const PATH: TypeId = TypeId(6);
+    pub const STYLING: TypeId = TypeId(7);
 }
 
 pub struct TypeInterner {
@@ -34,7 +34,7 @@ impl TypeInterner {
         let mut result = Self { types };
         debug_assert_eq!(result.get_or_intern(Type::Error), TypeId::ERROR);
         debug_assert_eq!(result.get_or_intern(Type::Void), TypeId::VOID);
-        debug_assert_eq!(result.get_or_intern(Type::Dict), TypeId::DICT);
+        debug_assert_eq!(result.get_or_intern(Type::DynamicDict), TypeId::DICT);
         debug_assert_eq!(result.get_or_intern(Type::Path), TypeId::PATH);
         debug_assert_eq!(result.get_or_intern(Type::Styling), TypeId::STYLING);
         result
@@ -70,7 +70,9 @@ pub enum Type {
     Float,
     Integer,
     String,
-    Dict,
+    DynamicDict,
+    Path,
+    TypedDict(Vec<Variable>),
     Styling,
     Background,
     Color,
@@ -85,7 +87,6 @@ pub enum Type {
     Element,
     Label,
     Image,
-    Path,
     Thickness,
     Enum(Box<Type>, Vec<String>),
     CustomElement(String),
@@ -170,6 +171,8 @@ impl Type {
             Some(Self::Array(TypeId::STYLING))
         } else if const_str::compare!(==, rust_string, "StyleUnit") {
             Some(Self::StyleUnit)
+        } else if const_str::compare!(==, rust_string, "usize") {
+            Some(Self::Integer)
         } else {
             None
         }
@@ -180,7 +183,11 @@ impl Type {
             .filter(|t| {
                 !matches!(
                     t,
-                    Type::Enum(..) | Type::Function(_) | Type::CustomElement(_) | Type::Array(_)
+                    Type::Enum(..)
+                        | Type::Function(_)
+                        | Type::CustomElement(_)
+                        | Type::Array(_)
+                        | Type::TypedDict(_)
                 )
             })
             .collect()

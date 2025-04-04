@@ -129,7 +129,7 @@ impl Presentation {
         use std::fmt::Write;
         let path = path.into();
         let file = std::fs::read_to_string(&path)?;
-        let mut extern_text = self.extern_texts.entry(placement).or_default();
+        let extern_text = self.extern_texts.entry(placement).or_default();
         writeln!(extern_text, "<!-- From {} -->", path.display()).expect("infallible");
         writeln!(extern_text, "{file}\n").expect("infallible");
         Ok(())

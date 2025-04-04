@@ -56,28 +56,36 @@ fn assign_to_field(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) {
+    let styling = evaluator.styling.as_mut().expect("");
     match context.string_interner.resolve_variable(name) {
+        "halign" => {
+            styling
+                .as_base_mut()
+                .set_horizontal_alignment(value.into_horizontal_alignment());
+        }
+        "valign" => {
+            styling
+                .as_base_mut()
+                .set_vertical_alignment(value.into_vertical_alignment());
+        }
         "font" => {
-            evaluator
-                .styling
-                .as_mut()
-                .expect("")
+            styling.as_label_mut().set_font(value.into_font());
+        }
+        "text_align" => {
+            styling
                 .as_label_mut()
-                .set_font(value.into_font());
+                .set_text_align(value.into_text_align());
+        }
+        "font_size" => {
+            styling
+                .as_label_mut()
+                .set_font_size(value.into_style_unit());
         }
         "text_color" => {
-            evaluator
-                .styling
-                .as_mut()
-                .expect("")
-                .as_label_mut()
-                .set_text_color(value.into_color());
+            styling.as_label_mut().set_text_color(value.into_color());
         }
         "background" => {
-            evaluator
-                .styling
-                .as_mut()
-                .expect("")
+            styling
                 .as_base_mut()
                 .set_background(value.into_background());
         }

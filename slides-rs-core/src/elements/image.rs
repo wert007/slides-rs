@@ -1,19 +1,16 @@
 use std::{fmt::Display, path::PathBuf};
 
 use crate::{
-    ElementStyling, ImageStyling, Positioning, Result, StylingReference, ToCss,
-    output::PresentationEmitter,
+    ElementStyling, ImageStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
 };
 
 use super::WebRenderable;
 
 #[derive(Debug, Clone)]
 pub struct Image {
-    z_index: usize,
     parent_id: String,
     id: String,
     source: ImageSource,
-    positioning: Positioning,
     styling: ElementStyling<ImageStyling>,
     stylings: Vec<StylingReference>,
 }
@@ -47,21 +44,13 @@ impl Display for ImageSource {
 impl Image {
     pub fn new(source: ImageSource) -> Self {
         Self {
-            z_index: 0,
             parent_id: String::new(),
             id: String::new(),
             source,
-            positioning: Positioning::new(),
             styling: ImageStyling::new(),
             stylings: Vec::new(),
         }
     }
-
-    pub fn with_positioning(mut self, positioning: Positioning) -> Self {
-        self.positioning = positioning;
-        self
-    }
-
     pub fn with_element_styling(mut self, styling: ElementStyling<ImageStyling>) -> Self {
         self.styling = styling;
         self
@@ -76,25 +65,20 @@ impl Image {
         &mut self.styling
     }
 
-    pub fn positioning_mut(&mut self) -> &mut Positioning {
-        &mut self.positioning
-    }
-
     pub fn as_element_mut(&mut self) -> super::ElementRefMut<'_> {
         super::ElementRefMut::Image(self)
+    }
+
+    pub fn add_styling(&mut self, reference: StylingReference) {
+        self.stylings.push(reference);
     }
 }
 
 impl WebRenderable for Image {
     fn output_to_html<W: std::io::Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let style_positioning = self.positioning.to_css_style();
         let style_styling = self.styling.to_css_style();
-        writeln!(
-            emitter.raw_css(),
-            "#{id} {{\nz-index: {};\n{style_positioning}\n{style_styling}\n}}",
-            self.z_index
-        )?;
+        writeln!(emitter.raw_css(), "#{id} {{\n{style_styling}\n}}",)?;
         self.source.add_files(emitter)?;
         writeln!(
             emitter.raw_html(),
@@ -118,7 +102,7 @@ impl WebRenderable for Image {
         self.parent_id = id;
     }
 
-    fn set_z_index(&mut self, z_index: usize) {
-        self.z_index = z_index;
+    fn element_styling_mut(&mut self) -> &mut crate::BaseElementStyling {
+        self.element_styling_mut().base_mut()
     }
 }

@@ -67,13 +67,8 @@ macro_rules! default_element {
             MemberDeclarations::rename::<BaseElementStyling>($name),
             MemberDeclarations {
                 name: $name,
-                members_names: &["valign", "halign", "styles", "margin"],
-                members_rust_types: &[
-                    "VerticalAlignment",
-                    "HorizontalAlignment",
-                    "#ArrayOfStyleReferences",
-                    "Thickness"
-                ],
+                members_names: &["styles"],
+                members_rust_types: &["#ArrayOfStyleReferences",],
             }
         )
     };

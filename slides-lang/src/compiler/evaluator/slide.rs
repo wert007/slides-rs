@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use slides_rs_core::{Background, Color, CustomElement, Label, Slide, WebRenderable};
+use slides_rs_core::{Background, Color, CustomElement, Label, Slide, Thickness, WebRenderable};
 use string_interner::symbol::SymbolUsize;
 
 use crate::compiler::binder::{self, BoundNode, BoundNodeKind, Value, typing::Type};
@@ -158,8 +158,22 @@ pub(super) fn evaluate_expression(
         BoundNodeKind::PostInitialization(post_initialization) => {
             evaluate_post_initialization(post_initialization, evaluator, context)
         }
-        _ => unreachable!("Only statements can be evaluated!"),
+        BoundNodeKind::Array(array) => evaluate_array(array, evaluator, context),
+        _ => unreachable!("Only expressions can be evaluated!"),
     }
+}
+
+fn evaluate_array(
+    array: Vec<BoundNode>,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> Value {
+    let mut values = Vec::with_capacity(array.len());
+    for value in array {
+        let value = evaluate_expression(value, evaluator, context);
+        values.push(value);
+    }
+    Value::Array(values)
 }
 
 fn evaluate_dict(
@@ -225,13 +239,23 @@ fn assign_to_slide_type(
     match member {
         "valign" => {
             base.as_mut_base_element()
-                .positioning_mut()
+                .element_styling_mut()
                 .set_vertical_alignment(value.into_vertical_alignment());
         }
         "halign" => {
             base.as_mut_base_element()
-                .positioning_mut()
+                .element_styling_mut()
                 .set_horizontal_alignment(value.into_horizontal_alignment());
+        }
+        "margin" => {
+            base.as_mut_base_element()
+                .element_styling_mut()
+                .set_margin(value.into_thickness());
+        }
+        "padding" => {
+            base.as_mut_base_element()
+                .element_styling_mut()
+                .set_padding(value.into_thickness());
         }
         "background" => {
             base.as_mut_base_element()
@@ -252,6 +276,17 @@ fn assign_to_slide_type(
             base.as_mut_label()
                 .element_styling_mut()
                 .set_text_align(value.into_text_align());
+        }
+        "font_size" => {
+            base.as_mut_label()
+                .element_styling_mut()
+                .set_font_size(value.into_style_unit());
+        }
+        "styles" => {
+            for value in value.into_array() {
+                base.as_mut_base_element()
+                    .add_styling_reference(value.into_style_reference())
+            }
         }
         missing => unreachable!("Missing Member {missing}"),
     }
@@ -411,6 +446,22 @@ fn evaluate_conversion(
             Value::Image(image) => todo!(),
             Value::CustomElement(custom_element) => todo!(),
             _ => unreachable!("Impossible conversion!"),
+        },
+        Type::Thickness => match base {
+            Value::Dict(entries) => {
+                let mut thickness = Thickness::default();
+                for (name, value) in entries {
+                    match name.as_str() {
+                        "top" => thickness.top = value.into_style_unit(),
+                        "left" => thickness.left = value.into_style_unit(),
+                        "bottom" => thickness.bottom = value.into_style_unit(),
+                        "right" => thickness.right = value.into_style_unit(),
+                        _ => unreachable!("Impossible conversion"),
+                    }
+                }
+                thickness.into()
+            }
+            _ => unreachable!("Impossible conversion"),
         },
         unknown => todo!("{unknown:?}"),
     }
