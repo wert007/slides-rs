@@ -1,12 +1,21 @@
 body,
 p,
-h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
     padding: 0;
+    margin: 0;
+}
+
+body {
+    background: black;
+    display: flex;
+}
+
+h1 {
+    padding: 30px 10px;
     margin: 0;
 }
 
@@ -20,11 +29,13 @@ ol {
 }
 
 .slide {
-    height: 100dvh;
+    /* height: 100dvh; */
+    position: relative;
     width: 100dvw;
     padding: 0;
-    margin: 0;
+    margin: auto 0;
     display: none;
+    aspect-ratio: 16/9;
 }
 
 .slide.active {
@@ -60,7 +71,8 @@ ol {
             top: 0px;
 bottom: 0px;
 height: 100%;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 
 
@@ -69,7 +81,8 @@ width: 100%;
 top: 0px;
 bottom: 0px;
 height: 100%;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 z-index: 0;
 
@@ -89,7 +102,8 @@ color: rgb(255, 255, 255, 1);
             top: 0px;
 bottom: 0px;
 height: 100%;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 
 
@@ -98,7 +112,8 @@ width: 100%;
 top: 0px;
 bottom: 0px;
 height: 100%;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 z-index: 0;
 
@@ -118,7 +133,8 @@ color: rgb(255, 255, 255, 1);
             top: 0px;
 bottom: 0px;
 height: 100%;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 
 
@@ -127,7 +143,8 @@ width: 100%;
 top: 0px;
 bottom: 0px;
 height: 100%;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 z-index: 0;
 
@@ -145,7 +162,8 @@ color: rgb(255, 255, 255, 1);
  }
 #title-title {
 bottom: 50%; top: unset;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 
 text-align: center;
@@ -153,8 +171,9 @@ font-size: 52pt;
 }
 #title-subtitle {
 top: 50%; bottom: unset;
-left: 0px;ight: 0px;
-width: 100%;
+left: 15%;
+right: 15%;
+width: 70%;
 
 text-align: center;
 font-size: 28pt;
@@ -173,7 +192,8 @@ font-size: 28pt;
             top: 0px;
 bottom: 0px;
 height: 100%;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 
 
@@ -182,9 +202,11 @@ width: 100%;
 top: 0px;
 bottom: 0px;
 height: 100%;
-left: 0px;ight: 0px;
+left: 0px;
+right: 0px;
 width: 100%;
 z-index: 0;
+filter: brightness(0.5);
 
 object-fit: cover;
 
@@ -202,6 +224,7 @@ color: rgb(255, 255, 255, 1);
 }
 #example-text {
 
+color: rgb(255, 255, 255, 1);
 }
 #one_sided_sync { 
  }

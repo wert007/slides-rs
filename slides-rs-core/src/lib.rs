@@ -103,7 +103,7 @@ impl Presentation {
         }
 
         for styling in self.stylings {
-            let css = styling.to_css_style();
+            let css = styling.to_css_style(ToCssLayout::unknown());
             if css.is_empty() {
                 continue;
             }
@@ -177,7 +177,7 @@ impl Slide {
 
     fn output_to_html<W: Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
         let id = self.id.expect("id should have been set here!");
-        let style = self.styling.to_css_style();
+        let style = self.styling.to_css_style(ToCssLayout::unknown());
         if !style.is_empty() {
             writeln!(emitter.raw_css(), "#{id} {{ {style} }}")?;
         }
@@ -185,7 +185,14 @@ impl Slide {
         for (index, mut element) in self.elements.into_iter().enumerate() {
             element.set_fallback_id(format!("element-{index}"));
             element.set_parent_id(id.clone());
-            element.output_to_html(emitter)?;
+            element.output_to_html(
+                emitter,
+                WebRenderableContext {
+                    layout: ToCssLayout {
+                        outer_padding: self.styling.base().padding,
+                    },
+                },
+            )?;
         }
         writeln!(emitter.raw_html(), "</section>")?;
         Ok(())

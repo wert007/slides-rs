@@ -27,19 +27,31 @@ pub fn evaluate_to_slide(
     let scope = evaluator.drop_scope();
     let mut slide = evaluator.slide.take().expect("There should be a slide!");
     for (name, value) in scope.variables {
+        let name = context.string_interner.resolve_variable(name);
+        match name {
+            "background" => {
+                slide.styling_mut().set_background(value.into_background());
+                continue;
+            }
+            "padding" => {
+                slide
+                    .styling_mut()
+                    .base_mut()
+                    .set_padding(value.into_thickness());
+                continue;
+            }
+            _ => {}
+        }
         match value {
             Value::Label(mut label) => {
-                let name = context.string_interner.resolve_variable(name);
                 label.set_id(name.into());
                 slide = slide.add_label(label);
             }
             Value::Image(mut image) => {
-                let name = context.string_interner.resolve_variable(name);
                 image.set_id(name.into());
                 slide = slide.add_image(image);
             }
             Value::CustomElement(mut custom_element) => {
-                let name = context.string_interner.resolve_variable(name);
                 custom_element.set_id(name.into());
                 slide = slide.add_custom_element(custom_element);
             }
@@ -283,6 +295,11 @@ fn assign_to_slide_type(
             base.as_mut_label()
                 .element_styling_mut()
                 .set_font_size(value.into_style_unit());
+        }
+        "filter" => {
+            base.as_mut_base_element()
+                .element_styling_mut()
+                .set_filter(value.into_filter());
         }
         "styles" => {
             for value in value.into_array() {

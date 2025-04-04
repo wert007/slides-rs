@@ -2,7 +2,9 @@ use std::collections::HashSet;
 
 use enum_dispatch::enum_dispatch;
 
-use crate::{BaseElementStyling, Result, StylingReference, output::PresentationEmitter};
+use crate::{
+    BaseElementStyling, Result, StylingReference, ToCssLayout, output::PresentationEmitter,
+};
 
 mod image;
 pub use image::*;
@@ -11,9 +13,18 @@ pub use label::*;
 mod custom_element;
 pub use custom_element::*;
 
+#[derive(Debug, Clone, Copy)]
+pub struct WebRenderableContext {
+    pub layout: ToCssLayout,
+}
+
 #[enum_dispatch]
 pub trait WebRenderable {
-    fn output_to_html<W: std::io::Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()>;
+    fn output_to_html<W: std::io::Write>(
+        self,
+        emitter: &mut PresentationEmitter<W>,
+        ctx: WebRenderableContext,
+    ) -> Result<()>;
     fn collect_google_font_references(&self, _: &mut HashSet<String>) -> Result<()> {
         Ok(())
     }

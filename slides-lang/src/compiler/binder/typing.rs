@@ -91,6 +91,7 @@ pub enum Type {
     Enum(Box<Type>, Vec<String>),
     CustomElement(String),
     Array(TypeId),
+    Filter,
 }
 
 impl Type {
@@ -173,6 +174,8 @@ impl Type {
             Some(Self::StyleUnit)
         } else if const_str::compare!(==, rust_string, "usize") {
             Some(Self::Integer)
+        } else if const_str::compare!(==, rust_string, "Filter") {
+            Some(Self::Filter)
         } else {
             None
         }

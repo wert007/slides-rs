@@ -381,6 +381,7 @@ summum! {
         CustomElement(slides_rs_core::CustomElement),
         Thickness(slides_rs_core::Thickness),
         Array(Vec<Value>),
+        Filter(slides_rs_core::Filter),
     }
 }
 
@@ -407,6 +408,7 @@ impl Value {
             Value::CustomElement(e) => Type::CustomElement(e.type_name().into()),
             Value::Thickness(_) => Type::Thickness,
             Value::Array(_) => unreachable!("Not possible"),
+            Value::Filter(_) => Type::Filter,
         }
     }
 
@@ -1186,12 +1188,14 @@ fn bind_slide_statement(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
-    let type_ = context.type_interner.get_or_intern(Type::Background);
     let scope = binder.create_scope();
-    let id = context.string_interner.create_or_get_variable("background");
-    scope
-        .try_register_variable(id, type_, slide_statement.name.location)
-        .expect("infallible");
+    for (name, type_) in globals::find_members_by_name("Slide") {
+        let id = context.string_interner.create_or_get_variable(name);
+        let type_ = context.type_interner.get_or_intern(type_);
+        scope
+            .try_register_variable(id, type_, slide_statement.name.location)
+            .expect("infallible");
+    }
     let mut statements = Vec::with_capacity(slide_statement.body.len());
     for statement in slide_statement.body {
         statements.push(bind_node(statement, binder, context));

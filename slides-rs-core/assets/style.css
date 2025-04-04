@@ -1,12 +1,21 @@
 body,
 p,
-h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
     padding: 0;
+    margin: 0;
+}
+
+body {
+    background: black;
+    display: flex;
+}
+
+h1 {
+    padding: 30px 10px;
     margin: 0;
 }
 
@@ -20,11 +29,13 @@ ol {
 }
 
 .slide {
-    height: 100dvh;
+    /* height: 100dvh; */
+    position: relative;
     width: 100dvw;
     padding: 0;
-    margin: 0;
+    margin: auto 0;
     display: none;
+    aspect-ratio: 16/9;
 }
 
 .slide.active {

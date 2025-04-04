@@ -9,7 +9,7 @@ use std::{any::type_name, fmt::Display, ops::Deref};
 pub trait ToCss {
     fn class_name(&self) -> String;
 
-    fn to_css_style(&self) -> String;
+    fn to_css_style(&self, layout: ToCssLayout) -> String;
 
     fn collect_google_font_references(
         &self,
@@ -22,7 +22,7 @@ impl ToCss for () {
         String::new()
     }
 
-    fn to_css_style(&self) -> String {
+    fn to_css_style(&self, layout: ToCssLayout) -> String {
         String::new()
     }
 
@@ -97,8 +97,12 @@ impl DynamicElementStyling {
 }
 
 impl ToCss for DynamicElementStyling {
-    fn to_css_style(&self) -> String {
-        [self.base.to_css_style(), self.specific.to_css_style()].join("\n")
+    fn to_css_style(&self, layout: ToCssLayout) -> String {
+        [
+            self.base.to_css_style(layout),
+            self.specific.to_css_style(layout),
+        ]
+        .join("\n")
     }
 
     fn collect_google_font_references(
@@ -113,13 +117,30 @@ impl ToCss for DynamicElementStyling {
     }
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum Filter {
+    #[default]
+    Unspecified,
+    Brightness(f64),
+}
+
+impl Filter {
+    pub fn to_css(&self) -> String {
+        match self {
+            Filter::Unspecified => "unset".into(),
+            Filter::Brightness(b) => format!("brightness({b})"),
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone, struct_field_names_as_array::FieldNamesAsSlice)]
 pub struct BaseElementStyling {
-    background: Background,
-    halign: HorizontalAlignment,
-    valign: VerticalAlignment,
-    margin: Thickness,
-    padding: Thickness,
+    pub background: Background,
+    pub halign: HorizontalAlignment,
+    pub valign: VerticalAlignment,
+    pub margin: Thickness,
+    pub padding: Thickness,
+    pub filter: Filter,
     z_index: Option<usize>,
 }
 impl BaseElementStyling {
@@ -146,10 +167,14 @@ impl BaseElementStyling {
     pub fn set_padding(&mut self, padding: Thickness) {
         self.padding = padding;
     }
+
+    pub fn set_filter(&mut self, filter: Filter) {
+        self.filter = filter;
+    }
 }
 
 impl ToCss for BaseElementStyling {
-    fn to_css_style(&self) -> String {
+    fn to_css_style(&self, layout: ToCssLayout) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         let mut translate = (0.0, 0.0);
@@ -157,8 +182,12 @@ impl ToCss for BaseElementStyling {
         match self.valign {
             VerticalAlignment::Unset => {}
             VerticalAlignment::Top => {
-                writeln!(result, "top: {}; bottom: unset;", self.margin.top.or_zero())
-                    .expect("infallible");
+                writeln!(
+                    result,
+                    "top: {}; bottom: unset;",
+                    self.margin.top.max(layout.outer_padding.top).or_zero()
+                )
+                .expect("infallible");
             }
             VerticalAlignment::Center => {
                 writeln!(result, "top: 50%; bottom: unset;").expect("infallible");
@@ -168,18 +197,21 @@ impl ToCss for BaseElementStyling {
                 writeln!(
                     result,
                     "bottom: {}; top: unset;",
-                    self.margin.bottom.or_zero()
+                    self.margin
+                        .bottom
+                        .max(layout.outer_padding.bottom)
+                        .or_zero()
                 )
                 .expect("infallible");
             }
             VerticalAlignment::Stretch => {
-                writeln!(
-                    result,
-                    "top: {};\nbottom: {};\nheight: 100%;",
-                    self.margin.top.or_zero(),
-                    self.margin.bottom.or_zero()
-                )
-                .expect("infallible");
+                let top = self.margin.top.max(layout.outer_padding.top);
+                let bottom = self.margin.bottom.max(layout.outer_padding.bottom);
+                let height = StyleUnit::Percent(100.0) - top - bottom;
+                let top = top.or_zero();
+                let bottom = bottom.or_zero();
+                writeln!(result, "top: {top};\nbottom: {bottom};\nheight: {height};",)
+                    .expect("infallible");
             }
         }
 
@@ -189,7 +221,7 @@ impl ToCss for BaseElementStyling {
                 writeln!(
                     result,
                     "left: {}; right: unset;",
-                    self.margin.left.or_zero()
+                    self.margin.left.max(layout.outer_padding.left).or_zero()
                 )
                 .expect("infallible");
             }
@@ -201,18 +233,18 @@ impl ToCss for BaseElementStyling {
                 writeln!(
                     result,
                     "right: {}; left: unset;",
-                    self.margin.right.or_zero()
+                    self.margin.right.max(layout.outer_padding.right).or_zero()
                 )
                 .expect("infallible");
             }
             HorizontalAlignment::Stretch => {
-                writeln!(
-                    result,
-                    "left: {};\right: {};\nwidth: 100%;",
-                    self.margin.left.or_zero(),
-                    self.margin.right.or_zero()
-                )
-                .expect("infallible");
+                let left = self.margin.left.max(layout.outer_padding.left);
+                let right = self.margin.right.max(layout.outer_padding.right);
+                let width = StyleUnit::Percent(100.0) - left - right;
+                let left = left.or_zero();
+                let right = right.or_zero();
+                writeln!(result, "left: {left};\nright: {right};\nwidth: {width};",)
+                    .expect("infallible");
             }
         }
 
@@ -235,6 +267,10 @@ impl ToCss for BaseElementStyling {
 
         if self.background != Background::Unspecified {
             writeln!(result, "background: {};", self.background).expect("infallible");
+        }
+
+        if self.filter != Filter::Unspecified {
+            writeln!(result, "filter: {};", self.filter.to_css()).expect("infallible");
         }
         result
     }
@@ -260,6 +296,10 @@ pub struct ElementStyling<S> {
 impl<S> ElementStyling<S> {
     pub fn base_mut(&mut self) -> &mut BaseElementStyling {
         &mut self.base
+    }
+
+    pub fn base(&self) -> &BaseElementStyling {
+        &self.base
     }
 }
 
@@ -298,9 +338,31 @@ impl<S: ToCss + 'static> ElementStyling<S> {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct ToCssLayout {
+    pub outer_padding: Thickness,
+}
+impl ToCssLayout {
+    pub(crate) fn unknown() -> ToCssLayout {
+        Self {
+            outer_padding: Thickness::default(),
+        }
+    }
+
+    pub(crate) fn new(base: &BaseElementStyling) -> Self {
+        Self {
+            outer_padding: base.padding,
+        }
+    }
+}
+
 impl<S: ToCss> ToCss for ElementStyling<S> {
-    fn to_css_style(&self) -> String {
-        [self.base.to_css_style(), self.specific.to_css_style()].join("\n")
+    fn to_css_style(&self, layout: ToCssLayout) -> String {
+        [
+            self.base.to_css_style(layout),
+            self.specific.to_css_style(layout),
+        ]
+        .join("\n")
     }
 
     fn collect_google_font_references(
@@ -383,7 +445,7 @@ impl SlideStyling {
 }
 
 impl ToCss for SlideStyling {
-    fn to_css_style(&self) -> String {
+    fn to_css_style(&self, layout: ToCssLayout) -> String {
         String::new()
     }
 
@@ -512,7 +574,7 @@ impl ElementStyling<LabelStyling> {
 }
 
 impl ToCss for LabelStyling {
-    fn to_css_style(&self) -> String {
+    fn to_css_style(&self, layout: ToCssLayout) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         if let Some(text_color) = self.text_color {
@@ -612,7 +674,7 @@ impl ElementStyling<ImageStyling> {
 }
 
 impl ToCss for ImageStyling {
-    fn to_css_style(&self) -> String {
+    fn to_css_style(&self, layout: ToCssLayout) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         if self.object_fit != ObjectFit::Unspecified {

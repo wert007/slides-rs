@@ -1,4 +1,9 @@
-use std::{fmt::Display, num::ParseFloatError, ops::Add, str::FromStr};
+use std::{
+    fmt::Display,
+    num::ParseFloatError,
+    ops::{Add, Sub},
+    str::FromStr,
+};
 
 use crate::SlidesEnum;
 
@@ -209,6 +214,26 @@ impl StyleUnit {
         }
     }
 
+    fn add_percent(&self, percent: f64) -> StyleUnit {
+        match self {
+            StyleUnit::Unspecified => StyleUnit::Percent(percent),
+            StyleUnit::Pixel(_) => todo!(),
+            StyleUnit::Point(pt) => todo!(),
+            StyleUnit::Percent(spercent) => Self::Percent(*spercent + percent),
+        }
+    }
+
+    pub fn max(&self, other: Self) -> Self {
+        match (self, &other) {
+            (StyleUnit::Unspecified, max) => *max,
+            (max, StyleUnit::Unspecified) => *max,
+            (StyleUnit::Pixel(a), StyleUnit::Pixel(b)) => StyleUnit::Pixel(a.max(*b)),
+            (StyleUnit::Point(a), StyleUnit::Point(b)) => StyleUnit::Point(a.max(*b)),
+            (StyleUnit::Percent(a), StyleUnit::Percent(b)) => StyleUnit::Percent(a.max(*b)),
+            _ => todo!(),
+        }
+    }
+
     pub fn or_zero(&self) -> StyleUnit {
         match self {
             Self::Unspecified => StyleUnit::Pixel(0.0),
@@ -225,7 +250,20 @@ impl Add for StyleUnit {
             StyleUnit::Unspecified => self,
             StyleUnit::Pixel(px) => self.add_pixel(px),
             StyleUnit::Point(pt) => todo!(),
-            StyleUnit::Percent(percent) => todo!(),
+            StyleUnit::Percent(percent) => self.add_percent(percent),
+        }
+    }
+}
+
+impl Sub for StyleUnit {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        match rhs {
+            StyleUnit::Unspecified => self,
+            StyleUnit::Pixel(px) => self.add_pixel(-px),
+            StyleUnit::Point(pt) => todo!(),
+            StyleUnit::Percent(percent) => self.add_percent(-percent),
         }
     }
 }

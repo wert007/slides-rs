@@ -4,7 +4,7 @@ use crate::{
     ElementStyling, ImageStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
 };
 
-use super::WebRenderable;
+use super::{WebRenderable, WebRenderableContext};
 
 #[derive(Debug, Clone)]
 pub struct Image {
@@ -75,9 +75,13 @@ impl Image {
 }
 
 impl WebRenderable for Image {
-    fn output_to_html<W: std::io::Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
+    fn output_to_html<W: std::io::Write>(
+        self,
+        emitter: &mut PresentationEmitter<W>,
+        ctx: WebRenderableContext,
+    ) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let style_styling = self.styling.to_css_style();
+        let style_styling = self.styling.to_css_style(ctx.layout);
         writeln!(emitter.raw_css(), "#{id} {{\n{style_styling}\n}}",)?;
         self.source.add_files(emitter)?;
         writeln!(

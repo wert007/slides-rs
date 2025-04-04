@@ -2,7 +2,7 @@ use std::io::Write;
 
 use crate::{ElementStyling, Result, StylingReference, ToCss, output::PresentationEmitter};
 
-use super::{Element, WebRenderable};
+use super::{Element, WebRenderable, WebRenderableContext};
 
 #[derive(Debug, Clone)]
 pub struct CustomElement {
@@ -47,9 +47,13 @@ impl CustomElement {
 }
 
 impl WebRenderable for CustomElement {
-    fn output_to_html<W: Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
+    fn output_to_html<W: Write>(
+        self,
+        emitter: &mut PresentationEmitter<W>,
+        ctx: WebRenderableContext,
+    ) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let style = self.styling.to_css_style();
+        let style = self.styling.to_css_style(ctx.layout);
         writeln!(
             emitter.raw_css(),
             r#"#{id} {{
@@ -66,7 +70,7 @@ impl WebRenderable for CustomElement {
                 .collect::<String>(),
         )?;
         for element in self.children {
-            element.output_to_html(emitter)?;
+            element.output_to_html(emitter, ctx)?;
         }
         writeln!(emitter.raw_html(), "</div>")?;
         Ok(())

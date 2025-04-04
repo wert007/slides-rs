@@ -4,7 +4,7 @@ use crate::{
     ElementStyling, LabelStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
 };
 
-use super::WebRenderable;
+use super::{WebRenderable, WebRenderableContext};
 
 #[derive(Debug, Clone)]
 pub struct FormattedText {
@@ -46,11 +46,17 @@ impl WebRenderable for Label {
         self.styling.collect_google_font_references(fonts)
     }
 
-    fn output_to_html<W: std::io::Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
+    fn output_to_html<W: std::io::Write>(
+        self,
+        emitter: &mut PresentationEmitter<W>,
+        ctx: WebRenderableContext,
+    ) -> Result<()> {
         let id = format!("{}-{}", self.parent_id, self.id);
-        let style_styling = self.styling.to_css_style();
+        let style_styling = self.styling.to_css_style(ctx.layout);
         writeln!(emitter.raw_css(), "#{id} {{")?;
         writeln!(emitter.raw_css(), "{style_styling}}}")?;
+        // TODO: Maybe in future all text is gonna be inside of svg to allow
+        // seemless scaling.
         writeln!(
             emitter.raw_html(),
             "<div id=\"{id}\" class=\"label{}\">",
