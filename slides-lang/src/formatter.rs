@@ -7,7 +7,7 @@ use std::{
 use crate::{
     Context,
     compiler::{
-        self,
+        self, DebugLang,
         evaluator::Value,
         lexer::{Token, TokenKind},
         parser::{SyntaxNodeKind, debug_ast},
@@ -47,14 +47,6 @@ impl TokenConfig {
         no_indent: true,
         indent_inner_lines: false,
     };
-
-    pub const STRING: TokenConfig = TokenConfig {
-        trim_lines: true,
-        trailing_space: false,
-        leading_blank_line: false,
-        no_indent: false,
-        indent_inner_lines: true,
-    };
 }
 
 #[derive(Debug)]
@@ -67,7 +59,6 @@ struct Formatter<W: std::io::Write> {
     trim_lines: bool,
     is_start_of_file: bool,
     wanted_column_width: usize,
-    is_blank_line: bool,
 }
 
 impl<W: Write + fmt::Debug> Formatter<W> {
@@ -81,7 +72,6 @@ impl<W: Write + fmt::Debug> Formatter<W> {
             trim_lines: false,
             is_start_of_file: true,
             wanted_column_width,
-            is_blank_line: false,
         }
     }
 
@@ -275,18 +265,23 @@ impl<W: Write + fmt::Debug> Write for Formatter<W> {
     }
 }
 
-pub fn format_file(path: std::path::PathBuf, dry: bool) -> std::io::Result<()> {
+pub fn format_file(path: std::path::PathBuf, dry: bool, debug: DebugLang) -> std::io::Result<()> {
     let mut context = Context::new();
+    context.debug = debug;
     let file = context.load_file(path.clone())?;
     if dry {
         let mut formatter = Formatter::new(stdout(), 100);
         let ast = compiler::parser::parse_file(file, &mut context);
-        debug_ast(&ast, &context);
+        if debug.parser {
+            debug_ast(&ast, &context);
+        }
         format_ast(ast, &mut formatter, &mut context)?;
     } else {
         let mut formatter = Formatter::new(File::create(path)?, 100);
         let ast = compiler::parser::parse_file(file, &mut context);
-        debug_ast(&ast, &context);
+        if debug.parser {
+            debug_ast(&ast, &context);
+        }
         format_ast(ast, &mut formatter, &mut context)?;
     }
     Ok(())

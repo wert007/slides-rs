@@ -1,4 +1,4 @@
-use super::lexer::{self, Token, TokenKind, Trivia, debug_tokens};
+use super::lexer::{self, Token, TokenKind, debug_tokens};
 use crate::{Context, FileId, Files, Location};
 
 #[derive(Debug, Clone)]
@@ -640,7 +640,9 @@ impl Parser {
 
 pub(crate) fn parse_file(file: FileId, context: &mut Context) -> Ast {
     let tokens = lexer::lex(file, context);
-    lexer::debug_tokens(&tokens, &context.loaded_files);
+    if context.debug.tokens {
+        lexer::debug_tokens(&tokens, &context.loaded_files);
+    }
     parse_tokens(tokens, context)
 }
 
@@ -678,7 +680,7 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
     }
 }
 
-fn parse_import_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+fn parse_import_statement(parser: &mut Parser, _context: &mut Context) -> SyntaxNode {
     let import_keyword = parser.match_token(TokenKind::ImportKeyword);
     let type_ = parser.match_token(TokenKind::Identifier);
     let string = parser.match_token(TokenKind::String);
@@ -704,7 +706,7 @@ fn parse_element_statement(parser: &mut Parser, context: &mut Context) -> Syntax
     SyntaxNode::element_statement(element_keyword, name, parameters, colon, body)
 }
 
-fn parse_parameter_node(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+fn parse_parameter_node(parser: &mut Parser, _context: &mut Context) -> SyntaxNode {
     let lparen = parser.match_token(TokenKind::SingleChar('('));
     let mut parameters = Vec::new();
     while parser.current_token().kind != TokenKind::Eof
@@ -943,10 +945,6 @@ fn parse_dict_identifier(parser: &mut Parser, _: &mut Context) -> Token {
         };
     }
     identifier
-}
-
-fn parse_member_access(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    todo!()
 }
 
 fn is_start_of_top_level_statement(kind: TokenKind) -> bool {

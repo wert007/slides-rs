@@ -94,7 +94,7 @@ impl Value {
     }
 }
 
-fn parse_multiline_string(text: &str, replace_escapisms: bool) -> Value {
+fn parse_multiline_string(text: &str, _replace_escapisms: bool) -> Value {
     let text = text
         .strip_suffix("\"\"\"")
         .expect("valid string literal")
@@ -142,7 +142,7 @@ fn parse_multiline_string(text: &str, replace_escapisms: bool) -> Value {
     Value::String(result)
 }
 
-fn parse_single_line_string(text: &str, replace_escapisms: bool) -> Value {
+fn parse_single_line_string(text: &str, _replace_escapisms: bool) -> Value {
     let text = text
         .strip_suffix('"')
         .expect("valid string literal")

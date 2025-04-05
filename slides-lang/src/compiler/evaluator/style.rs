@@ -1,5 +1,3 @@
-use slides_rs_core::{ElementStyling, ToCss};
-
 use super::Evaluator;
 use super::value::Value;
 use crate::compiler::binder::{BoundNode, BoundNodeKind};
@@ -17,16 +15,9 @@ fn evaluate_statement(statement: BoundNode, evaluator: &mut Evaluator, context: 
         BoundNodeKind::AssignmentStatement(assignment_statement) => {
             evaluate_assignment_statement(assignment_statement, evaluator, context)
         }
-        BoundNodeKind::FunctionCall(function_call) => todo!(),
-        BoundNodeKind::VariableReference(variable) => todo!(),
-        BoundNodeKind::Literal(value) => todo!(),
-        BoundNodeKind::VariableDeclaration(variable_declaration) => {
+        BoundNodeKind::VariableDeclaration(_variable_declaration) => {
             todo!()
         }
-        BoundNodeKind::Dict(items) => todo!(),
-        BoundNodeKind::MemberAccess(member_access) => todo!(),
-        BoundNodeKind::Conversion(conversion) => todo!(),
-        BoundNodeKind::PostInitialization(post_initialization) => todo!(),
         _ => unreachable!(),
     }
 }
@@ -57,7 +48,7 @@ fn assign_to(lhs: BoundNode, value: Value, evaluator: &mut Evaluator, context: &
                 missing => unreachable!("Missing member {missing}"),
             }
         }
-        BoundNodeKind::Conversion(conversion) => todo!(),
+        BoundNodeKind::Conversion(_conversion) => todo!(),
         _ => unreachable!(),
     }
 }

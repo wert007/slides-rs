@@ -3,12 +3,12 @@ use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
 
 use slides_rs_core::{
-    Background, Color, CustomElement, ElementStyling, Label, Slide, Thickness, WebRenderable,
+    Background, Color, CustomElement, ElementStyling, Label, Thickness, WebRenderable,
 };
 use string_interner::symbol::SymbolUsize;
 
+use crate::Context;
 use crate::compiler::binder::{self, BoundNode, BoundNodeKind, typing::Type};
-use crate::{Context, VariableId};
 
 use super::Evaluator;
 use super::value::{UserFunctionValue, Value};
@@ -123,7 +123,7 @@ fn assign_to(node: BoundNode, value: Value, evaluator: &mut Evaluator, context: 
             let member = member_access.member;
             assign_member(*member_access.base, member, value, evaluator, context);
         }
-        BoundNodeKind::Conversion(conversion) => todo!(),
+        BoundNodeKind::Conversion(_conversion) => todo!(),
         _ => {
             unreachable!("Not assignable!")
         }
@@ -249,7 +249,7 @@ fn evaluate_post_initialization(
 }
 
 fn assign_to_slide_type(
-    base_type: Type,
+    _base_type: Type,
     base: &mut Value,
     member: SymbolUsize,
     value: Value,
@@ -485,9 +485,9 @@ fn evaluate_conversion(
             _ => unreachable!("Impossible conversion!"),
         },
         Type::Element => match base {
-            Value::Label(label) => todo!(),
-            Value::Image(image) => todo!(),
-            Value::CustomElement(custom_element) => todo!(),
+            Value::Label(_label) => todo!(),
+            Value::Image(_image) => todo!(),
+            Value::CustomElement(_custom_element) => todo!(),
             _ => unreachable!("Impossible conversion!"),
         },
         Type::Thickness => match base {

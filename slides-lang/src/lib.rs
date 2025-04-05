@@ -1,6 +1,6 @@
 use std::{ops::Index, path::PathBuf};
 
-use compiler::{binder::typing::TypeInterner, diagnostics::Diagnostics};
+use compiler::{DebugLang, binder::typing::TypeInterner, diagnostics::Diagnostics};
 use slides_rs_core::Presentation;
 use string_interner::{Symbol, backend::BucketBackend, symbol::SymbolUsize};
 
@@ -163,6 +163,7 @@ pub struct Context {
     diagnostics: Diagnostics,
     string_interner: StringInterner,
     type_interner: TypeInterner,
+    debug: DebugLang,
 }
 
 impl Context {
@@ -173,6 +174,7 @@ impl Context {
             diagnostics: Diagnostics::new(),
             string_interner: StringInterner::new(),
             type_interner: TypeInterner::new(),
+            debug: DebugLang::default(),
         }
     }
 

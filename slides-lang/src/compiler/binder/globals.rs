@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use constcat::concat_slices;
 use slides_rs_core::{
     BaseElementStyling, HorizontalAlignment, ImageStyling, LabelStyling, ObjectFit, SlideStyling,

@@ -139,7 +139,7 @@ fn evaluate_statement(
 
 fn evaluate_import_statement(
     import_statement: std::path::PathBuf,
-    evaluator: &mut Evaluator,
+    _evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     let path_extensions = import_statement.to_str().unwrap().split('.').rev();
@@ -179,7 +179,7 @@ fn evaluate_import_statement(
 fn evaluate_element_statement(
     element_statement: super::binder::ElementStatement,
     evaluator: &mut Evaluator,
-    context: &mut Context,
+    _context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     let parameters = element_statement.parameters;
     evaluator.set_variable(

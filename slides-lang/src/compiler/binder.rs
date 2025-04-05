@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use convert_case::Casing;
-use slides_rs_core::{CustomElement, ElementRefMut, Presentation, StyleUnit, TextAlign};
+use slides_rs_core::Presentation;
 use string_interner::symbol::SymbolUsize;
 use summum_types::summum;
 use typing::{FunctionType, Type, TypeId, TypeInterner};
@@ -10,19 +10,28 @@ pub mod globals;
 pub mod typing;
 
 use super::{
+    DebugLang,
     evaluator::{self, Value},
     lexer::Token,
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
 use crate::{Context, Location, StringInterner, VariableId};
 
-pub(crate) fn create_presentation_from_file(file: PathBuf) -> slides_rs_core::Result<Presentation> {
+pub(crate) fn create_presentation_from_file(
+    file: PathBuf,
+    debug: DebugLang,
+) -> slides_rs_core::Result<Presentation> {
     let mut context = Context::new();
+    context.debug = debug;
     let file = context.load_file(file)?;
     let ast = parser::parse_file(file, &mut context);
-    debug_ast(&ast, &context);
+    if debug.parser {
+        debug_ast(&ast, &context);
+    }
     let ast = bind_ast(ast, &mut context);
-    debug_bound_ast(&ast, &context);
+    if debug.binder {
+        debug_bound_ast(&ast, &context);
+    }
     // let Context {
     //     presentation,
     //     diagnostics,
@@ -840,7 +849,7 @@ fn bind_element_statement(
 
 fn bind_parameter_block(
     parameter_block: parser::ParameterBlock,
-    location: Location,
+    _location: Location,
     binder: &mut Binder,
     context: &mut Context,
 ) -> Vec<VariableId> {
@@ -963,7 +972,6 @@ fn access_member(
             visited.push(base_type.clone());
         }
         let member = context.string_interner.resolve(member);
-        dbg!(&base_type, member);
         if let Some(type_) = base_type.field_type(member) {
             let type_ = context.type_interner.get_or_intern(type_);
             let mut fallback = BoundNode::error(base.location);
@@ -1102,7 +1110,7 @@ fn bind_conversion(
     base: BoundNode,
     target: TypeId,
     conversion_kind: ConversionKind,
-    binder: &mut Binder,
+    _binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
     if base.type_ == TypeId::ERROR || base.type_ == target {
@@ -1162,7 +1170,7 @@ fn bind_conversion(
 
 fn bind_literal(
     token: super::lexer::Token,
-    binder: &mut Binder,
+    _binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
     let text = token.text(&context.loaded_files);
@@ -1260,7 +1268,6 @@ fn bind_styling_statement(
     binder.create_scope();
 
     for (member_name, member_type) in members {
-        dbg!(member_name, &member_type);
         let variable = context.string_interner.create_or_get_variable(&member_name);
         let type_id = context.type_interner.get_or_intern(member_type);
         binder
