@@ -11,9 +11,15 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+pub struct Parameter {
+    pub id: VariableId,
+    pub value: Option<Value>,
+}
+
+#[derive(Debug, Clone)]
 pub struct UserFunctionValue {
     pub has_implicit_slide_parameter: bool,
-    pub parameters: Vec<VariableId>,
+    pub parameters: Vec<Parameter>,
     pub body: Vec<BoundNode>,
     pub return_type: TypeId,
 }

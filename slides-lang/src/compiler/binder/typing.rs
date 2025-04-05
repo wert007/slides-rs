@@ -4,6 +4,7 @@ use super::{ConversionKind, Variable, globals};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FunctionType {
+    pub min_argument_count: usize,
     pub(super) argument_types: Vec<TypeId>,
     pub(super) return_type: TypeId,
 }
@@ -26,6 +27,8 @@ impl TypeId {
     pub const DICT: TypeId = TypeId(5);
     pub const PATH: TypeId = TypeId(6);
     pub const STYLING: TypeId = TypeId(7);
+    pub const BACKGROUND: TypeId = TypeId(8);
+    pub const COLOR: TypeId = TypeId(9);
 }
 
 pub struct TypeInterner {
@@ -41,6 +44,8 @@ impl TypeInterner {
         debug_assert_eq!(result.get_or_intern(Type::DynamicDict), TypeId::DICT);
         debug_assert_eq!(result.get_or_intern(Type::Path), TypeId::PATH);
         debug_assert_eq!(result.get_or_intern(Type::Styling), TypeId::STYLING);
+        debug_assert_eq!(result.get_or_intern(Type::Background), TypeId::BACKGROUND);
+        debug_assert_eq!(result.get_or_intern(Type::Color), TypeId::COLOR);
         result
     }
 

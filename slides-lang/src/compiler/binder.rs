@@ -11,7 +11,7 @@ pub mod typing;
 
 use super::{
     DebugLang,
-    evaluator::{self, Value},
+    evaluator::{self, Parameter, Value},
     lexer::Token,
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
@@ -210,14 +210,16 @@ impl Scope {
         let f = globals::FUNCTIONS;
         for function in f {
             let id = string_interner.create_or_get_variable(function.name);
-            let argument_types = function
+            let argument_types: Vec<TypeId> = function
                 .parameters
                 .into_iter()
                 .map(|t| type_interner.get_or_intern(t.clone()))
                 .collect();
             let return_type = type_interner.get_or_intern(function.return_type.clone());
+            let min_argument_count = argument_types.len();
             let type_ = type_interner.get_or_intern(Type::Function(FunctionType {
                 argument_types,
+                min_argument_count,
                 return_type,
             }));
             global
@@ -400,14 +402,14 @@ pub struct AssignmentStatement {
 pub struct ElementStatement {
     pub name: VariableId,
     pub type_: TypeId,
-    pub parameters: Vec<VariableId>,
+    pub parameters: Vec<Parameter>,
     pub body: Vec<BoundNode>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TemplateStatement {
     pub name: VariableId,
-    pub parameters: Vec<VariableId>,
+    pub parameters: Vec<Parameter>,
     pub body: Vec<BoundNode>,
 }
 #[derive(Debug, Clone)]
@@ -479,6 +481,7 @@ pub struct BoundNode {
     location: Location,
     pub kind: BoundNodeKind,
     pub type_: TypeId,
+    pub constant_value: Option<Value>,
 }
 impl BoundNode {
     fn syntax_error(location: Location, consumed: bool) -> BoundNode {
@@ -487,6 +490,7 @@ impl BoundNode {
             location,
             kind: BoundNodeKind::Error(()),
             type_: TypeId::ERROR,
+            constant_value: None,
         }
     }
 
@@ -496,6 +500,7 @@ impl BoundNode {
             location,
             kind: BoundNodeKind::Error(()),
             type_: TypeId::ERROR,
+            constant_value: None,
         }
     }
 
@@ -511,6 +516,7 @@ impl BoundNode {
             location,
             kind: BoundNodeKind::StylingStatement(StylingStatement { name, type_, body }),
             type_: TypeId::VOID,
+            constant_value: None,
         }
     }
 
@@ -523,6 +529,7 @@ impl BoundNode {
                 value: Box::new(value),
             }),
             type_: TypeId::VOID,
+            constant_value: None,
         }
     }
 
@@ -542,6 +549,7 @@ impl BoundNode {
                 function_type,
             }),
             type_,
+            constant_value: None,
         }
     }
 
@@ -551,6 +559,7 @@ impl BoundNode {
             location: token.location,
             kind: BoundNodeKind::VariableReference(variable.clone()),
             type_: variable.type_.clone(),
+            constant_value: None,
         }
     }
 
@@ -558,8 +567,9 @@ impl BoundNode {
         BoundNode {
             base: Some(SyntaxNodeKind::Literal(token)),
             location: token.location,
-            kind: BoundNodeKind::Literal(value),
+            kind: BoundNodeKind::Literal(value.clone()),
             type_,
+            constant_value: Some(value),
         }
     }
 
@@ -574,6 +584,7 @@ impl BoundNode {
             location,
             kind: BoundNodeKind::SlideStatement(SlideStatement { name, body }),
             type_: TypeId::VOID,
+            constant_value: None,
         }
     }
 
@@ -590,6 +601,7 @@ impl BoundNode {
                 value: Box::new(value),
             }),
             type_: TypeId::VOID,
+            constant_value: None,
         }
     }
 
@@ -604,6 +616,7 @@ impl BoundNode {
             location,
             kind: BoundNodeKind::Dict(entries),
             type_,
+            constant_value: None,
         }
     }
 
@@ -621,6 +634,7 @@ impl BoundNode {
                 member,
             }),
             type_,
+            constant_value: None,
         }
     }
 
@@ -628,10 +642,15 @@ impl BoundNode {
         BoundNode {
             base: None,
             location: base.location,
+            constant_value: base
+                .constant_value
+                .clone()
+                .map(|v| constant_conversion(v, target, kind))
+                .flatten(),
             kind: BoundNodeKind::Conversion(Conversion {
                 base: Box::new(base),
                 kind,
-                target: target,
+                target,
             }),
             type_: target,
         }
@@ -646,13 +665,14 @@ impl BoundNode {
                 base: Box::new(base),
                 dict: Box::new(dict),
             }),
+            constant_value: None,
         }
     }
 
     fn element_statement(
         location: Location,
         element_type: TypeId,
-        parameters: Vec<VariableId>,
+        parameters: Vec<Parameter>,
         function_type: TypeId,
         name: VariableId,
         body: Vec<BoundNode>,
@@ -667,12 +687,13 @@ impl BoundNode {
                 body,
             }),
             type_: function_type,
+            constant_value: None,
         }
     }
 
     fn template_statement(
         location: Location,
-        parameters: Vec<VariableId>,
+        parameters: Vec<Parameter>,
         function_type: TypeId,
         name: VariableId,
         body: Vec<BoundNode>,
@@ -685,6 +706,7 @@ impl BoundNode {
                 name,
                 body,
             }),
+            constant_value: None,
             type_: function_type,
         }
     }
@@ -694,6 +716,7 @@ impl BoundNode {
             base: None,
             location,
             kind: BoundNodeKind::ImportStatement(path),
+            constant_value: None,
             type_: TypeId::VOID,
         }
     }
@@ -704,7 +727,26 @@ impl BoundNode {
             location,
             kind: BoundNodeKind::Array(entries),
             type_,
+            constant_value: None,
         }
+    }
+}
+
+fn constant_conversion(value: Value, target: TypeId, kind: ConversionKind) -> Option<Value> {
+    match target {
+        TypeId::PATH => match value {
+            Value::String(value) => Some(PathBuf::from(value).into()),
+            _ => None,
+        },
+        TypeId::BACKGROUND => match value {
+            Value::Color(value) => Some(slides_rs_core::Background::Color(value).into()),
+            _ => None,
+        },
+        TypeId::COLOR => match value {
+            Value::String(value) => Some(slides_rs_core::Color::from_css(&value).into()),
+            _ => None,
+        },
+        _ => None,
     }
 }
 
@@ -858,9 +900,10 @@ fn bind_element_statement(
         context,
     );
     let function_type = Type::Function(FunctionType {
+        min_argument_count: parameters.iter().filter(|p| p.value.is_none()).count(),
         argument_types: parameters
             .iter()
-            .map(|v| binder.look_up_variable(*v).unwrap().type_)
+            .map(|v| binder.look_up_variable(v.id).unwrap().type_)
             .collect(),
         return_type: element_type,
     });
@@ -913,9 +956,10 @@ fn bind_template_statement(
         context,
     );
     let function_type = Type::Function(FunctionType {
+        min_argument_count: parameters.iter().filter(|p| p.value.is_none()).count(),
         argument_types: parameters
             .iter()
-            .map(|v| binder.look_up_variable(*v).unwrap().type_)
+            .map(|v| binder.look_up_variable(v.id).unwrap().type_)
             .collect(),
         return_type: TypeId::VOID,
     });
@@ -941,14 +985,13 @@ fn bind_parameter_block(
     _location: Location,
     binder: &mut Binder,
     context: &mut Context,
-) -> Vec<VariableId> {
+) -> Vec<Parameter> {
     let mut result = Vec::with_capacity(parameter_block.parameters.len());
     for (parameter, _) in parameter_block.parameters {
         let location = parameter.location;
-        let parameter = parameter
-            .kind
-            .try_as_parameter()
-            .expect("Parameter blocks are made of parameter");
+        let Some(parameter) = parameter.kind.try_as_parameter() else {
+            continue;
+        };
         let type_name_str = parameter.type_.text(&context.loaded_files);
         let type_name = context.string_interner.create_or_get(type_name_str);
         let type_ = match binder.look_up_type_by_name(type_name) {
@@ -968,7 +1011,14 @@ fn bind_parameter_block(
             Some(it) => it,
             None => variable,
         };
-        result.push(variable);
+        let value = match parameter.optional_initializer {
+            Some(it) => bind_node(*it, binder, context).constant_value,
+            None => None,
+        };
+        result.push(Parameter {
+            id: variable,
+            value,
+        });
     }
     result
 }
@@ -1330,7 +1380,9 @@ fn bind_function_call(
             context,
         ));
     }
-    if arguments.len() != function_type.argument_types.len() {
+    if !(function_type.min_argument_count..=function_type.argument_types.len())
+        .contains(&arguments.len())
+    {
         context
             .diagnostics
             .report_wrong_argument_count(location, function_type, arguments.len());

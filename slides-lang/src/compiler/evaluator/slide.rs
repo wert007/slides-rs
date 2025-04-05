@@ -406,8 +406,14 @@ fn evaluate_user_function(
     for (id, value) in implicit_fields {
         scope.set_variable(*id, value.clone());
     }
-    for (parameter, value) in user_function.parameters.into_iter().zip(arguments) {
-        scope.set_variable(parameter, value);
+    for (parameter, value) in user_function.parameters.into_iter().zip(
+        arguments
+            .into_iter()
+            .map(|v| Some(v))
+            .chain(std::iter::repeat(None)),
+    ) {
+        let value = value.or_else(|| parameter.value).unwrap();
+        scope.set_variable(parameter.id, value);
     }
     for statement in user_function.body {
         evaluate_statement(statement, evaluator, context).unwrap();

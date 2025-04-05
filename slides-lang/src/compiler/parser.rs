@@ -103,6 +103,8 @@ pub struct Parameter {
     pub identifier: Token,
     pub colon: Token,
     pub type_: Token,
+    pub optional_equals: Option<Token>,
+    pub optional_initializer: Option<Box<SyntaxNode>>,
 }
 #[derive(Debug, Clone)]
 pub struct ParameterBlock {
@@ -383,7 +385,13 @@ impl SyntaxNode {
         }
     }
 
-    fn parameter(identifier: Token, colon: Token, type_: Token) -> SyntaxNode {
+    fn parameter(
+        identifier: Token,
+        colon: Token,
+        type_: Token,
+        optional_equals: Option<Token>,
+        optional_initializer: Option<SyntaxNode>,
+    ) -> SyntaxNode {
         let location = Location::combine(identifier.location, type_.location);
         SyntaxNode {
             location,
@@ -391,6 +399,8 @@ impl SyntaxNode {
                 identifier,
                 colon,
                 type_,
+                optional_equals,
+                optional_initializer: optional_initializer.map(Box::new),
             }),
         }
     }
@@ -769,7 +779,7 @@ fn parse_element_statement(parser: &mut Parser, context: &mut Context) -> Syntax
     SyntaxNode::element_statement(element_keyword, name, parameters, colon, body)
 }
 
-fn parse_parameter_node(parser: &mut Parser, _context: &mut Context) -> SyntaxNode {
+fn parse_parameter_node(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     let lparen = parser.match_token(TokenKind::SingleChar('('));
     let mut parameters = Vec::new();
     while parser.current_token().kind != TokenKind::Eof
@@ -780,9 +790,21 @@ fn parse_parameter_node(parser: &mut Parser, _context: &mut Context) -> SyntaxNo
         let identifier = parser.match_token(TokenKind::Identifier);
         let colon = parser.match_token(TokenKind::SingleChar(':'));
         let type_ = parser.match_token(TokenKind::Identifier);
+        let optional_equals = parser.try_match_token(TokenKind::SingleChar('='));
+        let optional_initializer = if optional_equals.is_some() {
+            Some(parse_expression(parser, context))
+        } else {
+            None
+        };
         let optional_comma = parser.try_match_token(TokenKind::SingleChar(','));
         parameters.push((
-            SyntaxNode::parameter(identifier, colon, type_),
+            SyntaxNode::parameter(
+                identifier,
+                colon,
+                type_,
+                optional_equals,
+                optional_initializer,
+            ),
             optional_comma,
         ));
         if let Some(consumed) = parser.ensure_consume(position) {

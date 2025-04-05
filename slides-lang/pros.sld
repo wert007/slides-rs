@@ -36,7 +36,7 @@ element image_with_caption(img: Image, caption: String):
     valign = VAlign.Stretch;
     halign = HAlign.Stretch;
 
-template page_number(color: Color):
+template page_number(color: Color = c"black"):
     // TODO add arithmetic expressions!
     // let number = slide_index - 4;
     let number = slide_index;
@@ -89,7 +89,7 @@ slide title:
         }
 
 slide toc:
-    page_number(c"black");
+    page_number();
     let toc =
         l"""
             # Übersicht
@@ -128,7 +128,7 @@ slide example:
 
 
 slide one_sided_sync:
-    page_number(c"black");
+    page_number();
     let text =
         l"""
             # Einseitige Synchronisation
