@@ -315,6 +315,9 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::ElementStatement(element_statement) => {
             format_element_statement(element_statement, formatter, context)
         }
+        SyntaxNodeKind::TemplateStatement(template_statement) => {
+            format_template_statement(template_statement, formatter, context)
+        }
         SyntaxNodeKind::ImportStatement(import_statement) => {
             format_import_statement(import_statement, formatter, context)
         }
@@ -492,6 +495,41 @@ fn format_element_statement<W: Write + fmt::Debug>(
     )?;
     formatter.indent += 4;
     for statement in element_statement.body {
+        format_node(statement, formatter, context)?;
+    }
+    formatter.indent -= 4;
+    Ok(())
+}
+
+fn format_template_statement<W: Write + fmt::Debug>(
+    template_statement: compiler::parser::TemplateStatement,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> Result<()> {
+    formatter.emit_token(
+        template_statement.template_keyword,
+        &context.loaded_files,
+        TokenConfig {
+            leading_blank_line: true,
+            trailing_space: true,
+            ..Default::default()
+        },
+    )?;
+    formatter.emit_token(
+        template_statement.name,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+
+    format_node(*template_statement.parameters, formatter, context)?;
+
+    formatter.emit_token(
+        template_statement.colon,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    formatter.indent += 4;
+    for statement in template_statement.body {
         format_node(statement, formatter, context)?;
     }
     formatter.indent -= 4;

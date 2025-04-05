@@ -10,6 +10,7 @@ pub enum TokenKind {
     StylingKeyword,
     ElementKeyword,
     ImportKeyword,
+    TemplateKeyword,
     LetKeyword,
     Number,
     SingleChar(char),
@@ -122,6 +123,7 @@ impl Token {
                 "styling" => TokenKind::StylingKeyword,
                 "element" => TokenKind::ElementKeyword,
                 "import" => TokenKind::ImportKeyword,
+                "template" => TokenKind::TemplateKeyword,
                 _ => TokenKind::Identifier,
             };
         }

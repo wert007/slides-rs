@@ -85,6 +85,17 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 debug_bound_node(statement, context, format!("{indent}    "));
             }
         }
+        BoundNodeKind::TemplateStatement(template_statement) => {
+            println!(
+                "Template {}",
+                context
+                    .string_interner
+                    .resolve_variable(template_statement.name),
+            );
+            for statement in &template_statement.body {
+                debug_bound_node(statement, context, format!("{indent}    "));
+            }
+        }
         BoundNodeKind::ImportStatement(path) => {
             println!("Import {}", path.display());
         }
@@ -392,6 +403,13 @@ pub struct ElementStatement {
     pub parameters: Vec<VariableId>,
     pub body: Vec<BoundNode>,
 }
+
+#[derive(Debug, Clone)]
+pub struct TemplateStatement {
+    pub name: VariableId,
+    pub parameters: Vec<VariableId>,
+    pub body: Vec<BoundNode>,
+}
 #[derive(Debug, Clone)]
 
 pub struct FunctionCall {
@@ -440,6 +458,7 @@ pub enum BoundNodeKind {
     StylingStatement(StylingStatement),
     AssignmentStatement(AssignmentStatement),
     ElementStatement(ElementStatement),
+    TemplateStatement(TemplateStatement),
     ImportStatement(PathBuf),
     FunctionCall(FunctionCall),
     VariableReference(Variable),
@@ -651,6 +670,25 @@ impl BoundNode {
         }
     }
 
+    fn template_statement(
+        location: Location,
+        parameters: Vec<VariableId>,
+        function_type: TypeId,
+        name: VariableId,
+        body: Vec<BoundNode>,
+    ) -> BoundNode {
+        BoundNode {
+            base: None,
+            location,
+            kind: BoundNodeKind::TemplateStatement(TemplateStatement {
+                parameters,
+                name,
+                body,
+            }),
+            type_: function_type,
+        }
+    }
+
     fn import(path: PathBuf, location: Location) -> BoundNode {
         BoundNode {
             base: None,
@@ -693,6 +731,9 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         }
         SyntaxNodeKind::ElementStatement(element_statement) => {
             bind_element_statement(element_statement, statement.location, binder, context)
+        }
+        SyntaxNodeKind::TemplateStatement(template_statement) => {
+            bind_template_statement(template_statement, statement.location, binder, context)
         }
         SyntaxNodeKind::ImportStatement(import_statement) => {
             bind_import_statement(import_statement, statement.location, binder, context)
@@ -845,6 +886,54 @@ fn bind_element_statement(
         name,
         body,
     )
+}
+
+fn bind_template_statement(
+    template_statement: parser::TemplateStatement,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    let scope = binder.create_scope();
+    let id = context
+        .string_interner
+        .create_or_get_variable("slide_index");
+    let type_ = context.type_interner.get_or_intern(Type::Integer);
+    binder
+        .expect_register_variable_id(id, type_, location, context)
+        .expect("is free");
+    let parameters = bind_parameter_block(
+        template_statement
+            .parameters
+            .kind
+            .try_as_parameter_block()
+            .expect("Parameters should be parameters"),
+        template_statement.parameters.location,
+        binder,
+        context,
+    );
+    let function_type = Type::Function(FunctionType {
+        argument_types: parameters
+            .iter()
+            .map(|v| binder.look_up_variable(*v).unwrap().type_)
+            .collect(),
+        return_type: TypeId::VOID,
+    });
+    let function_type = context.type_interner.get_or_intern(function_type);
+    let mut body = Vec::with_capacity(template_statement.body.len());
+    for statement in template_statement.body {
+        body.push(bind_node(statement, binder, context));
+    }
+    binder.drop_scope();
+    let Some(name) = binder.expect_register_variable_token(
+        template_statement.name,
+        function_type,
+        template_statement.name.location,
+        context,
+    ) else {
+        return BoundNode::error(template_statement.name.location);
+    };
+    BoundNode::template_statement(location, parameters, function_type, name, body)
 }
 
 fn bind_parameter_block(

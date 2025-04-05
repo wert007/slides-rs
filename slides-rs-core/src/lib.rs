@@ -133,6 +133,10 @@ impl Presentation {
         writeln!(extern_text, "{file}\n").expect("infallible");
         Ok(())
     }
+
+    pub fn slide_count(&self) -> usize {
+        self.slides.len()
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -142,6 +146,7 @@ pub enum FilePlacement {
 
 #[derive(Debug)]
 pub struct Slide {
+    pub index: usize,
     id: Option<String>,
     elements: Vec<Element>,
     styling: ElementStyling<SlideStyling>,
@@ -149,8 +154,9 @@ pub struct Slide {
 }
 
 impl Slide {
-    pub fn new() -> Self {
+    pub fn new(index: usize) -> Self {
         Self {
+            index,
             id: None,
             elements: Vec::new(),
             styling: SlideStyling::new(),
@@ -223,5 +229,10 @@ impl Slide {
         let result = self.current_z_index;
         self.current_z_index += 1;
         result
+    }
+
+    pub fn add_element(mut self, element: Element) -> Slide {
+        self.elements.push(element);
+        self
     }
 }

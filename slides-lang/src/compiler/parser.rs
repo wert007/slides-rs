@@ -1,4 +1,4 @@
-use super::lexer::{self, Token, TokenKind, debug_tokens};
+use super::lexer::{self, Token, TokenKind};
 use crate::{Context, FileId, Files, Location};
 
 #[derive(Debug, Clone)]
@@ -110,6 +110,7 @@ pub struct ParameterBlock {
     pub parameters: Vec<(SyntaxNode, Option<Token>)>,
     pub rparen: Token,
 }
+
 #[derive(Debug, Clone)]
 pub struct ElementStatement {
     pub element_keyword: Token,
@@ -118,6 +119,16 @@ pub struct ElementStatement {
     pub colon: Token,
     pub body: Vec<SyntaxNode>,
 }
+
+#[derive(Debug, Clone)]
+pub struct TemplateStatement {
+    pub template_keyword: Token,
+    pub name: Token,
+    pub parameters: Box<SyntaxNode>,
+    pub colon: Token,
+    pub body: Vec<SyntaxNode>,
+}
+
 #[derive(Debug, Clone)]
 pub struct ImportStatement {
     pub import_keyword: Token,
@@ -132,6 +143,7 @@ pub enum SyntaxNodeKind {
     SlideStatement(SlideStatement),
     ElementStatement(ElementStatement),
     ImportStatement(ImportStatement),
+    TemplateStatement(TemplateStatement),
     ExpressionStatement(ExpressionStatement),
     VariableDeclaration(VariableDeclaration),
     AssignmentStatement(AssignmentStatement),
@@ -435,6 +447,27 @@ impl SyntaxNode {
             }),
         }
     }
+
+    fn template_statement(
+        template_keyword: Token,
+        name: Token,
+        parameters: SyntaxNode,
+        colon: Token,
+        body: Vec<SyntaxNode>,
+    ) -> SyntaxNode {
+        let location = Location::combine(template_keyword.location, body.last().unwrap().location);
+
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::TemplateStatement(TemplateStatement {
+                template_keyword,
+                name,
+                parameters: Box::new(parameters),
+                colon,
+                body,
+            }),
+        }
+    }
 }
 
 pub struct Ast {
@@ -470,6 +503,18 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
             );
             println!("{indent}Body:");
             for statement in &element_statement.body {
+                debug_syntax_node(statement, files, format!("{indent}    "));
+            }
+        }
+        SyntaxNodeKind::TemplateStatement(template_statement) => {
+            println!("Custom Template {}", template_statement.name.text(files),);
+            debug_syntax_node(
+                &template_statement.parameters,
+                files,
+                format!("{indent}    "),
+            );
+            println!("{indent}Body:");
+            for statement in &template_statement.body {
                 debug_syntax_node(statement, files, format!("{indent}    "));
             }
         }
@@ -670,6 +715,7 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
         TokenKind::SlideKeyword => parse_slide_statement(parser, context),
         TokenKind::StylingKeyword => parse_styling_statement(parser, context),
         TokenKind::ElementKeyword => parse_element_statement(parser, context),
+        TokenKind::TemplateKeyword => parse_template_statement(parser, context),
         TokenKind::ImportKeyword => parse_import_statement(parser, context),
         _ => {
             context
@@ -678,6 +724,23 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
             SyntaxNode::error(*parser.current_token(), false)
         }
     }
+}
+
+fn parse_template_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let template_keyword = parser.match_token(TokenKind::TemplateKeyword);
+    let name = parser.match_token(TokenKind::Identifier);
+    let parameters = parse_parameter_node(parser, context);
+    let colon = parser.match_token(TokenKind::SingleChar(':'));
+    let mut body = Vec::new();
+    while !is_start_of_top_level_statement(parser.current_token().kind) {
+        let position = parser.position();
+
+        body.push(parse_statement(parser, context));
+        if let Some(consumed) = parser.ensure_consume(position) {
+            body.push(SyntaxNode::error(consumed, true));
+        }
+    }
+    SyntaxNode::template_statement(template_keyword, name, parameters, colon, body)
 }
 
 fn parse_import_statement(parser: &mut Parser, _context: &mut Context) -> SyntaxNode {
@@ -870,7 +933,6 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
         TokenKind::SingleChar('[') => parse_array(parser, context),
         TokenKind::SingleChar('.') => parse_inferred_member(parser, context),
         _ => {
-            debug_tokens(&parser.tokens[parser.index..], &context.loaded_files);
             context
                 .diagnostics
                 .report_expected_expression(*parser.current_token(), &context.loaded_files);
@@ -954,5 +1016,6 @@ fn is_start_of_top_level_statement(kind: TokenKind) -> bool {
             | TokenKind::StylingKeyword
             | TokenKind::Eof
             | TokenKind::ElementKeyword
+            | TokenKind::TemplateKeyword
     )
 }

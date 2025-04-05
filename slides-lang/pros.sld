@@ -36,10 +36,15 @@ element image_with_caption(img: Image, caption: String):
     valign = VAlign.Stretch;
     halign = HAlign.Stretch;
 
-styling page_number(Label):
-    valign = VAlign.Bottom;
-    halign = HAlign.Center;
-    text_align = TextAlign.Center;
+template page_number():
+    // TODO add arithmetic expressions!
+    // let number = slide_index - 4;
+    let number = slide_index;
+    let page_number = label(string(number)) {
+        valign: VAlign.Bottom,
+        halign: HAlign.Center,
+        text_align: TextAlign.Center,
+    };
 
 slide code:
     let bg =
@@ -82,6 +87,7 @@ slide title:
         }
 
 slide toc:
+    page_number();
     let toc =
         l"""
             # Übersicht
@@ -93,20 +99,18 @@ slide toc:
         """ {
         };
 
-    let page = l"1" {
-            styles: [ page_number ],
-        };
 
 slide example:
-
-    let bg2 =
+    text_color = c"white";
+    page_number();
+    let bg =
         image_with_caption(
             image(p"./pros-assets/car-repair.jpg") {
                 filter: brightness(0.4),
             },
             "Bild von emkanicepic auf Pixabay");
 
-    let text2 =
+    let text =
         l"""
             # Beispiel
 
@@ -116,16 +120,11 @@ slide example:
              - Zwei Arten von Problemen
                 - Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation
                 - Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks
-        """ {
-            text_color: c"white",
-        };
+        """;
 
-    let page = l"2" {
-            text_color: c"white",
-            styles: [ page_number ],
-        };
 
 slide one_sided_sync:
+    page_number();
     let text =
         l"""
             # Einseitige Synchronisation
@@ -137,8 +136,4 @@ slide one_sided_sync:
             5. Überprüfen auf Anfrage ohne Kenntnis anderer Threads
             6. Fazit zur einseitigen Synchronisation
         """;
-
-    let page = l"3" {
-            styles: [ page_number ],
-        };
 

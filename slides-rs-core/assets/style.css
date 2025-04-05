@@ -70,6 +70,7 @@ ol {
 .label {
     font-size: calc(1.0 * min(16 * 4dvh, 9 * 4dvw) / 16);
     font-weight: normal;
+    color: inherit;
 }
 
 .image {

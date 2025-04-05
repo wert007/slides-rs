@@ -28,7 +28,7 @@ impl CustomElement {
         &self.type_name
     }
 
-    pub(crate) fn element_styling_mut(&mut self) -> &mut ElementStyling<()> {
+    pub fn element_styling_mut(&mut self) -> &mut ElementStyling<()> {
         &mut self.styling
     }
 
@@ -39,6 +39,11 @@ impl CustomElement {
 
     pub fn add_styling(&mut self, reference: StylingReference) {
         self.stylings.push(reference);
+    }
+
+    pub fn with_elements(mut self, children: Vec<Element>) -> CustomElement {
+        self.children = children;
+        self
     }
 }
 

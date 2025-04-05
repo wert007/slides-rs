@@ -1,3 +1,5 @@
+#![allow(unused_mut)]
+
 use constcat::concat_slices;
 use slides_rs_core::{
     BaseElementStyling, HorizontalAlignment, ImageStyling, LabelStyling, ObjectFit, SlideStyling,

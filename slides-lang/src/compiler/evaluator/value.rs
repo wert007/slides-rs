@@ -12,6 +12,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct UserFunctionValue {
+    pub has_implicit_slide_parameter: bool,
     pub parameters: Vec<VariableId>,
     pub body: Vec<BoundNode>,
     pub return_type: TypeId,
@@ -21,6 +22,7 @@ summum! {
     #[allow(dead_code)]
     #[derive(Debug, Clone)]
     pub enum Value {
+        Void(()),
         Float(f64),
         Integer(i64),
         String(String),
@@ -49,6 +51,7 @@ summum! {
 impl Value {
     pub fn infer_type(&self) -> Type {
         match self {
+            Value::Void(()) => Type::Void,
             Value::Float(_) => Type::Float,
             Value::Integer(_) => Type::Integer,
             Value::String(_) => Type::String,

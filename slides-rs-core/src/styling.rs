@@ -16,7 +16,11 @@ pub trait ToCss {
         w: &mut dyn Write,
     ) -> std::io::Result<()> {
         let style = self.to_css_style(layout);
-        writeln!(w, "{selector} {{ {style} }}")
+        if style.is_empty() {
+            Ok(())
+        } else {
+            writeln!(w, "{selector} {{\n{style}}}\n")
+        }
     }
 
     fn to_css_style(&self, layout: ToCssLayout) -> String;
@@ -200,19 +204,19 @@ impl ToCss for BaseElementStyling {
             VerticalAlignment::Top => {
                 writeln!(
                     result,
-                    "top: {}; bottom: unset;",
+                    "    top: {};\n    bottom: unset;",
                     self.margin.top.max(layout.outer_padding.top).or_zero()
                 )
                 .expect("infallible");
             }
             VerticalAlignment::Center => {
-                writeln!(result, "top: 50%; bottom: unset;").expect("infallible");
+                writeln!(result, "    top: 50%;\n    bottom: unset;").expect("infallible");
                 translate.1 = -50.0;
             }
             VerticalAlignment::Bottom => {
                 writeln!(
                     result,
-                    "bottom: {}; top: unset;",
+                    "    bottom: {};\n    top: unset;",
                     self.margin
                         .bottom
                         .max(layout.outer_padding.bottom)
@@ -226,8 +230,11 @@ impl ToCss for BaseElementStyling {
                 let height = StyleUnit::Percent(100.0) - top - bottom;
                 let top = top.or_zero();
                 let bottom = bottom.or_zero();
-                writeln!(result, "top: {top};\nbottom: {bottom};\nheight: {height};",)
-                    .expect("infallible");
+                writeln!(
+                    result,
+                    "    top: {top};\n    bottom: {bottom};\n    height: {height};",
+                )
+                .expect("infallible");
             }
         }
 
@@ -236,19 +243,19 @@ impl ToCss for BaseElementStyling {
             HorizontalAlignment::Left => {
                 writeln!(
                     result,
-                    "left: {}; right: unset;",
+                    "    left: {};\n    right: unset;",
                     self.margin.left.max(layout.outer_padding.left).or_zero()
                 )
                 .expect("infallible");
             }
             HorizontalAlignment::Center => {
-                writeln!(result, "left: 50%; right: unset;").expect("infallible");
+                writeln!(result, "    left: 50%;\n    right: unset;").expect("infallible");
                 translate.0 = -50.0;
             }
             HorizontalAlignment::Right => {
                 writeln!(
                     result,
-                    "right: {}; left: unset;",
+                    "    right: {};\n    left: unset;",
                     self.margin.right.max(layout.outer_padding.right).or_zero()
                 )
                 .expect("infallible");
@@ -259,34 +266,37 @@ impl ToCss for BaseElementStyling {
                 let width = StyleUnit::Percent(100.0) - left - right;
                 let left = left.or_zero();
                 let right = right.or_zero();
-                writeln!(result, "left: {left};\nright: {right};\nwidth: {width};",)
-                    .expect("infallible");
+                writeln!(
+                    result,
+                    "    left: {left};\n    right: {right};\n    width: {width};",
+                )
+                .expect("infallible");
             }
         }
 
         if translate != (0.0, 0.0) {
             writeln!(
                 result,
-                "transform: translate({}%, {}%);",
+                "    transform: translate({}%, {}%);",
                 translate.0, translate.1
             )
             .expect("infallible");
         }
 
         if self.padding != Thickness::default() {
-            writeln!(result, "padding: {};", self.padding).expect("infallible");
+            writeln!(result, "    padding: {};", self.padding).expect("infallible");
         }
 
         if let Some(z_index) = self.z_index {
-            writeln!(result, "z-index: {z_index};").expect("infallible");
+            writeln!(result, "    z-index: {z_index};").expect("infallible");
         }
 
         if self.background != Background::Unspecified {
-            writeln!(result, "background: {};", self.background).expect("infallible");
+            writeln!(result, "    background: {};", self.background).expect("infallible");
         }
 
         if self.filter != Filter::Unspecified {
-            writeln!(result, "filter: {};", self.filter.to_css()).expect("infallible");
+            writeln!(result, "    filter: {};", self.filter.to_css()).expect("infallible");
         }
         result
     }
@@ -441,6 +451,10 @@ impl ElementStyling<SlideStyling> {
             specific: self.specific.into(),
         }
     }
+
+    pub fn set_text_color(&mut self, color: Color) {
+        self.specific.text_color = Some(color);
+    }
 }
 impl ElementStyling<()> {
     pub fn to_dynamic(self, name: String) -> DynamicElementStyling {
@@ -458,17 +472,24 @@ impl ElementStyling<()> {
 }
 
 #[derive(Debug, Default, FieldNamesAsSlice)]
-pub struct SlideStyling {}
+pub struct SlideStyling {
+    text_color: Option<Color>,
+}
 
 impl SlideStyling {
     pub fn new() -> ElementStyling<SlideStyling> {
-        ElementStyling::new(Self {})
+        ElementStyling::new(Self { text_color: None })
     }
 }
 
 impl ToCss for SlideStyling {
     fn to_css_style(&self, layout: ToCssLayout) -> String {
-        String::new()
+        use std::fmt::Write;
+        let mut result = String::new();
+        if let Some(text_color) = self.text_color {
+            writeln!(result, "    color: {text_color};").expect("infallible");
+        }
+        result
     }
 
     fn collect_google_font_references(
@@ -550,13 +571,13 @@ impl TextStyling {
 
     fn output_css_statements(&self, w: &mut dyn Write) -> std::io::Result<()> {
         if let Some(text_color) = self.text_color {
-            writeln!(w, "color: {text_color};")?;
+            writeln!(w, "    color: {text_color};")?;
         }
         Ok(())
     }
 }
 
-#[derive(Debug, Clone, FieldNamesAsSlice)]
+#[derive(Debug, Clone, FieldNamesAsSlice, Default, PartialEq)]
 pub struct LabelStyling {
     text: TextStyling,
     text_color: Option<Color>,
@@ -630,6 +651,9 @@ impl ToCss for LabelStyling {
         selector: &str,
         w: &mut dyn Write,
     ) -> std::io::Result<()> {
+        if self == &LabelStyling::default() {
+            return Ok(());
+        }
         if self.text != TextStyling::default() {
             writeln!(w, "{selector} .label-text {{")?;
             self.text.output_css_statements(w)?;
@@ -639,18 +663,18 @@ impl ToCss for LabelStyling {
             writeln!(w, "{selector}, {selector} .label-text {{")?;
         }
         if let Some(text_color) = self.text_color {
-            writeln!(w, "color: {text_color};").expect("infallible");
+            writeln!(w, "    color: {text_color};").expect("infallible");
         }
         if self.font != Font::Unspecified {
-            writeln!(w, "font-family: {};", self.font).expect("infallible");
+            writeln!(w, "    font-family: {};", self.font).expect("infallible");
         }
         if self.text_align != TextAlign::Unspecified {
-            writeln!(w, "text-align: {};", self.text_align.as_css()).expect("infallible");
+            writeln!(w, "    text-align: {};", self.text_align.as_css()).expect("infallible");
         }
         if let Some(font_size) = self.font_size {
             writeln!(
                 w,
-                "font-size: calc({font_size} * min(16 * 4dvh, 9 * 4dvw) / 16);"
+                "    font-size: calc({font_size} * min(16 * 4dvh, 9 * 4dvw) / 16);"
             )
             .expect("infallible");
         }
@@ -749,7 +773,7 @@ impl ToCss for ImageStyling {
         use std::fmt::Write;
         let mut result = String::new();
         if self.object_fit != ObjectFit::Unspecified {
-            writeln!(result, "object-fit: {};", self.object_fit.as_css()).expect("infallible");
+            writeln!(result, "    object-fit: {};", self.object_fit.as_css()).expect("infallible");
         }
         result
     }

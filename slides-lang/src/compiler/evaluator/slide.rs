@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
 
 use slides_rs_core::{
-    Background, Color, CustomElement, ElementStyling, Label, Thickness, WebRenderable,
+    Background, Color, CustomElement, Element, ElementStyling, Label, Thickness, WebRenderable,
 };
 use string_interner::symbol::SymbolUsize;
 
@@ -34,6 +34,10 @@ pub fn evaluate_to_slide(
         match name {
             "background" => {
                 slide.styling_mut().set_background(value.into_background());
+                continue;
+            }
+            "text_color" => {
+                slide.styling_mut().set_text_color(value.into_color());
                 continue;
             }
             "padding" => {
@@ -383,7 +387,21 @@ fn evaluate_user_function(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
+    let implicit_fields: &[(crate::VariableId, Value)] =
+        if user_function.has_implicit_slide_parameter {
+            &[(
+                context
+                    .string_interner
+                    .create_or_get_variable("slide_index"),
+                Value::Integer(evaluator.slide.as_ref().unwrap().index as i64),
+            )]
+        } else {
+            &[]
+        };
     let scope = evaluator.push_scope();
+    for (id, value) in implicit_fields {
+        scope.set_variable(*id, value.clone());
+    }
     for (parameter, value) in user_function.parameters.into_iter().zip(arguments) {
         scope.set_variable(parameter, value);
     }
@@ -392,21 +410,29 @@ fn evaluate_user_function(
     }
 
     let scope = evaluator.drop_scope();
-    let mut elements = Vec::new();
-    let mut styling = ElementStyling::new_base();
+    let type_name = context
+        .type_interner
+        .resolve(user_function.return_type)
+        .unwrap()
+        .try_as_custom_element_ref()
+        .cloned()
+        .unwrap_or_default();
+    let mut custom_element = CustomElement::new(type_name, Vec::new());
     let mut slide = evaluator.slide.take().expect("slide");
+    let styling = if user_function.has_implicit_slide_parameter {
+        slide.styling_mut().base_mut()
+    } else {
+        custom_element.element_styling_mut().base_mut()
+    };
+    let mut elements: Vec<Element> = Vec::new();
     for (name, value) in scope.variables() {
         match context.string_interner.resolve_variable(name) {
             "halign" => {
-                styling
-                    .base_mut()
-                    .set_horizontal_alignment(value.into_horizontal_alignment());
+                styling.set_horizontal_alignment(value.into_horizontal_alignment());
                 continue;
             }
             "valign" => {
-                styling
-                    .base_mut()
-                    .set_vertical_alignment(value.into_vertical_alignment());
+                styling.set_vertical_alignment(value.into_vertical_alignment());
                 continue;
             }
             _ => {}
@@ -416,38 +442,36 @@ fn evaluate_user_function(
                 let mut label = Arc::unwrap_or_clone(label).into_inner();
                 let name = context.string_interner.resolve_variable(name);
                 label.set_id(name.into());
-                label.set_z_index(slide.next_z_index());
                 elements.push(label.into());
             }
             Value::Image(image) => {
                 let mut image = Arc::unwrap_or_clone(image).into_inner();
                 let name = context.string_interner.resolve_variable(name);
                 image.set_id(name.into());
-                image.set_z_index(slide.next_z_index());
                 elements.push(image.into());
             }
             Value::CustomElement(element) => {
                 let mut element = Arc::unwrap_or_clone(element).into_inner();
                 let name = context.string_interner.resolve_variable(name);
                 element.set_id(name.into());
-                element.set_z_index(slide.next_z_index());
                 elements.push(element.into());
             }
 
             _ => {}
         }
     }
-    evaluator.slide = Some(slide);
 
-    let type_name = context
-        .type_interner
-        .resolve(user_function.return_type)
-        .unwrap()
-        .try_as_custom_element_ref()
-        .unwrap();
-    Value::CustomElement(Arc::new(RefCell::new(
-        CustomElement::new(type_name, elements).with_element_styling(styling),
-    )))
+    let result = if user_function.has_implicit_slide_parameter {
+        for element in elements {
+            slide = slide.add_element(element);
+        }
+        Value::Void(())
+    } else {
+        let custom_element = custom_element.with_elements(elements);
+        Value::CustomElement(Arc::new(RefCell::new(custom_element)))
+    };
+    evaluator.slide = Some(slide);
+    result
 }
 
 fn extract_function_name(base: BoundNode, context: &mut Context) -> String {

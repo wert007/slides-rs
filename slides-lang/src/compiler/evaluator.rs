@@ -6,7 +6,7 @@ use slides_rs_core::{
     TextStyling,
 };
 
-use super::binder::{BoundAst, BoundNode, BoundNodeKind, StylingType};
+use super::binder::{BoundAst, BoundNode, BoundNodeKind, StylingType, typing::TypeId};
 use crate::{Context, VariableId};
 
 pub mod functions;
@@ -150,6 +150,9 @@ fn evaluate_statement(
         BoundNodeKind::ElementStatement(element_statement) => {
             evaluate_element_statement(element_statement, evaluator, context)
         }
+        BoundNodeKind::TemplateStatement(template_statement) => {
+            evaluate_template_statement(template_statement, evaluator, context)
+        }
         BoundNodeKind::ImportStatement(import_statement) => {
             evaluate_import_statement(import_statement, evaluator, context)
         }
@@ -205,9 +208,28 @@ fn evaluate_element_statement(
     evaluator.set_variable(
         element_statement.name,
         Value::UserFunction(UserFunctionValue {
+            has_implicit_slide_parameter: false,
             parameters,
             body: element_statement.body,
             return_type: element_statement.type_,
+        }),
+    );
+    Ok(())
+}
+
+fn evaluate_template_statement(
+    template_statement: super::binder::TemplateStatement,
+    evaluator: &mut Evaluator,
+    _context: &mut Context,
+) -> slides_rs_core::Result<()> {
+    let parameters = template_statement.parameters;
+    evaluator.set_variable(
+        template_statement.name,
+        Value::UserFunction(UserFunctionValue {
+            has_implicit_slide_parameter: true,
+            parameters,
+            body: template_statement.body,
+            return_type: TypeId::VOID,
         }),
     );
     Ok(())
@@ -218,7 +240,8 @@ fn evaluate_slide_statement(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
-    let slide = Slide::new().with_name(
+    let slide_count = context.presentation.slide_count();
+    let slide = Slide::new(slide_count).with_name(
         context
             .string_interner
             .resolve_variable(slide_statement.name),

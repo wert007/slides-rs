@@ -21,3 +21,7 @@ pub fn gfont(name: String) -> Font {
 pub fn brightness(value: f64) -> Filter {
     Filter::Brightness(value)
 }
+
+pub fn string(value: i64) -> String {
+    value.to_string()
+}
