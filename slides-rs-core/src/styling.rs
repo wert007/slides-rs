@@ -562,7 +562,7 @@ pub struct LabelStyling {
     text_color: Option<Color>,
     text_align: TextAlign,
     font: Font,
-    font_size: StyleUnit,
+    font_size: Option<f64>,
 }
 
 impl LabelStyling {
@@ -572,7 +572,7 @@ impl LabelStyling {
             text_color: None,
             text_align: TextAlign::Unspecified,
             font: Font::Unspecified,
-            font_size: StyleUnit::Unspecified,
+            font_size: None,
         })
     }
 
@@ -594,8 +594,8 @@ impl LabelStyling {
         self.font = font;
     }
 
-    pub fn set_font_size(&mut self, font_size: StyleUnit) {
-        self.font_size = font_size;
+    pub fn set_font_size(&mut self, font_size: f64) {
+        self.font_size = Some(font_size);
     }
 }
 
@@ -618,8 +618,8 @@ impl ElementStyling<LabelStyling> {
         self.specific.text_align = text_align;
     }
 
-    pub fn set_font_size(&mut self, font_size: StyleUnit) {
-        self.specific.font_size = font_size;
+    pub fn set_font_size(&mut self, font_size: f64) {
+        self.specific.font_size = Some(font_size);
     }
 }
 
@@ -647,8 +647,12 @@ impl ToCss for LabelStyling {
         if self.text_align != TextAlign::Unspecified {
             writeln!(w, "text-align: {};", self.text_align.as_css()).expect("infallible");
         }
-        if self.font_size != StyleUnit::Unspecified {
-            writeln!(w, "font-size: {};", self.font_size).expect("infallible");
+        if let Some(font_size) = self.font_size {
+            writeln!(
+                w,
+                "font-size: calc({font_size} * min(16 * 4dvh, 9 * 4dvw) / 16);"
+            )
+            .expect("infallible");
         }
         writeln!(w, "}}\n")?;
 
@@ -657,21 +661,6 @@ impl ToCss for LabelStyling {
 
     fn to_css_style(&self, layout: ToCssLayout) -> String {
         unreachable!("PANIC!");
-        use std::fmt::Write;
-        let mut result = String::new();
-        if let Some(text_color) = self.text_color {
-            writeln!(result, "color: {text_color};").expect("infallible");
-        }
-        if self.font != Font::Unspecified {
-            writeln!(result, "font-family: {};", self.font).expect("infallible");
-        }
-        if self.text_align != TextAlign::Unspecified {
-            writeln!(result, "text-align: {};", self.text_align.as_css()).expect("infallible");
-        }
-        if self.font_size != StyleUnit::Unspecified {
-            writeln!(result, "font-size: {};", self.font_size).expect("infallible");
-        }
-        result
     }
 
     fn collect_google_font_references(

@@ -31,7 +31,6 @@ pub fn evaluate_to_slide(
     let mut slide = evaluator.slide.take().expect("There should be a slide!");
     for (name, value) in scope.variables() {
         let name = context.string_interner.resolve_variable(name);
-        dbg!(name);
         match name {
             "background" => {
                 slide.styling_mut().set_background(value.into_background());
@@ -312,7 +311,7 @@ fn assign_to_slide_type(
             base.as_mut_label()
                 .borrow_mut()
                 .element_styling_mut()
-                .set_font_size(value.into_style_unit());
+                .set_font_size(value.into_float());
         }
         missing => unreachable!("Missing Member {missing}"),
     }

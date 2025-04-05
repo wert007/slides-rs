@@ -15,8 +15,19 @@ body {
 }
 
 h1 {
-    padding: 30px 10px;
+    padding: min(30px, 2%) min(10px, 0.7%);
     margin: 0;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-size: inherit;
+    font-weight: inherit;
 }
 
 * {
@@ -46,6 +57,19 @@ ol {
 .image,
 .custom-element {
     position: absolute;
+}
+
+.emphasis {
+    font-style: italic;
+}
+
+.strong {
+    font-weight: bold;
+}
+
+.label {
+    font-size: calc(1.0 * min(16 * 4dvh, 9 * 4dvw) / 16);
+    font-weight: normal;
 }
 
 .image {

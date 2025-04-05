@@ -80,9 +80,7 @@ fn assign_to_field(
                 .set_text_align(value.into_text_align());
         }
         "font_size" => {
-            styling
-                .as_label_mut()
-                .set_font_size(value.into_style_unit());
+            styling.as_label_mut().set_font_size(value.into_float());
         }
         "text_color" => {
             styling.as_label_mut().set_text_color(value.into_color());

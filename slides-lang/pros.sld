@@ -31,6 +31,7 @@ element image_with_caption(img: Image, caption: String):
             valign: VAlign.Bottom,
             halign: HAlign.Right,
             text_color: c"white",
+            font_size: 0.8,
         }
     valign = VAlign.Stretch;
     halign = HAlign.Stretch;
@@ -59,7 +60,7 @@ slide title:
     let title =
         l"# Einseitige Synchronisation und Deadlocks" {
             text_align: TextAlign.Center,
-            font_size: 52pt,
+            font_size: 2.5,
             valign: VAlign.Bottom,
             halign: HAlign.Stretch,
             margin: {
@@ -69,9 +70,10 @@ slide title:
     let subtitle =
         l"## Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
             text_align: TextAlign.Center,
-            font_size: 28pt,
+            font_size: 1.3,
             valign: VAlign.Top,
             halign: HAlign.Stretch,
+            text_color: c"#595959",
             margin: {
                 top: 50%,
                 left: 15%,
