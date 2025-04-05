@@ -479,6 +479,7 @@ pub enum BoundBinaryOperator {
 impl BoundBinaryOperator {
     fn type_(&self, lhs: TypeId, rhs: TypeId) -> TypeId {
         match (lhs, rhs) {
+            (TypeId::INTEGER, TypeId::INTEGER) => TypeId::INTEGER,
             _ => TypeId::ERROR,
         }
     }

@@ -562,6 +562,13 @@ fn evaluate_conversion(
             }
             _ => unreachable!("Impossible conversion"),
         },
+        Type::String => match base {
+            Value::Float(x) => Value::String(x.to_string()),
+            Value::Integer(x) => Value::String(x.to_string()),
+            Value::String(x) => Value::String(x),
+            Value::Path(x) => Value::String(x.to_string_lossy().into_owned()),
+            _ => unreachable!("Impossible conversion"),
+        },
         unknown => todo!("{unknown:?}"),
     }
 }

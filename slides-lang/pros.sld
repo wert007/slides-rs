@@ -38,7 +38,7 @@ element image_with_caption(img: Image, caption: String):
 
 template page_number(color: Color = c"black"):
     let number = slide_index - 3;
-    let page_number = label(string(number)) {
+    let page_number = l'{number}' {
         valign: VAlign.Bottom,
         halign: HAlign.Center,
         text_align: TextAlign.Center,
