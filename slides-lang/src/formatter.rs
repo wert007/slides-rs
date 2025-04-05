@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    Context,
+    Context, Location,
     compiler::{
         self, DebugLang,
         evaluator::Value,
@@ -197,9 +197,8 @@ impl<W: Write + fmt::Debug> Formatter<W> {
         Ok(())
     }
 
-    fn available_space(&self) -> isize {
-        isize::try_from(self.wanted_column_width).expect("< usize::MAX")
-            - isize::try_from(self.column).expect("< usize::MAX")
+    fn available_space(&self) -> usize {
+        self.wanted_column_width.saturating_sub(self.column)
     }
 
     fn raw(&mut self, location: crate::Location, loaded_files: &crate::Files) -> Result<()> {
@@ -317,7 +316,7 @@ fn format_node<W: Write + fmt::Debug>(
             format_element_statement(element_statement, formatter, context)
         }
         SyntaxNodeKind::ImportStatement(import_statement) => {
-            todo!()
+            format_import_statement(import_statement, formatter, context)
         }
         SyntaxNodeKind::ExpressionStatement(expression_statement) => {
             format_expression_statement(expression_statement, formatter, context)
@@ -351,7 +350,7 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::Error(false) => Ok(()),
         SyntaxNodeKind::DictEntry(dict_entry) => format_dict_entry(dict_entry, formatter, context),
         SyntaxNodeKind::Dict(dict) => format_dict(dict, formatter, context),
-        SyntaxNodeKind::Array(array) => todo!(),
+        SyntaxNodeKind::Array(array) => format_array(array, formatter, context),
         SyntaxNodeKind::InferredMember(inferred_member) => todo!(),
         SyntaxNodeKind::PostInitialization(post_initialization) => {
             format_post_initialization(post_initialization, formatter, context)
@@ -361,6 +360,60 @@ fn format_node<W: Write + fmt::Debug>(
             format_parameter_block(parameter_block, formatter, context)
         }
     }
+}
+
+fn format_array<W: Write + fmt::Debug>(
+    array: compiler::parser::Array,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> std::result::Result<(), std::io::Error> {
+    let split = formatter.available_space()
+        < Location::combine(array.lbracket.location, array.rbracket.location).length;
+    formatter.emit_token(
+        array.lbracket,
+        &context.loaded_files,
+        TokenConfig::TRAILING_SPACE,
+    )?;
+    formatter.indent += 4;
+    for (expression, comma) in array.entries {
+        if split {
+            formatter.ensure_indented_line()?;
+        }
+        format_node(expression, formatter, context)?;
+        if let Some(comma) = comma {
+            formatter.emit_token(comma, &context.loaded_files, TokenConfig::TRAILING_SPACE)?;
+        }
+    }
+    formatter.indent -= 4;
+    formatter.ensure_space()?;
+    formatter.emit_token(
+        array.rbracket,
+        &context.loaded_files,
+        TokenConfig {
+            leading_blank_line: split,
+            ..Default::default()
+        },
+    )?;
+    Ok(())
+}
+
+fn format_import_statement<W: Write + fmt::Debug>(
+    import_statement: compiler::parser::ImportStatement,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> std::result::Result<(), std::io::Error> {
+    formatter.emit_token(
+        import_statement.import_keyword,
+        &context.loaded_files,
+        TokenConfig::TRAILING_SPACE,
+    )?;
+    format_node(*import_statement.path, formatter, context)?;
+    formatter.emit_token(
+        import_statement.semicolon,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    Ok(())
 }
 
 fn format_parameter<W: Write + fmt::Debug>(
@@ -556,6 +609,12 @@ fn format_variable_declaration<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::TRAILING_SPACE,
     )?;
+    formatter.indent += 4;
+    let needed_space = variable_declaration.semicolon.location.end()
+        - variable_declaration.expression.location.start;
+    if formatter.available_space() < needed_space {
+        formatter.ensure_indented_line()?;
+    }
     // TODO: formatter.reserve(variable_declaration.expression.location.length)
     format_node(*variable_declaration.expression, formatter, context)?;
     formatter.emit_token(
@@ -563,6 +622,7 @@ fn format_variable_declaration<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::default(),
     )?;
+    formatter.indent -= 4;
     formatter.ensure_new_line()?;
     Ok(())
 }
@@ -659,8 +719,22 @@ fn format_function_call<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::default(),
     )?;
+    let split = formatter.available_space()
+        < Location::combine(
+            function_call
+                .arguments
+                .first()
+                .map(|(a, _)| a.location)
+                .unwrap_or(function_call.rparen.location),
+            function_call.rparen.location,
+        )
+        .length;
     let arguments_count = function_call.arguments.len();
+    formatter.indent += 4;
     for (i, (argument, comma)) in function_call.arguments.into_iter().enumerate() {
+        if split {
+            formatter.ensure_indented_line()?;
+        }
         format_node(argument, formatter, context)?;
         if i != arguments_count - 1 {
             match comma {
@@ -671,6 +745,7 @@ fn format_function_call<W: Write + fmt::Debug>(
             }
         }
     }
+    formatter.indent -= 4;
     formatter.emit_token(
         function_call.rparen,
         &context.loaded_files,

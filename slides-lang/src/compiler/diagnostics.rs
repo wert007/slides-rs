@@ -132,4 +132,8 @@ impl Diagnostics {
             location,
         );
     }
+
+    pub fn report_unknown_type(&mut self, location: Location, type_: &str) {
+        self.report_error(format!("No Type named {type_} found"), location);
+    }
 }

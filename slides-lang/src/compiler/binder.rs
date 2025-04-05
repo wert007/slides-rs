@@ -865,8 +865,9 @@ fn bind_parameter_block(
         let type_ = match binder.look_up_type_by_name(type_name) {
             Some(type_) => type_,
             None => {
-                // TODO: Diagnostics
-                panic!("Found no type named {type_name_str}");
+                context
+                    .diagnostics
+                    .report_unknown_type(parameter.type_.location, type_name_str);
                 TypeId::ERROR
             }
         };
