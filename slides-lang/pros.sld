@@ -36,15 +36,16 @@ element image_with_caption(img: Image, caption: String):
     valign = VAlign.Stretch;
     halign = HAlign.Stretch;
 
-template page_number(color: Color = c"black"):
-    let number = slide_index - 3;
-    let page_number = l'{number}' {
-        valign: VAlign.Bottom,
-        halign: HAlign.Center,
-        text_align: TextAlign.Center,
-        text_color: color,
-        z_index: 999,
-    };
+template page_number(color: Color):
+    let number = slide_index3;
+    let page_number =
+        l'{number}' {
+            valign: VAlign.Bottom,
+            halign: HAlign.Center,
+            text_align: TextAlign.Center,
+            text_color: color,
+            z_index: 999,
+        };
 
 slide code:
     let bg =
@@ -99,7 +100,6 @@ slide toc:
         """ {
         };
 
-
 slide example:
     let bg =
         image_with_caption(
@@ -121,9 +121,8 @@ slide example:
                 - Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation
                 - Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks
         """ {
-            text_color: c"white"
+            text_color: c"white",
         };
-
 
 slide one_sided_sync:
     page_number();
@@ -139,33 +138,26 @@ slide one_sided_sync:
             6. Fazit zur einseitigen Synchronisation
         """;
 
-element two_icons(icon1: String, icon2: String, subtitle: String = ""):
-    let img1 = image(p'./pros-assets/{icon1}.png') {
-        width: 50%,
-        halign: HAlign.Left,
-        valign: VAlign.Stretch,
-    };
-    let img2 = image(p'./pros-assets/{icon2}.png') {
-        width: 50%,
-        halign: HAlign.Right,
-        valign: VAlign.Stretch,
-    };
+element two_icons(icon1: String, icon2: String, subtitle: String):
+    let img1 =
+        image(p'./pros-assets/{icon1}.png') {
+            width: 50%,
+            halign: HAlign.Left,
+            valign: VAlign.Stretch,
+        };
+    let img2 =
+        image(p'./pros-assets/{icon2}.png') {
+            width: 50%,
+            halign: HAlign.Right,
+            valign: VAlign.Stretch,
+        };
 
 slide base_problem:
     page_number();
-    let g = grid("*|*","min|*");
-    g.set_cell(
-        l"# Einseitige Synchronisation: Grundproblem"
-        0, 0,
-    );
+    let g = grid("*|*", "min|*");
+    g.set_cell(l"# Einseitige Synchronisation: Grundproblem", 0, 0);
 
-    g.set_cell(
-        two_icons("amanda", "light")
-        0, 1,
-    );
+    g.set_cell(two_icons("amanda", "light"), 0, 1);
 
-    g.set_cell(
-        two_icons("wait", "bobbl")
-        1, 1,
-    );
+    g.set_cell(two_icons("wait", "bobbl"), 1, 1);
 

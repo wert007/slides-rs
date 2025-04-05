@@ -364,8 +364,25 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::ParameterBlock(parameter_block) => {
             format_parameter_block(parameter_block, formatter, context)
         }
-        SyntaxNodeKind::Binary(binary) => todo!(),
+        SyntaxNodeKind::Binary(binary) => format_binary(binary, formatter, context),
     }
+}
+
+fn format_binary<W: Write + fmt::Debug>(
+    binary: compiler::parser::Binary,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> std::result::Result<(), std::io::Error> {
+    format_node(*binary.lhs, formatter, context)?;
+    let new_line = formatter.available_space()
+        < Location::combine(binary.operator.location, binary.rhs.location).length;
+    formatter.indent += 4;
+    if new_line {
+        formatter.ensure_indented_line()?;
+    }
+    format_node(*binary.rhs, formatter, context)?;
+    formatter.indent -= 4;
+    Ok(())
 }
 
 fn format_array<W: Write + fmt::Debug>(
@@ -496,6 +513,7 @@ fn format_element_statement<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::default(),
     )?;
+    formatter.ensure_new_line()?;
     formatter.indent += 4;
     for statement in element_statement.body {
         format_node(statement, formatter, context)?;
@@ -531,6 +549,7 @@ fn format_template_statement<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::default(),
     )?;
+    formatter.ensure_new_line()?;
     formatter.indent += 4;
     for statement in template_statement.body {
         format_node(statement, formatter, context)?;
@@ -707,23 +726,27 @@ fn format_string<W: Write + fmt::Debug>(
     formatter: &mut Formatter<W>,
     context: &mut Context,
 ) -> Result<()> {
-    let string =
-        Value::parse_string_literal(token.text(&context.loaded_files), false, true).into_string();
-    formatter.ensure_indent()?;
-    if string.contains('\n') {
-        writeln!(formatter, "\"\"\"")?;
-        formatter.indent += 4;
+    if token.kind == TokenKind::String {
+        let string = Value::parse_string_literal(token.text(&context.loaded_files), false, true)
+            .into_string();
         formatter.ensure_indent()?;
+        if string.contains('\n') {
+            writeln!(formatter, "\"\"\"")?;
+            formatter.indent += 4;
+            formatter.ensure_indent()?;
+        } else {
+            write!(formatter, "\"")?;
+        }
+        write!(formatter, "{}", string)?;
+        if string.contains('\n') {
+            formatter.indent -= 4;
+            formatter.ensure_indent()?;
+            write!(formatter, "\n\"\"\"")?;
+        } else {
+            write!(formatter, "\"")?;
+        }
     } else {
-        write!(formatter, "\"")?;
-    }
-    write!(formatter, "{}", string)?;
-    if string.contains('\n') {
-        formatter.indent -= 4;
-        formatter.ensure_indent()?;
-        write!(formatter, "\n\"\"\"")?;
-    } else {
-        write!(formatter, "\"")?;
+        formatter.emit_token(token, &context.loaded_files, TokenConfig::default())?;
     }
     Ok(())
 }

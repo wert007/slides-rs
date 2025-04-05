@@ -2,9 +2,7 @@ use std::cell::RefCell;
 use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
 
-use slides_rs_core::{
-    Background, Color, CustomElement, Element, ElementStyling, Label, Thickness, WebRenderable,
-};
+use slides_rs_core::{Background, Color, CustomElement, Element, Label, Thickness, WebRenderable};
 use string_interner::symbol::SymbolUsize;
 
 use crate::Context;
