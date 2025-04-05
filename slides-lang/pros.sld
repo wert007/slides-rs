@@ -37,9 +37,7 @@ element image_with_caption(img: Image, caption: String):
     halign = HAlign.Stretch;
 
 template page_number(color: Color = c"black"):
-    // TODO add arithmetic expressions!
-    // let number = slide_index - 4;
-    let number = slide_index;
+    let number = slide_index - 3;
     let page_number = label(string(number)) {
         valign: VAlign.Bottom,
         halign: HAlign.Center,

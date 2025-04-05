@@ -362,6 +362,7 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::ParameterBlock(parameter_block) => {
             format_parameter_block(parameter_block, formatter, context)
         }
+        SyntaxNodeKind::Binary(binary) => todo!(),
     }
 }
 

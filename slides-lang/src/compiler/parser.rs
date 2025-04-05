@@ -137,6 +137,12 @@ pub struct ImportStatement {
     pub path: Box<SyntaxNode>,
     pub semicolon: Token,
 }
+#[derive(Debug, Clone)]
+pub struct Binary {
+    pub lhs: Box<SyntaxNode>,
+    pub operator: Token,
+    pub rhs: Box<SyntaxNode>,
+}
 
 #[derive(strum::EnumTryAs, Debug, strum::AsRefStr, Clone)]
 pub enum SyntaxNodeKind {
@@ -161,6 +167,7 @@ pub enum SyntaxNodeKind {
     PostInitialization(PostInitialization),
     Parameter(Parameter),
     ParameterBlock(ParameterBlock),
+    Binary(Binary),
 }
 
 #[derive(Debug, Clone)]
@@ -478,6 +485,18 @@ impl SyntaxNode {
             }),
         }
     }
+
+    fn binary(lhs: SyntaxNode, operator: Token, rhs: SyntaxNode) -> SyntaxNode {
+        let location = Location::combine(lhs.location, rhs.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::Binary(Binary {
+                lhs: Box::new(lhs),
+                operator,
+                rhs: Box::new(rhs),
+            }),
+        }
+    }
 }
 
 pub struct Ast {
@@ -509,11 +528,11 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
             debug_syntax_node(
                 &element_statement.parameters,
                 files,
-                format!("{indent}    "),
+                format!("{indent}        "),
             );
-            println!("{indent}Body:");
+            println!("{indent}    Body:");
             for statement in &element_statement.body {
-                debug_syntax_node(statement, files, format!("{indent}    "));
+                debug_syntax_node(statement, files, format!("{indent}        "));
             }
         }
         SyntaxNodeKind::TemplateStatement(template_statement) => {
@@ -521,11 +540,11 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
             debug_syntax_node(
                 &template_statement.parameters,
                 files,
-                format!("{indent}    "),
+                format!("{indent}        "),
             );
-            println!("{indent}Body:");
+            println!("{indent}    Body:");
             for statement in &template_statement.body {
-                debug_syntax_node(statement, files, format!("{indent}    "));
+                debug_syntax_node(statement, files, format!("{indent}        "));
             }
         }
         SyntaxNodeKind::ExpressionStatement(expression_statement) => {
@@ -637,6 +656,11 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
             for (entry, _) in &array.entries {
                 debug_syntax_node(entry, files, format!("{indent}    "));
             }
+        }
+        SyntaxNodeKind::Binary(binary) => {
+            println!("Binary {}", binary.operator.text(files));
+            debug_syntax_node(&binary.lhs, files, format!("{indent}    "));
+            debug_syntax_node(&binary.rhs, files, format!("{indent}    "));
         }
     }
 }
@@ -884,6 +908,30 @@ fn parse_variable_declaration(parser: &mut Parser, context: &mut Context) -> Syn
 }
 
 fn parse_expression(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let mut lhs = parse_add_minus(parser, context);
+    while parser.current_token().kind == TokenKind::SingleChar('*')
+        || parser.current_token().kind == TokenKind::SingleChar('/')
+    {
+        let operator = parser.next_token();
+        let rhs = parse_add_minus(parser, context);
+        lhs = SyntaxNode::binary(lhs, operator, rhs);
+    }
+    lhs
+}
+
+fn parse_add_minus(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let mut lhs = parse_post_initialization(parser, context);
+    while parser.current_token().kind == TokenKind::SingleChar('+')
+        || parser.current_token().kind == TokenKind::SingleChar('-')
+    {
+        let operator = parser.next_token();
+        let rhs = parse_post_initialization(parser, context);
+        lhs = SyntaxNode::binary(lhs, operator, rhs);
+    }
+    lhs
+}
+
+fn parse_post_initialization(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     let expression = parse_function_call(parser, context);
     if parser.current_token().kind == TokenKind::SingleChar('{') {
         let dict = parse_dict(parser, context);

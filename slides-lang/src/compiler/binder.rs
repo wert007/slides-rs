@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use convert_case::Casing;
 use slides_rs_core::Presentation;
@@ -187,6 +187,11 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
             println!("Post Initialization");
             debug_bound_node(&post_initialization.base, context, format!("{indent}    "));
             debug_bound_node(&post_initialization.dict, context, format!("{indent}    "));
+        }
+        BoundNodeKind::Binary(binary) => {
+            println!("Binary {}", binary.operator);
+            debug_bound_node(&binary.lhs, context, format!("{indent}    "));
+            debug_bound_node(&binary.rhs, context, format!("{indent}    "));
         }
     }
 }
@@ -452,6 +457,40 @@ pub struct PostInitialization {
     pub dict: Box<BoundNode>,
 }
 
+#[derive(Debug, Clone, Copy, strum::Display)]
+pub enum BoundBinaryOperator {
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
+    Unknown(SymbolUsize),
+}
+
+impl BoundBinaryOperator {
+    fn type_(&self, lhs: TypeId, rhs: TypeId) -> TypeId {
+        match (lhs, rhs) {
+            _ => TypeId::ERROR,
+        }
+    }
+
+    pub(crate) fn execute(&self, lhs: Value, rhs: Value) -> Value {
+        match self {
+            BoundBinaryOperator::Addition => (lhs.into_integer() + rhs.into_integer()).into(),
+            BoundBinaryOperator::Subtraction => (lhs.into_integer() - rhs.into_integer()).into(),
+            BoundBinaryOperator::Multiplication => todo!(),
+            BoundBinaryOperator::Division => todo!(),
+            BoundBinaryOperator::Unknown(symbol_usize) => unreachable!(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Binary {
+    pub lhs: Box<BoundNode>,
+    pub operator: BoundBinaryOperator,
+    pub rhs: Box<BoundNode>,
+}
+
 summum! {
 
 #[derive(Debug, Clone)]
@@ -472,6 +511,7 @@ pub enum BoundNodeKind {
     MemberAccess(MemberAccess),
     Conversion(Conversion),
     PostInitialization(PostInitialization),
+    Binary(Binary),
 }
 }
 #[derive(Debug, Clone)]
@@ -730,6 +770,25 @@ impl BoundNode {
             constant_value: None,
         }
     }
+
+    fn binary(
+        location: Location,
+        lhs: BoundNode,
+        operator: BoundBinaryOperator,
+        rhs: BoundNode,
+    ) -> BoundNode {
+        BoundNode {
+            base: None,
+            location,
+            type_: operator.type_(lhs.type_, rhs.type_),
+            kind: BoundNodeKind::Binary(Binary {
+                lhs: Box::new(lhs),
+                operator,
+                rhs: Box::new(rhs),
+            }),
+            constant_value: None,
+        }
+    }
 }
 
 fn constant_conversion(value: Value, target: TypeId, kind: ConversionKind) -> Option<Value> {
@@ -808,7 +867,34 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         SyntaxNodeKind::PostInitialization(post_initialization) => {
             bind_post_initialization(post_initialization, statement.location, binder, context)
         }
+        SyntaxNodeKind::Binary(binary) => bind_binary(binary, statement.location, binder, context),
         unsupported => unreachable!("Not supported: {}", unsupported.as_ref()),
+    }
+}
+
+fn bind_binary(
+    binary: parser::Binary,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    let lhs = bind_node(*binary.lhs, binder, context);
+    let rhs = bind_node(*binary.rhs, binder, context);
+    let operator = bind_binary_operator(binary.operator, binder, context);
+    BoundNode::binary(location, lhs, operator, rhs)
+}
+
+fn bind_binary_operator(
+    operator: Token,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundBinaryOperator {
+    match operator.text(&context.loaded_files) {
+        "+" => BoundBinaryOperator::Addition,
+        "-" => BoundBinaryOperator::Subtraction,
+        "*" => BoundBinaryOperator::Multiplication,
+        "/" => BoundBinaryOperator::Division,
+        unknown => BoundBinaryOperator::Unknown(context.string_interner.create_or_get(unknown)),
     }
 }
 

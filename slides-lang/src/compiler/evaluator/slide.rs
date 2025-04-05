@@ -186,8 +186,19 @@ pub(super) fn evaluate_expression(
             evaluate_post_initialization(post_initialization, evaluator, context)
         }
         BoundNodeKind::Array(array) => evaluate_array(array, evaluator, context),
+        BoundNodeKind::Binary(binary) => evaluate_binary(binary, evaluator, context),
         _ => unreachable!("Only expressions can be evaluated!"),
     }
+}
+
+fn evaluate_binary(
+    binary: binder::Binary,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> Value {
+    let lhs = evaluate_expression(*binary.lhs, evaluator, context);
+    let rhs = evaluate_expression(*binary.rhs, evaluator, context);
+    binary.operator.execute(lhs, rhs)
 }
 
 fn evaluate_array(
