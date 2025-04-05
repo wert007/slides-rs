@@ -64,12 +64,12 @@ impl TypeInterner {
         TypeId(index)
     }
 
-    pub fn resolve(&self, id: TypeId) -> Option<&Type> {
-        self.types.get(id.0)
+    pub fn resolve(&self, id: TypeId) -> &Type {
+        self.types.get(id.0).expect("TypeIds are always valid")
     }
 
     pub fn resolve_types<const N: usize>(&self, target: [TypeId; N]) -> [&Type; N] {
-        target.map(|t| self.types.get(t.0).unwrap_or(&Type::Error))
+        target.map(|t| self.types.get(t.0).expect("TypeIds are always valid"))
     }
 }
 

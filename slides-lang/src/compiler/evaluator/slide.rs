@@ -242,7 +242,7 @@ fn evaluate_post_initialization(
 
     for (member, value) in dict {
         let member = context.string_interner.create_or_get(&member);
-        let base_type = context.type_interner.resolve(base_type).unwrap().clone();
+        let base_type = context.type_interner.resolve(base_type).clone();
         match base_type {
             Type::Element | Type::Label | Type::CustomElement(_) | Type::Image => {
                 assign_to_slide_type(base_type, &mut base, member, value, context)
@@ -352,7 +352,6 @@ fn evaluate_member_access(
     if let Some((enum_type, _)) = context
         .type_interner
         .resolve(member_access.base.type_)
-        .unwrap_or(&Type::Error)
         .try_as_enum_ref()
     {
         let variant = context.string_interner.resolve(member_access.member);
@@ -442,7 +441,6 @@ fn evaluate_user_function(
     let type_name = context
         .type_interner
         .resolve(user_function.return_type)
-        .unwrap()
         .try_as_custom_element_ref()
         .cloned()
         .unwrap_or_default();
@@ -519,11 +517,7 @@ fn evaluate_conversion(
     context: &mut Context,
 ) -> Value {
     let base = evaluate_expression(*conversion.base, evaluator, context);
-    match context
-        .type_interner
-        .resolve(conversion.target)
-        .unwrap_or(&Type::Error)
-    {
+    match context.type_interner.resolve(conversion.target) {
         Type::Background => match base {
             Value::Color(color) => Value::Background(Background::Color(color)),
             _ => unreachable!("Impossible conversion!"),

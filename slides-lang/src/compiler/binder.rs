@@ -85,10 +85,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 context
                     .string_interner
                     .resolve_variable(element_statement.name),
-                context
-                    .type_interner
-                    .resolve(element_statement.type_)
-                    .unwrap()
+                context.type_interner.resolve(element_statement.type_)
             );
             for statement in &element_statement.body {
                 debug_bound_node(statement, context, format!("{indent}    "));
@@ -120,7 +117,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         BoundNodeKind::FunctionCall(function_call) => {
             println!(
                 "FunctionCall: {:?}",
-                context.type_interner.resolve(statement.type_).unwrap()
+                context.type_interner.resolve(statement.type_)
             );
             debug_bound_node(&function_call.base, context, format!("{indent}    "));
             for arg in &function_call.arguments {
@@ -131,7 +128,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
             println!(
                 "Variable {}: {:?}",
                 context.string_interner.resolve_variable(variable.id),
-                context.type_interner.resolve(variable.type_).unwrap()
+                context.type_interner.resolve(variable.type_)
             );
         }
         BoundNodeKind::Literal(value) => {
@@ -157,7 +154,6 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 context
                     .type_interner
                     .resolve(variable_declaration.value.type_)
-                    .unwrap()
             );
             debug_bound_node(
                 &variable_declaration.value,
@@ -187,7 +183,7 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         BoundNodeKind::Conversion(conversion) => {
             println!(
                 "Conversion to {:?} (Kind {:?})",
-                context.type_interner.resolve(statement.type_).unwrap(),
+                context.type_interner.resolve(statement.type_),
                 conversion.kind
             );
             debug_bound_node(&conversion.base, context, format!("{indent}    "));
@@ -1131,11 +1127,7 @@ fn bind_post_initialization(
     let mut dict = bind_node(*post_initialization.dict, binder, context);
     for (entry, entry_type) in dict.kind.as_mut_dict() {
         let member = context.string_interner.create_or_get(&entry);
-        let base_type = context
-            .type_interner
-            .resolve(base.type_)
-            .unwrap_or(&Type::Error)
-            .clone();
+        let base_type = context.type_interner.resolve(base.type_).clone();
         let mut base = base.clone();
         if let Some(target) = access_member(
             entry_type.location,
@@ -1154,10 +1146,7 @@ fn bind_post_initialization(
         } else {
             context.diagnostics.report_unknown_member(
                 dict.location,
-                &context
-                    .type_interner
-                    .resolve(base.type_)
-                    .unwrap_or(&Type::Error),
+                &context.type_interner.resolve(base.type_),
                 &entry,
             );
             *entry_type = BoundNode::error(entry_type.location);
@@ -1175,11 +1164,7 @@ fn bind_member_access(
     let mut base = bind_node(*member_access.base, binder, context);
     let member = member_access.member.text(&context.loaded_files);
     let member = context.string_interner.create_or_get(member);
-    let base_type = context
-        .type_interner
-        .resolve(base.type_)
-        .unwrap_or(&Type::Error)
-        .clone();
+    let base_type = context.type_interner.resolve(base.type_).clone();
     let Some(member_type) = access_member(
         member_access.member.location,
         binder,
@@ -1228,10 +1213,7 @@ fn access_member(
     }
     context.diagnostics.report_unknown_member(
         error_location,
-        &context
-            .type_interner
-            .resolve(base.type_)
-            .unwrap_or(&Type::Error),
+        &context.type_interner.resolve(base.type_),
         context.string_interner.resolve(member),
     );
     None
@@ -1398,7 +1380,6 @@ fn bind_string(string: Token, binder: &mut Binder, context: &mut Context) -> Bou
         let function_type = context
             .type_interner
             .resolve(var.type_)
-            .unwrap()
             .clone()
             .try_as_function()
             .unwrap();
@@ -1435,7 +1416,7 @@ fn bind_conversion(
                 for field in fields {
                     if field.type_ != style_unit_type {
                         context.diagnostics.report_cannot_convert(
-                            context.type_interner.resolve(field.type_).unwrap(),
+                            context.type_interner.resolve(field.type_),
                             &Type::StyleUnit,
                             field.definition,
                         );
@@ -1472,10 +1453,10 @@ fn bind_conversion(
             }
         },
         ConversionKind::TypedString => match context.type_interner.resolve(target) {
-            Some(Type::Label | Type::Color | Type::Path) => {}
+            Type::Label | Type::Color | Type::Path => {}
             unknown => unreachable!("Unknown TypedString {unknown:?}"),
         },
-        ConversionKind::ToString => match context.type_interner.resolve(base.type_).unwrap() {
+        ConversionKind::ToString => match context.type_interner.resolve(base.type_) {
             Type::Error => return base,
             Type::Float | Type::Integer | Type::Path => {}
             Type::String => return base,
@@ -1542,7 +1523,6 @@ fn bind_function_call(
     let Some(function_type) = context
         .type_interner
         .resolve(base.type_)
-        .unwrap_or(&Type::Error)
         .clone()
         .try_as_function()
     else {
