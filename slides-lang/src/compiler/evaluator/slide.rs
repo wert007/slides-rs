@@ -275,6 +275,14 @@ fn assign_to_slide_type(
 ) {
     let member = context.string_interner.resolve(member);
     match member {
+        "width" => {
+            base.as_mut_base_element()
+                .set_width(value.into_style_unit());
+        }
+        "height" => {
+            base.as_mut_base_element()
+                .set_height(value.into_style_unit());
+        }
         "z_index" => {
             base.as_mut_base_element()
                 .set_z_index(value.into_integer() as _);

@@ -139,3 +139,26 @@ slide one_sided_sync:
             6. Fazit zur einseitigen Synchronisation
         """;
 
+element two_icons(icon1: String, icon2: String, subtitle: String = ""):
+    let img1 = image(p'./assets/{icon1}.png') {
+        width: 50%,
+        halign: HAlign.Left,
+        valign: VAlign.Stretch,
+    };
+    let img2 = image(p'./assets/{icon2}.png') {
+        width: 50%,
+        halign: HAlign.Right,
+        valign: VAlign.Stretch,
+    };
+
+slide base_problem:
+    page_number();
+    let title = l"# Einseitige Synchronisation: Grundproblem" {};
+    let amanda = two_icons("amanda", "light") {
+        width: 40%,
+        halign: HAlign.Right,
+    };
+    let bobbl = two_icons("wait", "bobbl") {
+        width: 40%
+        halign: HAlign.Left,
+    };

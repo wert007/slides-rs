@@ -161,6 +161,8 @@ pub struct BaseElementStyling {
     pub margin: Thickness,
     pub padding: Thickness,
     pub filter: Filter,
+    pub width: StyleUnit,
+    pub height: StyleUnit,
     z_index: Option<usize>,
 }
 impl BaseElementStyling {
@@ -186,6 +188,14 @@ impl BaseElementStyling {
 
     pub fn set_padding(&mut self, padding: Thickness) {
         self.padding = padding;
+    }
+
+    pub fn set_width(&mut self, width: StyleUnit) {
+        self.width = width;
+    }
+
+    pub fn set_height(&mut self, height: StyleUnit) {
+        self.height = height;
     }
 
     pub fn set_filter(&mut self, filter: Filter) {

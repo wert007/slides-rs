@@ -8,7 +8,8 @@ use std::{
 use enum_dispatch::enum_dispatch;
 
 use crate::{
-    BaseElementStyling, Result, StylingReference, ToCssLayout, output::PresentationEmitter,
+    BaseElementStyling, Result, StyleUnit, StylingReference, ToCssLayout,
+    output::PresentationEmitter,
 };
 
 mod image;
@@ -91,6 +92,14 @@ impl ElementRefMut {
 
     pub fn set_vertical_alignment(&mut self, value: crate::VerticalAlignment) {
         self.apply_to_base_element_styling(|base| base.set_vertical_alignment(value));
+    }
+
+    pub fn set_width(&mut self, value: StyleUnit) {
+        self.apply_to_base_element_styling(|base| base.set_width(value));
+    }
+
+    pub fn set_height(&mut self, value: StyleUnit) {
+        self.apply_to_base_element_styling(|base| base.set_height(value));
     }
 
     pub fn set_z_index(&mut self, value: usize) {
