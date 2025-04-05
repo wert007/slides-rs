@@ -26,7 +26,7 @@ element image_with_caption(img: Image, caption: String):
         valign: VAlign.Stretch,
         halign: HAlign.Stretch,
     }
-    let lbl = 
+    let lbl =
         label(caption) {
             valign: VAlign.Bottom,
             halign: HAlign.Right,
@@ -41,22 +41,22 @@ styling page_number(Label):
     text_align = TextAlign.Center;
 
 slide code:
-    let bg = 
+    let bg =
         image_with_caption(
-            image(p"./pros-assets/code.jpg"), 
+            image(p"./pros-assets/code.jpg"),
             "Image by Christopher Kuszajewski from Pixabay");
 
 slide threads:
-    let bg = 
+    let bg =
         image_with_caption(
-            image(p"./pros-assets/threads.jpg"), 
+            image(p"./pros-assets/threads.jpg"),
             "Bild von Myriams-Fotos auf Pixabay");
 
 slide frozen:
     let bg = image_with_caption(image(p"./pros-assets/frozen.jpg"), "Bild von adege auf Pixabay");
 
 slide title:
-    let title = 
+    let title =
         l"# Einseitige Synchronisation und Deadlocks" {
             text_align: TextAlign.Center,
             font_size: 52pt,
@@ -66,7 +66,7 @@ slide title:
                 bottom: 50%,
             },
         }
-    let subtitle = 
+    let subtitle =
         l"## Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
             text_align: TextAlign.Center,
             font_size: 28pt,
@@ -80,7 +80,7 @@ slide title:
         }
 
 slide toc:
-    let toc = 
+    let toc =
         l"""
             # Übersicht
 
@@ -97,7 +97,14 @@ slide toc:
 
 slide example:
 
-    let text = 
+    let bg2 =
+        image_with_caption(
+            image(p"./pros-assets/car-repair.jpg") {
+                filter: brightness(0.4),
+            },
+            "Bild von emkanicepic auf Pixabay");
+
+    let text2 =
         l"""
             # Beispiel
 
@@ -111,20 +118,13 @@ slide example:
             text_color: c"white",
         };
 
-    let bg = 
-        image_with_caption(
-            image(p"./pros-assets/car-repair.jpg") {
-                filter: brightness(0.4),
-            }, 
-            "Bild von emkanicepic auf Pixabay");
-
     let page = l"2" {
             text_color: c"white",
             styles: [ page_number ],
         };
 
 slide one_sided_sync:
-    let text = 
+    let text =
         l"""
             # Einseitige Synchronisation
 
@@ -137,7 +137,6 @@ slide one_sided_sync:
         """;
 
     let page = l"3" {
-            text_color: c"white",
             styles: [ page_number ],
         };
 

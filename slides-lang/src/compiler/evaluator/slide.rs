@@ -29,8 +29,9 @@ pub fn evaluate_to_slide(
 
     let scope = evaluator.drop_scope();
     let mut slide = evaluator.slide.take().expect("There should be a slide!");
-    for (name, value) in scope.variables {
+    for (name, value) in scope.variables() {
         let name = context.string_interner.resolve_variable(name);
+        dbg!(name);
         match name {
             "background" => {
                 slide.styling_mut().set_background(value.into_background());
@@ -49,16 +50,19 @@ pub fn evaluate_to_slide(
             Value::Label(label) => {
                 let mut label = Arc::unwrap_or_clone(label).into_inner();
                 label.set_id(name.into());
+                label.set_z_index(slide.next_z_index());
                 slide = slide.add_label(label);
             }
             Value::Image(image) => {
                 let mut image = Arc::unwrap_or_clone(image).into_inner();
                 image.set_id(name.into());
+                image.set_z_index(slide.next_z_index());
                 slide = slide.add_image(image);
             }
             Value::CustomElement(custom_element) => {
                 let mut custom_element = Arc::unwrap_or_clone(custom_element).into_inner();
                 custom_element.set_id(name.into());
+                custom_element.set_z_index(slide.next_z_index());
                 slide = slide.add_custom_element(custom_element);
             }
 
@@ -392,7 +396,7 @@ fn evaluate_user_function(
     let mut elements = Vec::new();
     let mut styling = ElementStyling::new_base();
     let mut slide = evaluator.slide.take().expect("slide");
-    for (name, value) in scope.variables {
+    for (name, value) in scope.variables() {
         match context.string_interner.resolve_variable(name) {
             "halign" => {
                 styling

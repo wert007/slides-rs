@@ -183,6 +183,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "index-map"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ea06ad425513b4cac7d2a1b3fc36b518281e74a96b9739d9a34e7a4151dbb48"
+
+[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -321,6 +327,7 @@ dependencies = [
  "convert_case",
  "enum_dispatch",
  "html-escape",
+ "index-map",
  "slides-rs-core",
  "string-interner",
  "struct-field-names-as-array",

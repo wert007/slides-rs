@@ -1,5 +1,6 @@
-use std::{cell::RefCell, collections::BTreeMap, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
+use index_map::IndexMap;
 use slides_rs_core::{
     DynamicElementStyling, FilePlacement, ImageStyling, LabelStyling, Slide, SlideStyling,
     TextStyling,
@@ -15,31 +16,50 @@ mod value;
 pub use value::*;
 
 struct Scope {
-    variables: BTreeMap<VariableId, Value>,
+    values: IndexMap<Value>,
+    variables: HashMap<VariableId, usize>,
 }
 
 impl Scope {
     pub fn global() -> Self {
         Self {
-            variables: BTreeMap::new(),
+            values: IndexMap::new(),
+            variables: HashMap::new(),
         }
     }
     pub fn new() -> Self {
         Self {
-            variables: BTreeMap::new(),
+            values: IndexMap::new(),
+            variables: HashMap::new(),
         }
     }
 
     fn set_variable(&mut self, name: VariableId, value: Value) {
-        self.variables.insert(name, value);
+        let index = self.values.insert(value);
+        self.variables.insert(name, index);
     }
 
     fn get_variable(&self, name: VariableId) -> Option<&Value> {
-        self.variables.get(&name)
+        let index = self.variables.get(&name)?;
+        self.values.get(*index)
     }
 
     fn get_variable_mut(&mut self, name: VariableId) -> Option<&mut Value> {
-        self.variables.get_mut(&name)
+        let index = self.variables.get(&name)?;
+        self.values.get_mut(*index)
+    }
+
+    fn variables(self) -> impl Iterator<Item = (VariableId, Value)> {
+        self.values.into_iter().filter_map(move |(vindex, v)| {
+            Some((
+                *self
+                    .variables
+                    .iter()
+                    .find(|(_, index)| vindex == **index)
+                    .map(|(v, _)| v)?,
+                v,
+            ))
+        })
     }
 }
 
