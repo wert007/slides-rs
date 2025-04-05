@@ -24,6 +24,7 @@ pub struct TypeId(usize);
 impl TypeId {
     pub const ERROR: TypeId = TypeId(0);
     pub const VOID: TypeId = TypeId(1);
+    pub const STRING: TypeId = TypeId(4);
     pub const DICT: TypeId = TypeId(5);
     pub const PATH: TypeId = TypeId(6);
     pub const STYLING: TypeId = TypeId(7);
@@ -41,6 +42,7 @@ impl TypeInterner {
         let mut result = Self { types };
         debug_assert_eq!(result.get_or_intern(Type::Error), TypeId::ERROR);
         debug_assert_eq!(result.get_or_intern(Type::Void), TypeId::VOID);
+        debug_assert_eq!(result.get_or_intern(Type::String), TypeId::STRING);
         debug_assert_eq!(result.get_or_intern(Type::DynamicDict), TypeId::DICT);
         debug_assert_eq!(result.get_or_intern(Type::Path), TypeId::PATH);
         debug_assert_eq!(result.get_or_intern(Type::Styling), TypeId::STYLING);
@@ -117,6 +119,10 @@ impl Type {
                 Type::String => &[Type::Color, Type::Label, Type::Path],
                 _ => &[],
             },
+            ConversionKind::ToString => match self {
+                Type::Float | Type::Integer | Type::String | Type::Path => &[Type::String],
+                _ => &[],
+            },
         }
     }
 
@@ -180,6 +186,8 @@ impl Type {
             Some(Self::Thickness)
         } else if const_str::compare!(==, rust_string, "#ArrayOfStyleReferences") {
             Some(Self::Array(TypeId::STYLING))
+        } else if const_str::compare!(==, rust_string, "StringArray") {
+            Some(Self::Array(TypeId::STRING))
         } else if const_str::compare!(==, rust_string, "StyleUnit") {
             Some(Self::StyleUnit)
         } else if const_str::compare!(==, rust_string, "usize") {

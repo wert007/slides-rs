@@ -168,6 +168,7 @@ pub enum SyntaxNodeKind {
     Parameter(Parameter),
     ParameterBlock(ParameterBlock),
     Binary(Binary),
+    FormatString(Token),
 }
 
 #[derive(Debug, Clone)]
@@ -267,6 +268,13 @@ impl SyntaxNode {
         SyntaxNode {
             kind: SyntaxNodeKind::Literal(literal),
             location: literal.location,
+        }
+    }
+
+    fn format_string(string: Token) -> SyntaxNode {
+        SyntaxNode {
+            kind: SyntaxNodeKind::FormatString(string),
+            location: string.location,
         }
     }
 
@@ -575,6 +583,8 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
         SyntaxNodeKind::VariableReference(variable) => {
             println!("Variable {}", variable.text(files));
         }
+        SyntaxNodeKind::FormatString(token) => println!("Format String {}", token.text(files)),
+
         SyntaxNodeKind::Literal(literal) => {
             println!("Literal {}", literal.text(files));
         }
@@ -978,7 +988,7 @@ fn parse_function_call(parser: &mut Parser, context: &mut Context) -> SyntaxNode
 fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     match parser.current_token().kind {
         TokenKind::Identifier => {
-            if parser.peek() == TokenKind::String {
+            if parser.peek() == TokenKind::String || parser.peek() == TokenKind::FormatString {
                 SyntaxNode::typed_string(parser.next_token(), parser.next_token())
             } else {
                 SyntaxNode::variable_reference(parser.next_token())
@@ -999,6 +1009,7 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
             }
         }
         TokenKind::String => SyntaxNode::literal(parser.next_token()),
+        TokenKind::FormatString => SyntaxNode::format_string(parser.next_token()),
         TokenKind::SingleChar('{') => parse_dict(parser, context),
         TokenKind::SingleChar('[') => parse_array(parser, context),
         TokenKind::SingleChar('.') => parse_inferred_member(parser, context),
@@ -1088,4 +1099,10 @@ fn is_start_of_top_level_statement(kind: TokenKind) -> bool {
             | TokenKind::ElementKeyword
             | TokenKind::TemplateKeyword
     )
+}
+
+pub(crate) fn parse_node(location: Location, context: &mut Context) -> SyntaxNode {
+    let tokens = lexer::lex_source(location, context);
+    let mut parser = Parser::new(tokens);
+    parse_expression(&mut parser, context)
 }

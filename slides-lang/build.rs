@@ -47,6 +47,7 @@ fn main() {
                     "f64" => "float".to_owned(),
                     "PathBuf" => "path".to_owned(),
                     "String" | "Background" | "Color" | "Label" | "Image" => p.to_ascii_lowercase(),
+                    "StringArray" => "string_array".to_owned(),
                     _ => unreachable!("Unexpected type {p}"),
                 };
                 format!("args[{i}].as_{type_name}().clone()")

@@ -330,7 +330,9 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::SlideStatement(slide_statement) => {
             format_slide_statement(slide_statement, formatter, context)
         }
-        SyntaxNodeKind::Literal(token) | SyntaxNodeKind::VariableReference(token) => {
+        SyntaxNodeKind::Literal(token)
+        | SyntaxNodeKind::VariableReference(token)
+        | SyntaxNodeKind::FormatString(token) => {
             if matches!(token.kind, TokenKind::String) {
                 format_string(token, formatter, context)
             } else {
@@ -706,7 +708,7 @@ fn format_string<W: Write + fmt::Debug>(
     context: &mut Context,
 ) -> Result<()> {
     let string =
-        Value::parse_string_literal(token.text(&context.loaded_files), false).into_string();
+        Value::parse_string_literal(token.text(&context.loaded_files), false, true).into_string();
     formatter.ensure_indent()?;
     if string.contains('\n') {
         writeln!(formatter, "\"\"\"")?;

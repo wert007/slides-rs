@@ -15,6 +15,7 @@ pub enum TokenKind {
     Number,
     SingleChar(char),
     String,
+    FormatString,
     Error,
     StyleUnitLiteral,
 }
@@ -90,6 +91,18 @@ impl Token {
         }
     }
 
+    fn format_string(file: FileId, start: usize, trivia: Trivia) -> Token {
+        Token {
+            location: Location {
+                file,
+                start,
+                length: 0,
+            },
+            kind: TokenKind::FormatString,
+            trivia,
+        }
+    }
+
     fn single_char_token(file: FileId, start: usize, char: char, trivia: Trivia) -> Token {
         Token {
             location: Location {
@@ -161,11 +174,69 @@ impl Token {
 }
 
 pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
+    lex_source(
+        Location {
+            file,
+            start: 0,
+            length: context.loaded_files[file].content().len(),
+        },
+        context,
+    )
+}
+
+pub fn debug_tokens(tokens: &[Token], files: &Files) {
+    for token in tokens {
+        print!("Token: {:?} >{}<", token.kind, token.text(files));
+        if let Some(comment) = token.trivia.leading_comments {
+            print!(" // trivia-comment-before: {}", files[comment].trim());
+        }
+        if let Some(comment) = token.trivia.trailing_comments {
+            print!(" // trivia-comment-after: {}", files[comment].trim());
+        }
+        println!();
+    }
+}
+
+fn is_token(char: char) -> bool {
+    matches!(
+        char,
+        ':' | ';'
+            | '='
+            | '('
+            | ')'
+            | '.'
+            | ','
+            | '{'
+            | '}'
+            | '['
+            | ']'
+            | '%'
+            | '-'
+            | '+'
+            | '/'
+            | '*'
+    )
+}
+
+pub(crate) fn lex_source(location: Location, context: &mut Context) -> Vec<Token> {
     let Context {
         loaded_files,
         diagnostics,
         ..
     } = context;
+    let file = location.file;
+    let offset = location.start;
+    if offset > 0 {
+        dbg!(&loaded_files[location]);
+    }
+
+    let text_len = loaded_files[location].len();
+
+    let mut iter = loaded_files[location]
+        .char_indices()
+        .chain(std::iter::once((text_len, '\0')))
+        .peekable();
+
     #[derive(Debug, Clone, Copy)]
     enum State {
         Init,
@@ -173,6 +244,7 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
         Number,
         DecimalNumber,
         OneLineString,
+        OneLineFormatString(usize),
         EscapedMultiLineString,
         LineComment,
         // Whitespace,
@@ -193,16 +265,9 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
             comment_before.set_end(index);
         }
     };
-    let text_len = loaded_files[file].content().len();
-
     let mut is_empty_line = false;
-
-    let mut iter = loaded_files[file]
-        .content()
-        .char_indices()
-        .chain(std::iter::once((text_len, '\0')))
-        .peekable();
     while let Some(&(index, char)) = iter.peek() {
+        let index = index + offset;
         match state {
             State::Init => match char {
                 '/' => {
@@ -252,6 +317,15 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                             },
                         );
                     }
+                    is_empty_line = false;
+                }
+                '\'' => {
+                    finish_token(index, current_token.take());
+                    finish_trivia(index, &mut current_trivia);
+                    current_token = Some(Token::format_string(file, index, current_trivia));
+                    current_trivia = Trivia::default();
+                    state = State::OneLineFormatString(0);
+                    iter.next();
                     is_empty_line = false;
                 }
                 '"' => {
@@ -372,6 +446,22 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
                 }
                 iter.next();
             }
+            State::OneLineFormatString(open_braces) => {
+                if char == '\'' {
+                    if open_braces != 0 {
+                        todo!("Do we handle {{{{ correctly?");
+                    }
+                    state = State::Init;
+                } else if char == '{' {
+                    state = State::OneLineFormatString(open_braces + 1)
+                } else if char == '}' {
+                    if open_braces == 0 {
+                        todo!("Do we handle }}}} correctly?");
+                    }
+                    state = State::OneLineFormatString(open_braces - 1)
+                }
+                iter.next();
+            }
             State::EscapedMultiLineString => {
                 if char == '"' {
                     iter.next();
@@ -410,38 +500,4 @@ pub fn lex(file: crate::FileId, context: &mut crate::Context) -> Vec<Token> {
     }
 
     result.into_inner()
-}
-
-pub fn debug_tokens(tokens: &[Token], files: &Files) {
-    for token in tokens {
-        print!("Token: {:?} >{}<", token.kind, token.text(files));
-        if let Some(comment) = token.trivia.leading_comments {
-            print!(" // trivia-comment-before: {}", files[comment].trim());
-        }
-        if let Some(comment) = token.trivia.trailing_comments {
-            print!(" // trivia-comment-after: {}", files[comment].trim());
-        }
-        println!();
-    }
-}
-
-fn is_token(char: char) -> bool {
-    matches!(
-        char,
-        ':' | ';'
-            | '='
-            | '('
-            | ')'
-            | '.'
-            | ','
-            | '{'
-            | '}'
-            | '['
-            | ']'
-            | '%'
-            | '-'
-            | '+'
-            | '/'
-            | '*'
-    )
 }

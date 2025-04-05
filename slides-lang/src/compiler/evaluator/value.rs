@@ -83,11 +83,15 @@ impl Value {
         }
     }
 
-    pub fn parse_string_literal(text: &str, replace_escapisms: bool) -> Value {
+    pub fn parse_string_literal(
+        text: &str,
+        replace_escapisms: bool,
+        includes_quotes: bool,
+    ) -> Value {
         if text.contains('\n') {
-            parse_multiline_string(text, replace_escapisms)
+            parse_multiline_string(text, replace_escapisms, includes_quotes)
         } else {
-            parse_single_line_string(text, replace_escapisms)
+            parse_single_line_string(text, replace_escapisms, includes_quotes)
         }
     }
 
@@ -101,14 +105,24 @@ impl Value {
             _ => unreachable!("Self is not a base element!"),
         }
     }
+
+    pub fn as_string_array(&self) -> Vec<String> {
+        match self {
+            Value::Array(values) => values.into_iter().map(|v| v.as_string().clone()).collect(),
+            _ => unreachable!("Value is not a string array!"),
+        }
+    }
 }
 
-fn parse_multiline_string(text: &str, _replace_escapisms: bool) -> Value {
-    let text = text
-        .strip_suffix("\"\"\"")
-        .expect("valid string literal")
-        .strip_prefix("\"\"\"")
-        .expect("valid string literal");
+fn parse_multiline_string(text: &str, _replace_escapisms: bool, includes_quotes: bool) -> Value {
+    let text = if includes_quotes {
+        text.strip_suffix("\"\"\"")
+            .expect("valid string literal")
+            .strip_prefix("\"\"\"")
+            .expect("valid string literal")
+    } else {
+        text
+    };
     let mut result = String::with_capacity(text.len());
     let mut is_start = true;
     let mut indent = 0;
@@ -151,12 +165,15 @@ fn parse_multiline_string(text: &str, _replace_escapisms: bool) -> Value {
     Value::String(result)
 }
 
-fn parse_single_line_string(text: &str, _replace_escapisms: bool) -> Value {
-    let text = text
-        .strip_suffix('"')
-        .expect("valid string literal")
-        .strip_prefix('"')
-        .expect("valid string literal");
+fn parse_single_line_string(text: &str, _replace_escapisms: bool, includes_quotes: bool) -> Value {
+    let text = if includes_quotes {
+        text.strip_suffix('"')
+            .expect("valid string literal")
+            .strip_prefix('"')
+            .expect("valid string literal")
+    } else {
+        text
+    };
     let mut result = String::with_capacity(text.len());
     let mut tmp = text.chars();
     while let Some(ch) = tmp.next() {

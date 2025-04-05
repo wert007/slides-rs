@@ -25,3 +25,9 @@ pub fn brightness(value: f64) -> Filter {
 pub fn string(value: i64) -> String {
     value.to_string()
 }
+
+type StringArray = Vec<String>;
+
+pub fn concat(value: StringArray) -> String {
+    value.join("")
+}

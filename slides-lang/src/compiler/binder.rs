@@ -12,10 +12,10 @@ pub mod typing;
 use super::{
     DebugLang,
     evaluator::{self, Parameter, Value},
-    lexer::Token,
+    lexer::{Token, TokenKind},
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
-use crate::{Context, Location, StringInterner, VariableId};
+use crate::{Context, Location, StringInterner, VariableId, compiler::lexer::Trivia};
 
 pub(crate) fn create_presentation_from_file(
     file: PathBuf,
@@ -46,6 +46,15 @@ pub(crate) fn create_presentation_from_file(
         evaluator::create_presentation_from_ast(ast, &mut context)?;
     }
     Ok(context.presentation)
+}
+
+fn bind_node_from_source(
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    let node = parser::parse_node(location, context);
+    bind_node(node, binder, context)
 }
 
 fn debug_bound_ast(ast: &BoundAst, context: &Context) {
@@ -381,6 +390,7 @@ impl Binder {
 pub enum ConversionKind {
     Implicit,
     TypedString,
+    ToString,
 }
 
 #[derive(Debug, strum::EnumString, Clone, Copy, PartialEq, Eq)]
@@ -1312,10 +1322,7 @@ fn bind_typed_string(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
-    let text = typed_string.string.text(&context.loaded_files);
-    let value = Value::parse_string_literal(text, true);
-    let type_ = context.type_interner.get_or_intern(value.infer_type());
-    let literal = BoundNode::literal(typed_string.string, value, type_);
+    let literal = bind_string(typed_string.string, binder, context);
     let type_ = typed_string.type_.text(&context.loaded_files);
     let type_ = match type_ {
         "c" => Type::Color,
@@ -1330,6 +1337,82 @@ fn bind_typed_string(
     };
     let type_ = context.type_interner.get_or_intern(type_);
     bind_conversion(literal, type_, ConversionKind::TypedString, binder, context)
+}
+
+fn bind_string(string: Token, binder: &mut Binder, context: &mut Context) -> BoundNode {
+    let text = string.text(&context.loaded_files);
+    dbg!(text, string);
+    if string.kind == TokenKind::String {
+        let value = Value::parse_string_literal(text, true, true);
+        let type_ = context.type_interner.get_or_intern(value.infer_type());
+        BoundNode::literal(string, value, type_)
+    } else {
+        let text = text.strip_prefix('\'').unwrap().strip_suffix('\'').unwrap();
+        let text = text.to_owned();
+        let parts = text.split('{');
+        let mut values = Vec::new();
+        let mut offset = 0;
+        for part in parts {
+            offset += 1;
+            let (expression, literal) = if part.contains('}') {
+                let (expression, literal) = part.split_once('}').unwrap();
+                (Some(expression), literal)
+            } else {
+                (None, part)
+            };
+            if let Some(expression) = expression {
+                dbg!(expression);
+                let location = Location {
+                    file: string.location.file,
+                    start: string.location.start + offset,
+                    length: expression.len(),
+                };
+                offset += expression.len() + 1;
+                values.push(bind_conversion(
+                    bind_node_from_source(location, binder, context),
+                    TypeId::STRING,
+                    ConversionKind::ToString,
+                    binder,
+                    context,
+                ));
+            }
+            values.push(BoundNode::literal(
+                Token {
+                    location: Location {
+                        file: string.location.file,
+                        start: string.location.start + offset,
+                        length: literal.len(),
+                    },
+                    kind: TokenKind::String,
+                    trivia: Trivia::default(),
+                },
+                Value::parse_string_literal(literal, true, false),
+                TypeId::STRING,
+            ));
+            offset += part.len();
+        }
+        let concat_id = context.string_interner.create_or_get_variable("concat");
+        let var = binder.look_up_variable(concat_id).unwrap();
+        let function_type = context
+            .type_interner
+            .resolve(var.type_)
+            .unwrap()
+            .clone()
+            .try_as_function()
+            .unwrap();
+        let string_array = context
+            .type_interner
+            .get_or_intern(Type::Array(TypeId::STRING));
+        BoundNode::function_call(
+            string.location,
+            BoundNode::variable_reference(
+                Token::fabricate(TokenKind::Identifier, Location::zero()),
+                var,
+            ),
+            vec![BoundNode::array(values, string.location, string_array)],
+            function_type,
+        )
+    }
 }
 
 fn bind_conversion(
@@ -1390,6 +1473,17 @@ fn bind_conversion(
             Some(Type::Label | Type::Color | Type::Path) => {}
             unknown => unreachable!("Unknown TypedString {unknown:?}"),
         },
+        ConversionKind::ToString => match context.type_interner.resolve(base.type_).unwrap() {
+            Type::Error => return base,
+            Type::Float | Type::Integer | Type::Path => {}
+            Type::String => return base,
+            from => {
+                context
+                    .diagnostics
+                    .report_cannot_convert(from, &Type::String, base.location);
+                return BoundNode::error(base.location);
+            }
+        },
     }
     BoundNode::conversion(base, target, conversion_kind)
 }
@@ -1408,7 +1502,7 @@ fn bind_literal(
                 Value::Integer(text.parse().expect("lexer filtered"))
             }
         }
-        super::lexer::TokenKind::String => Value::parse_string_literal(text, true),
+        super::lexer::TokenKind::String => Value::parse_string_literal(text, true, true),
         super::lexer::TokenKind::StyleUnitLiteral => {
             Value::StyleUnit(text.parse().expect("lexer filtered"))
         }
