@@ -264,6 +264,10 @@ fn assign_to_slide_type(
 ) {
     let member = context.string_interner.resolve(member);
     match member {
+        "z_index" => {
+            base.as_mut_base_element()
+                .set_z_index(value.into_integer() as _);
+        }
         "valign" => {
             base.as_mut_base_element()
                 .set_vertical_alignment(value.into_vertical_alignment());

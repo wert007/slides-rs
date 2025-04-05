@@ -136,4 +136,19 @@ impl Diagnostics {
     pub fn report_unknown_type(&mut self, location: Location, type_: &str) {
         self.report_error(format!("No Type named {type_} found"), location);
     }
+
+    pub(crate) fn report_wrong_argument_count(
+        &mut self,
+        location: Location,
+        function_type: super::binder::typing::FunctionType,
+        actual_argument_count: usize,
+    ) {
+        self.report_error(
+            format!(
+                "Expected {} arguments, but found {actual_argument_count} instead",
+                function_type.argument_count()
+            ),
+            location,
+        );
+    }
 }

@@ -93,6 +93,10 @@ impl ElementRefMut {
         self.apply_to_base_element_styling(|base| base.set_vertical_alignment(value));
     }
 
+    pub fn set_z_index(&mut self, value: usize) {
+        self.apply_to_base_element_styling(|base| base.set_z_index(value));
+    }
+
     pub fn set_horizontal_alignment(&mut self, value: crate::HorizontalAlignment) {
         self.apply_to_base_element_styling(|base| base.set_horizontal_alignment(value));
     }

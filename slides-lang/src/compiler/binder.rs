@@ -1307,9 +1307,6 @@ fn bind_function_call(
 ) -> BoundNode {
     let base = bind_node(*function_call.base, binder, context);
     let mut arguments = Vec::with_capacity(function_call.arguments.len());
-    for (argument, _) in function_call.arguments {
-        arguments.push(bind_node(argument, binder, context));
-    }
     let Some(function_type) = context
         .type_interner
         .resolve(base.type_)
@@ -1320,7 +1317,27 @@ fn bind_function_call(
         // TODO: Report unexpected Type!
         return BoundNode::error(base.location);
     };
-    BoundNode::function_call(location, base, arguments, function_type)
+    for ((argument, _), type_) in function_call
+        .arguments
+        .into_iter()
+        .zip(&function_type.argument_types)
+    {
+        arguments.push(bind_conversion(
+            bind_node(argument, binder, context),
+            *type_,
+            ConversionKind::Implicit,
+            binder,
+            context,
+        ));
+    }
+    if arguments.len() != function_type.argument_types.len() {
+        context
+            .diagnostics
+            .report_wrong_argument_count(location, function_type, arguments.len());
+        BoundNode::error(location)
+    } else {
+        BoundNode::function_call(location, base, arguments, function_type)
+    }
 }
 
 fn bind_assignment_statement(

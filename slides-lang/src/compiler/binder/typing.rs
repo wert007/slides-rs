@@ -11,6 +11,10 @@ impl FunctionType {
     pub fn return_type(&self) -> TypeId {
         self.return_type
     }
+
+    pub fn argument_count(&self) -> usize {
+        self.argument_types.len()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

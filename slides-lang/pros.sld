@@ -36,7 +36,7 @@ element image_with_caption(img: Image, caption: String):
     valign = VAlign.Stretch;
     halign = HAlign.Stretch;
 
-template page_number():
+template page_number(color: Color):
     // TODO add arithmetic expressions!
     // let number = slide_index - 4;
     let number = slide_index;
@@ -44,6 +44,8 @@ template page_number():
         valign: VAlign.Bottom,
         halign: HAlign.Center,
         text_align: TextAlign.Center,
+        text_color: color,
+        z_index: 999,
     };
 
 slide code:
@@ -87,7 +89,7 @@ slide title:
         }
 
 slide toc:
-    page_number();
+    page_number(c"black");
     let toc =
         l"""
             # Übersicht
@@ -101,14 +103,14 @@ slide toc:
 
 
 slide example:
-    text_color = c"white";
-    page_number();
     let bg =
         image_with_caption(
             image(p"./pros-assets/car-repair.jpg") {
                 filter: brightness(0.4),
             },
             "Bild von emkanicepic auf Pixabay");
+
+    page_number(c"white");
 
     let text =
         l"""
@@ -120,11 +122,13 @@ slide example:
              - Zwei Arten von Problemen
                 - Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation
                 - Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks
-        """;
+        """ {
+            text_color: c"white"
+        };
 
 
 slide one_sided_sync:
-    page_number();
+    page_number(c"black");
     let text =
         l"""
             # Einseitige Synchronisation

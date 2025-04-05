@@ -230,18 +230,16 @@ ol {
     left: 50%;
     right: unset;
     transform: translate(-50%, 0%);
+    z-index: 999;
 }
 
 #toc-page_number, #toc-page_number .label-text {
+    color: rgb(0, 0, 0, 1);
     text-align: center;
 }
 
 #toc-toc {
     z-index: 0;
-}
-
-#example {
-    color: rgb(255, 255, 255, 1);
 }
 
 #example-page_number {
@@ -250,9 +248,11 @@ ol {
     left: 50%;
     right: unset;
     transform: translate(-50%, 0%);
+    z-index: 999;
 }
 
 #example-page_number, #example-page_number .label-text {
+    color: rgb(255, 255, 255, 1);
     text-align: center;
 }
 
@@ -296,15 +296,21 @@ ol {
     z-index: 1;
 }
 
+#example-text, #example-text .label-text {
+    color: rgb(255, 255, 255, 1);
+}
+
 #one_sided_sync-page_number {
     bottom: 0px;
     top: unset;
     left: 50%;
     right: unset;
     transform: translate(-50%, 0%);
+    z-index: 999;
 }
 
 #one_sided_sync-page_number, #one_sided_sync-page_number .label-text {
+    color: rgb(0, 0, 0, 1);
     text-align: center;
 }
 
