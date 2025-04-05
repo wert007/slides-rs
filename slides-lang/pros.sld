@@ -140,12 +140,12 @@ slide one_sided_sync:
         """;
 
 element two_icons(icon1: String, icon2: String, subtitle: String = ""):
-    let img1 = image(p'./assets/{icon1}.png') {
+    let img1 = image(p'./pros-assets/{icon1}.png') {
         width: 50%,
         halign: HAlign.Left,
         valign: VAlign.Stretch,
     };
-    let img2 = image(p'./assets/{icon2}.png') {
+    let img2 = image(p'./pros-assets/{icon2}.png') {
         width: 50%,
         halign: HAlign.Right,
         valign: VAlign.Stretch,
