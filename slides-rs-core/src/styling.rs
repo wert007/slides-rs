@@ -209,6 +209,8 @@ impl ToCss for BaseElementStyling {
         let mut result = String::new();
         let mut translate = (0.0, 0.0);
 
+        let mut was_height_already_emitted = false;
+        let mut was_width_already_emitted = false;
         match self.valign {
             VerticalAlignment::Unset => {}
             VerticalAlignment::Top => {
@@ -240,6 +242,7 @@ impl ToCss for BaseElementStyling {
                 let height = StyleUnit::Percent(100.0) - top - bottom;
                 let top = top.or_zero();
                 let bottom = bottom.or_zero();
+                was_height_already_emitted = true;
                 writeln!(
                     result,
                     "    top: {top};\n    bottom: {bottom};\n    height: {height};",
@@ -276,12 +279,21 @@ impl ToCss for BaseElementStyling {
                 let width = StyleUnit::Percent(100.0) - left - right;
                 let left = left.or_zero();
                 let right = right.or_zero();
+                was_width_already_emitted = true;
                 writeln!(
                     result,
                     "    left: {left};\n    right: {right};\n    width: {width};",
                 )
                 .expect("infallible");
             }
+        }
+
+        if !was_height_already_emitted && self.height != StyleUnit::Unspecified {
+            writeln!(result, "    height: {};", self.height).expect("infallible");
+        }
+
+        if !was_width_already_emitted && self.width != StyleUnit::Unspecified {
+            writeln!(result, "    width: {};", self.width).expect("infallible");
         }
 
         if translate != (0.0, 0.0) {

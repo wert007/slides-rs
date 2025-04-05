@@ -153,12 +153,19 @@ element two_icons(icon1: String, icon2: String, subtitle: String = ""):
 
 slide base_problem:
     page_number();
-    let title = l"# Einseitige Synchronisation: Grundproblem" {};
-    let amanda = two_icons("amanda", "light") {
-        width: 40%,
-        halign: HAlign.Right,
-    };
-    let bobbl = two_icons("wait", "bobbl") {
-        width: 40%
-        halign: HAlign.Left,
-    };
+    let g = grid("*|*","min|*");
+    g.set_cell(
+        l"# Einseitige Synchronisation: Grundproblem"
+        0, 0,
+    );
+
+    g.set_cell(
+        two_icons("amanda", "light")
+        0, 1,
+    );
+
+    g.set_cell(
+        two_icons("wait", "bobbl")
+        1, 1,
+    );
+

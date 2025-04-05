@@ -860,6 +860,7 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         }
         SyntaxNodeKind::VariableReference(token) => bind_variable_reference(token, binder, context),
         SyntaxNodeKind::Literal(token) => bind_literal(token, binder, context),
+        SyntaxNodeKind::FormatString(token) => bind_string(token, binder, context),
         SyntaxNodeKind::MemberAccess(member_access) => {
             bind_member_access(member_access, statement.location, binder, context)
         }
