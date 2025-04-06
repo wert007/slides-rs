@@ -36,8 +36,8 @@ element image_with_caption(img: Image, caption: String):
     valign = VAlign.Stretch;
     halign = HAlign.Stretch;
 
-template page_number(color: Color):
-    let number = slide_index3;
+template page_number(color: Color = c"black"):
+    let number = slide_index - 3;
     let page_number =
         l'{number}' {
             valign: VAlign.Bottom,
@@ -155,9 +155,12 @@ element two_icons(icon1: String, icon2: String, subtitle: String):
 slide base_problem:
     page_number();
     let g = grid("*|*", "min|*");
-    g.set_cell(l"# Einseitige Synchronisation: Grundproblem", 0, 0);
+    // let title = g.add(
+    //     l"# Einseitige Synchronisation: Grundproblem"
+    // );
+    // title.column_span = 2;
 
-    g.set_cell(two_icons("amanda", "light"), 0, 1);
+    // g.add(two_icons("amanda", "light"));
 
-    g.set_cell(two_icons("wait", "bobbl"), 1, 1);
+    // g.add(two_icons("wait", "bobbl"));
 

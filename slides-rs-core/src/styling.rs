@@ -812,6 +812,32 @@ impl ToCss for ImageStyling {
     }
 }
 
+#[derive(Debug, Clone, FieldNamesAsSlice)]
+pub struct GridStyling {}
+
+impl GridStyling {
+    pub fn new() -> ElementStyling<Self> {
+        ElementStyling::new(GridStyling {})
+    }
+}
+
+impl ToCss for GridStyling {
+    fn class_name(&self) -> String {
+        "grid".into()
+    }
+
+    fn to_css_style(&self, layout: ToCssLayout) -> String {
+        todo!()
+    }
+
+    fn collect_google_font_references(
+        &self,
+        _: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        Ok(())
+    }
+}
+
 #[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum Background {
     #[default]

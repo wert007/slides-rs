@@ -6,6 +6,119 @@
             <!-- For Google font! -->
             <link rel="preconnect" href="https://fonts.googleapis.com">
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
 </head>
             <body onload="init()" onkeydown="keydown(event)">
+<section id="code" class="slide">
+<div id="code-bg" class="custom-element ImageWithCaption ">
+<img id="code-bg-img" class="image" src="./pros-assets/code.jpg"/>
+<div id="code-bg-lbl" class="label">
+<p class="label-text">Image by Christopher Kuszajewski from Pixabay</p>
+</div>
+</div>
+</section>
+<section id="threads" class="slide">
+<div id="threads-bg" class="custom-element ImageWithCaption ">
+<img id="threads-bg-img" class="image" src="./pros-assets/threads.jpg"/>
+<div id="threads-bg-lbl" class="label">
+<p class="label-text">Bild von Myriams-Fotos auf Pixabay</p>
+</div>
+</div>
+</section>
+<section id="frozen" class="slide">
+<div id="frozen-bg" class="custom-element ImageWithCaption ">
+<img id="frozen-bg-img" class="image" src="./pros-assets/frozen.jpg"/>
+<div id="frozen-bg-lbl" class="label">
+<p class="label-text">Bild von adege auf Pixabay</p>
+</div>
+</div>
+</section>
+<section id="title" class="slide">
+<div id="title-title" class="label">
+<h1 class="label-header">
+Einseitige Synchronisation und Deadlocks</h1>
+</div>
+<div id="title-subtitle" class="label">
+<h2 class="label-header">
+Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik</h2>
+</div>
+</section>
+<section id="toc" class="slide">
+<div id="toc-page_number" class="label">
+<p class="label-text">1</p>
+</div>
+<div id="toc-toc" class="label">
+<h1 class="label-header">
+Übersicht</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Übersicht</p>
+  <li>
+<p class="label-text">Beispiel</p>
+  <li>
+<p class="label-text">Einseitige Synchronisation</p>
+  <li>
+<p class="label-text">Deadlocks</p>
+</ol>
+</div>
+</section>
+<section id="example" class="slide">
+<div id="example-page_number" class="label">
+<p class="label-text">2</p>
+</div>
+<div id="example-bg" class="custom-element ImageWithCaption ">
+<img id="example-bg-img" class="image" src="./pros-assets/car-repair.jpg"/>
+<div id="example-bg-lbl" class="label">
+<p class="label-text">Bild von emkanicepic auf Pixabay</p>
+</div>
+</div>
+<div id="example-text" class="label">
+<h1 class="label-header">
+Beispiel</h1>
+<ul class="label-text">
+  <li>
+<p class="label-text">Arbeitsplatz: <span class="emphasis">Autowerkstatt</span></p>
+  <li>
+<p class="label-text">Angestellte: <span class="emphasis">Amanda</span> und <span class="emphasis">Bobbl</span></p>
+  <li>
+<p class="label-text">Werkzeuge: <span class="emphasis">Licht</span> und <span class="emphasis">Hebebühne</span></p>
+  <li>
+<p class="label-text">Zwei Arten von Problemen</p>
+<ul class="label-text">
+  <li>
+<p class="label-text">Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation</p>
+  <li>
+<p class="label-text">Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks</p>
+</ul>
+</ul>
+</div>
+</section>
+<section id="one_sided_sync" class="slide">
+<div id="one_sided_sync-page_number" class="label">
+<p class="label-text">3</p>
+</div>
+<div id="one_sided_sync-text" class="label">
+<h1 class="label-header">
+Einseitige Synchronisation</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Grundproblem</p>
+  <li>
+<p class="label-text">Ständiges Überprüfen</p>
+  <li>
+<p class="label-text">Getaktetes Überprüfen</p>
+  <li>
+<p class="label-text">Überprüfen auf Anfrage</p>
+  <li>
+<p class="label-text">Überprüfen auf Anfrage ohne Kenntnis anderer Threads</p>
+  <li>
+<p class="label-text">Fazit zur einseitigen Synchronisation</p>
+</ol>
+</div>
+</section>
+<section id="base_problem" class="slide">
+<div id="base_problem-page_number" class="label">
+<p class="label-text">4</p>
+</div>
+</section>
 </body></html>

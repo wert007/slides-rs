@@ -99,6 +99,7 @@ pub enum Type {
     Slide,
     Element,
     Label,
+    Grid,
     Image,
     Thickness,
     Enum(Box<Type>, Vec<String>),
@@ -170,6 +171,8 @@ impl Type {
             Some(Self::Color)
         } else if const_str::compare!(==, rust_string, "Label") {
             Some(Self::Label)
+        } else if const_str::compare!(==, rust_string, "Grid") {
+            Some(Self::Grid)
         } else if const_str::compare!(==, rust_string, "Image") {
             Some(Self::Image)
         } else if const_str::compare!(==, rust_string, "ObjectFit") {

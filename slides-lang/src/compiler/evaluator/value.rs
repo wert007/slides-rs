@@ -36,6 +36,7 @@ summum! {
         Background(slides_rs_core::Background),
         Color(slides_rs_core::Color),
         Label(Arc<RefCell<slides_rs_core::Label>>),
+        Grid(Arc<RefCell<slides_rs_core::Grid>>),
         Path(PathBuf),
         Image(Arc<RefCell<slides_rs_core::Image>>),
         ObjectFit(slides_rs_core::ObjectFit),
@@ -65,6 +66,7 @@ impl Value {
             Value::Background(_) => Type::Background,
             Value::Color(_) => Type::Color,
             Value::Label(_) => Type::Label,
+            Value::Grid(_) => Type::Grid,
             Value::Path(_) => Type::Path,
             Value::Image(_) => Type::Image,
             Value::ObjectFit(_) => Type::ObjectFit,
@@ -199,5 +201,11 @@ impl From<slides_rs_core::Image> for Value {
 impl From<slides_rs_core::CustomElement> for Value {
     fn from(value: slides_rs_core::CustomElement) -> Self {
         Self::CustomElement(Arc::new(RefCell::new(value)))
+    }
+}
+
+impl From<slides_rs_core::Grid> for Value {
+    fn from(value: slides_rs_core::Grid) -> Self {
+        Self::Grid(Arc::new(RefCell::new(value)))
     }
 }

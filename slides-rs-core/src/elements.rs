@@ -18,6 +18,8 @@ mod label;
 pub use label::*;
 mod custom_element;
 pub use custom_element::*;
+mod grid;
+pub use grid::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct WebRenderableContext {
@@ -49,6 +51,7 @@ pub enum Element {
     Image,
     Label,
     CustomElement,
+    Grid,
 }
 
 // #[enum_dispatch(WebRenderable)]
@@ -57,6 +60,7 @@ pub enum ElementRefMut {
     Image(Arc<RefCell<Image>>),
     Label(Arc<RefCell<Label>>),
     CustomElement(Arc<RefCell<CustomElement>>),
+    Grid(Arc<RefCell<Grid>>),
 }
 
 impl ElementRefMut {
@@ -77,6 +81,7 @@ impl ElementRefMut {
             ElementRefMut::CustomElement(it) => {
                 cb(it.borrow_mut().element_styling_mut().base_mut())
             }
+            ElementRefMut::Grid(it) => cb(it.borrow_mut().element_styling_mut()),
         }
     }
 
@@ -87,6 +92,7 @@ impl ElementRefMut {
             ElementRefMut::CustomElement(custom_element) => {
                 custom_element.borrow_mut().add_styling(reference)
             }
+            ElementRefMut::Grid(it) => it.borrow_mut().add_styling(reference),
         }
     }
 

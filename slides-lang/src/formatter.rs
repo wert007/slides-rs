@@ -380,6 +380,12 @@ fn format_binary<W: Write + fmt::Debug>(
     if new_line {
         formatter.ensure_indented_line()?;
     }
+    formatter.ensure_space()?;
+    formatter.emit_token(
+        binary.operator,
+        &context.loaded_files,
+        TokenConfig::TRAILING_SPACE,
+    )?;
     format_node(*binary.rhs, formatter, context)?;
     formatter.indent -= 4;
     Ok(())
