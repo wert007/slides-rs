@@ -192,6 +192,7 @@ impl Slide {
                 WebRenderableContext {
                     layout: ToCssLayout {
                         outer_padding: self.styling.base().padding,
+                        grid_data: None,
                     },
                 },
             )?;

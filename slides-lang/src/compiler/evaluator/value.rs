@@ -37,6 +37,7 @@ summum! {
         Color(slides_rs_core::Color),
         Label(Arc<RefCell<slides_rs_core::Label>>),
         Grid(Arc<RefCell<slides_rs_core::Grid>>),
+        GridEntry(Arc<RefCell<slides_rs_core::GridEntry>>),
         Path(PathBuf),
         Image(Arc<RefCell<slides_rs_core::Image>>),
         ObjectFit(slides_rs_core::ObjectFit),
@@ -52,6 +53,7 @@ summum! {
         Array(Vec<Value>),
         Filter(slides_rs_core::Filter),
         TextStyling(Arc<RefCell<slides_rs_core::TextStyling>>),
+        Element(Arc<RefCell<slides_rs_core::Element>>),
     }
 }
 
@@ -67,6 +69,7 @@ impl Value {
             Value::Color(_) => Type::Color,
             Value::Label(_) => Type::Label,
             Value::Grid(_) => Type::Grid,
+            Value::GridEntry(_) => Type::GridEntry,
             Value::Path(_) => Type::Path,
             Value::Image(_) => Type::Image,
             Value::ObjectFit(_) => Type::ObjectFit,
@@ -82,6 +85,7 @@ impl Value {
             Value::Array(_) => unreachable!("Not possible"),
             Value::Filter(_) => Type::Filter,
             Value::TextStyling(_) => Type::TextStyling,
+            Value::Element(_) => Type::Element,
         }
     }
 
@@ -104,6 +108,7 @@ impl Value {
             Value::CustomElement(custom_element) => {
                 slides_rs_core::ElementRefMut::CustomElement(custom_element.clone())
             }
+            Value::Grid(grid) => slides_rs_core::ElementRefMut::Grid(grid.clone()),
             _ => unreachable!("Self is not a base element!"),
         }
     }

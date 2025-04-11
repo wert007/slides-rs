@@ -100,6 +100,7 @@ pub enum Type {
     Element,
     Label,
     Grid,
+    GridEntry,
     Image,
     Thickness,
     Enum(Box<Type>, Vec<String>),
@@ -129,7 +130,7 @@ impl Type {
         }
     }
 
-    pub fn field_type(&self, member: &str) -> Option<Type> {
+    pub fn field_type(&self, member: &str, type_interner: &mut TypeInterner) -> Option<Type> {
         if self == &Type::Error {
             return Some(Type::Error);
         }
@@ -150,6 +151,7 @@ impl Type {
             let rs_type_name = globals::normalize_type_name(m.members_rust_types[index].trim());
             return Some(
                 Self::from_rust_string(rs_type_name)
+                    .or_else(|| Self::from_fn_name(rs_type_name, type_interner))
                     .unwrap_or_else(|| panic!("Could not find type! {m:?}.{member}")),
             );
         }
@@ -201,6 +203,10 @@ impl Type {
             Some(Self::Filter)
         } else if const_str::compare!(==, rust_string, "TextStyling") {
             Some(Self::TextStyling)
+        } else if const_str::compare!(==, rust_string, "GridEntry") {
+            Some(Self::GridEntry)
+        } else if const_str::compare!(==, rust_string, "Element") {
+            Some(Self::Element)
         } else {
             None
         }
@@ -219,5 +225,22 @@ impl Type {
                 )
             })
             .collect()
+    }
+
+    fn from_fn_name(name: &str, type_interner: &mut TypeInterner) -> Option<Type> {
+        let name = name.strip_prefix("#Fn(")?;
+        let (parameters, return_type) = name.split_once("):")?;
+        let parameters: Option<Vec<TypeId>> = parameters
+            .split(',')
+            .into_iter()
+            .map(|p| Type::from_rust_string(p).map(|t| type_interner.get_or_intern(t)))
+            .collect();
+        let parameters = parameters?;
+        let return_type = type_interner.get_or_intern(Self::from_rust_string(return_type)?);
+        Some(Type::Function(FunctionType {
+            min_argument_count: parameters.len(),
+            argument_types: parameters,
+            return_type,
+        }))
     }
 }

@@ -2,7 +2,7 @@ use convert_case::{Case, Casing};
 use enum_dispatch::enum_dispatch;
 use struct_field_names_as_array::FieldNamesAsSlice;
 
-use crate::{HorizontalAlignment, Result, StyleUnit, Thickness, VerticalAlignment};
+use crate::{GridEntry, HorizontalAlignment, Result, StyleUnit, Thickness, VerticalAlignment};
 use std::{any::type_name, fmt::Display, io::Write, ops::Deref};
 
 #[enum_dispatch]
@@ -389,17 +389,20 @@ impl<S: ToCss + 'static> ElementStyling<S> {
 #[derive(Debug, Clone, Copy)]
 pub struct ToCssLayout {
     pub outer_padding: Thickness,
+    pub grid_data: Option<GridEntry>,
 }
 impl ToCssLayout {
     pub(crate) fn unknown() -> ToCssLayout {
         Self {
             outer_padding: Thickness::default(),
+            grid_data: None,
         }
     }
 
     pub(crate) fn new(base: &BaseElementStyling) -> Self {
         Self {
             outer_padding: base.padding,
+            grid_data: None,
         }
     }
 }
@@ -411,6 +414,16 @@ impl<S: ToCss> ToCss for ElementStyling<S> {
         selector: &str,
         w: &mut dyn Write,
     ) -> std::io::Result<()> {
+        if let Some(grid_data) = layout.grid_data {
+            writeln!(w, "{selector} {{")?;
+            if grid_data.column_span != 1 {
+                writeln!(w, "    grid-column: span {};", grid_data.column_span)?;
+            }
+            if grid_data.row_span != 1 {
+                writeln!(w, "    grid-row: span {};", grid_data.row_span)?;
+            }
+            writeln!(w, "}}")?;
+        }
         self.base.to_css_rule(layout, selector, w)?;
         self.specific.to_css_rule(layout, selector, w)?;
         Ok(())
@@ -812,12 +825,36 @@ impl ToCss for ImageStyling {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum GridCellSize {
+    Auto,
+    Fraction(usize),
+    Concrete(StyleUnit),
+    Minimum,
+    Maximum,
+}
+
+impl GridCellSize {
+    pub fn to_css(&self) -> String {
+        match self {
+            GridCellSize::Auto => "auto".into(),
+            GridCellSize::Fraction(fr) => format!("{fr}fr"),
+            GridCellSize::Concrete(style_unit) => style_unit.to_string(),
+            GridCellSize::Minimum => "min-content".into(),
+            GridCellSize::Maximum => "max-content".into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, FieldNamesAsSlice)]
-pub struct GridStyling {}
+pub struct GridStyling {
+    columns: Vec<GridCellSize>,
+    rows: Vec<GridCellSize>,
+}
 
 impl GridStyling {
-    pub fn new() -> ElementStyling<Self> {
-        ElementStyling::new(GridStyling {})
+    pub fn new(columns: Vec<GridCellSize>, rows: Vec<GridCellSize>) -> ElementStyling<Self> {
+        ElementStyling::new(GridStyling { columns, rows })
     }
 }
 
@@ -827,7 +864,33 @@ impl ToCss for GridStyling {
     }
 
     fn to_css_style(&self, layout: ToCssLayout) -> String {
-        todo!()
+        use std::fmt::Write;
+        let mut result = String::new();
+        if !self.columns.is_empty() {
+            writeln!(
+                result,
+                "    grid-template-columns: {};",
+                self.columns
+                    .iter()
+                    .map(|c| c.to_css())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+            .expect("Infallibe");
+        }
+        if !self.rows.is_empty() {
+            writeln!(
+                result,
+                "    grid-template-rows: {};",
+                self.rows
+                    .iter()
+                    .map(|c| c.to_css())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+            .expect("Infallibe");
+        }
+        result
     }
 
     fn collect_google_font_references(

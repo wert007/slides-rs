@@ -465,6 +465,14 @@ fn format_parameter<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::default(),
     )?;
+    if let Some(equals) = parameter.optional_equals {
+        formatter.ensure_space()?;
+        formatter.emit_token(equals, &context.loaded_files, TokenConfig::TRAILING_SPACE)?;
+    }
+    if let Some(initializer) = parameter.optional_initializer {
+        formatter.ensure_space()?;
+        format_node(*initializer, formatter, context)?;
+    }
     Ok(())
 }
 

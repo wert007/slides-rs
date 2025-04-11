@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use slides_rs_core::{Color, Filter, Font, Grid, Image, ImageSource, Label};
+use slides_rs_core::{Color, Filter, Font, Grid, GridCellSize, Image, ImageSource, Label};
 
 pub fn rgb(r: i64, g: i64, b: i64) -> Color {
     Color::rgb(r as _, g as _, b as _)
@@ -15,8 +15,17 @@ pub fn label(text: String) -> Label {
 }
 
 pub fn grid(columns: String, rows: String) -> Grid {
+    fn parse_grid_cell_size(text: &str) -> GridCellSize {
+        match text {
+            "*" => GridCellSize::Fraction(1),
+            "min" => GridCellSize::Minimum,
+            _ => todo!(),
+        }
+    }
+    let columns = columns.split('|').map(parse_grid_cell_size).collect();
+    let rows = rows.split('|').map(parse_grid_cell_size).collect();
     // TODO: Parse columns and rows and construct grid out of it!
-    Grid::new()
+    Grid::new(columns, rows)
 }
 
 pub fn gfont(name: String) -> Font {

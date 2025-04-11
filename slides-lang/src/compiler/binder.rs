@@ -1195,7 +1195,7 @@ fn access_member(
             visited.push(base_type.clone());
         }
         let member = context.string_interner.resolve(member);
-        if let Some(type_) = base_type.field_type(member) {
+        if let Some(type_) = base_type.field_type(member, &mut context.type_interner) {
             let type_ = context.type_interner.get_or_intern(type_);
             let mut fallback = BoundNode::error(base.location);
             std::mem::swap(base, &mut fallback);

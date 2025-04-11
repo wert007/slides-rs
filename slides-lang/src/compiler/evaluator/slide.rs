@@ -66,6 +66,12 @@ pub fn evaluate_to_slide(
                 custom_element.set_z_index(slide.next_z_index());
                 slide = slide.add_custom_element(custom_element);
             }
+            Value::Grid(grid) => {
+                let mut grid = Arc::unwrap_or_clone(grid).into_inner();
+                grid.set_id(name.into());
+                grid.set_z_index(slide.next_z_index());
+                slide = slide.add_element(Element::Grid(grid));
+            }
 
             _ => {}
         }
@@ -151,7 +157,11 @@ fn assign_member(
             let base = evaluator.get_variable_mut(variable.id);
             let base_type = base.infer_type();
             match base_type {
-                Type::Element | Type::Label | Type::Image | Type::CustomElement(_) => {
+                Type::Element
+                | Type::Label
+                | Type::Image
+                | Type::CustomElement(_)
+                | Type::GridEntry => {
                     assign_to_slide_type(base_type, base, member, value, context);
                 }
                 missing => unreachable!("Missing {missing:?}"),
@@ -242,7 +252,7 @@ fn evaluate_post_initialization(
         let member = context.string_interner.create_or_get(&member);
         let base_type = context.type_interner.resolve(base_type).clone();
         match base_type {
-            Type::Element | Type::Label | Type::CustomElement(_) | Type::Image => {
+            Type::Element | Type::Label | Type::CustomElement(_) | Type::Image | Type::Grid => {
                 assign_to_slide_type(base_type, &mut base, member, value, context)
             }
             _ => {
@@ -338,6 +348,9 @@ fn assign_to_slide_type(
                 .element_styling_mut()
                 .set_font_size(value.into_float());
         }
+        "column_span" => {
+            base.as_grid_entry().borrow_mut().column_span = value.into_integer() as _;
+        }
         missing => unreachable!("Missing Member {missing}"),
     }
 }
@@ -376,19 +389,69 @@ fn evaluate_function_call(
         .into_iter()
         .map(|a| evaluate_expression(a, evaluator, context))
         .collect();
-    let function_name = extract_function_name(*function_call.base, context);
+    execute_function(*function_call.base, arguments, evaluator, context)
+}
+
+fn execute_function(
+    base: BoundNode,
+    arguments: Vec<Value>,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> Value {
+    match base.kind {
+        BoundNodeKind::VariableReference(variable) => {
+            let name = context
+                .string_interner
+                .resolve_variable(variable.id)
+                .to_owned();
+            execute_named_function(name, arguments, evaluator, context)
+        }
+        BoundNodeKind::MemberAccess(member_access) => {
+            let base = evaluate_expression(*member_access.base, evaluator, context);
+            let name = context
+                .string_interner
+                .resolve(member_access.member)
+                .to_owned();
+            execute_member_function(base, name, arguments, evaluator, context)
+        }
+        _ => todo!("Add function handling!"),
+    }
+}
+
+fn execute_member_function(
+    base: Value,
+    name: String,
+    arguments: Vec<Value>,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> Value {
+    match base {
+        Value::Grid(base) => {
+            match name.as_str() {
+                "add" => Value::GridEntry(base.borrow_mut().add_element(
+                    Arc::unwrap_or_clone(arguments[0].as_element().clone()).into_inner(),
+                )),
+                _ => todo!(),
+            }
+        }
+        _ => todo!(),
+    }
+}
+
+fn execute_named_function(
+    name: String,
+    arguments: Vec<Value>,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> Value {
     match binder::globals::FUNCTIONS
         .iter()
-        .find(|f| f.name == function_name.as_str())
+        .find(|f| f.name == name.as_str())
     {
         Some(it) => (it.call)(arguments),
         None => {
             let value = evaluator
-                .get_variable_mut(
-                    context
-                        .string_interner
-                        .create_or_get_variable(&function_name),
-                )
+                .get_variable_mut(context.string_interner.create_or_get_variable(&name))
                 .clone();
             evaluate_user_function(
                 value.as_user_function().clone(),
@@ -533,9 +596,15 @@ fn evaluate_conversion(
             _ => unreachable!("Impossible conversion!"),
         },
         Type::Element => match base {
-            Value::Label(_label) => todo!(),
-            Value::Image(_image) => todo!(),
-            Value::CustomElement(_custom_element) => todo!(),
+            Value::Label(label) => Value::Element(Arc::new(RefCell::new(Element::Label(
+                Arc::unwrap_or_clone(label).into_inner(),
+            )))),
+            Value::Image(image) => Value::Element(Arc::new(RefCell::new(Element::Image(
+                Arc::unwrap_or_clone(image).into_inner(),
+            )))),
+            Value::CustomElement(custom_element) => Value::Element(Arc::new(RefCell::new(
+                Element::CustomElement(Arc::unwrap_or_clone(custom_element).into_inner()),
+            ))),
             _ => unreachable!("Impossible conversion!"),
         },
         Type::Thickness => match base {
