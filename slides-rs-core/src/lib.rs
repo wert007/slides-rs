@@ -185,8 +185,7 @@ impl Slide {
             .to_css_rule(ToCssLayout::unknown(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(emitter.raw_html(), "<section id=\"{id}\" class=\"slide\">")?;
         for (index, mut element) in self.elements.into_iter().enumerate() {
-            element.set_fallback_id(format!("element-{index}"));
-            element.set_parent_id(id.clone());
+            element.set_namespace(id.clone());
             element.output_to_html(
                 emitter,
                 WebRenderableContext {

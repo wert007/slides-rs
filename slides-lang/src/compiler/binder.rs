@@ -380,6 +380,14 @@ impl Binder {
     fn look_up_type_by_name(&self, type_name: SymbolUsize) -> Option<TypeId> {
         self.types.get(&type_name).copied()
     }
+
+    fn register_type_by_name(&mut self, type_: TypeId, name: SymbolUsize) -> Option<SymbolUsize> {
+        if self.types.contains_key(&name) {
+            return None;
+        }
+        self.types.insert(name, type_);
+        Some(name)
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -973,7 +981,12 @@ fn bind_element_statement(
         .to_case(convert_case::Case::Pascal);
     let element_type = context
         .type_interner
-        .get_or_intern(Type::CustomElement(type_name));
+        .get_or_intern(Type::CustomElement(type_name.clone()));
+
+    let type_name_symbol = context.string_interner.create_or_get(&type_name);
+    binder
+        .register_type_by_name(element_type, type_name_symbol)
+        .expect("Check this!");
 
     let scope = binder.create_scope();
     for (name, type_) in globals::find_members_by_name("Element") {

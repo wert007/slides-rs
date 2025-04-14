@@ -2,12 +2,14 @@ use std::{cell::RefCell, io::Write, sync::Arc};
 
 use crate::{ElementStyling, Result, StylingReference, ToCss, output::PresentationEmitter};
 
-use super::{Element, WebRenderable, WebRenderableContext};
+use super::{Element, ElementId, WebRenderable, WebRenderableContext};
 
 #[derive(Debug, Clone)]
 pub struct CustomElement {
-    parent_id: String,
-    id: String,
+    namespace: String,
+    name: String,
+    id: ElementId,
+    parent: Option<ElementId>,
     styling: ElementStyling<()>,
     stylings: Vec<StylingReference>,
     type_name: String,
@@ -16,8 +18,10 @@ pub struct CustomElement {
 impl CustomElement {
     pub fn new(type_name: impl Into<String>, children: Vec<Element>) -> Self {
         Self {
-            parent_id: String::new(),
-            id: String::new(),
+            namespace: String::new(),
+            name: String::new(),
+            id: ElementId::generate(),
+            parent: None,
             type_name: type_name.into(),
             children,
             styling: ElementStyling::new_base(),
@@ -45,6 +49,14 @@ impl CustomElement {
         self.children = children;
         self
     }
+
+    pub fn name(&self) -> String {
+        if self.name.is_empty() {
+            format!("{}-{}", self.styling.class_name(), self.id)
+        } else {
+            self.name.clone()
+        }
+    }
 }
 
 impl WebRenderable for CustomElement {
@@ -53,7 +65,7 @@ impl WebRenderable for CustomElement {
         emitter: &mut PresentationEmitter<W>,
         ctx: WebRenderableContext,
     ) -> Result<()> {
-        let id = format!("{}-{}", self.parent_id, self.id);
+        let id = format!("{}-{}", self.namespace, self.name());
         self.styling
             .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         writeln!(
@@ -72,31 +84,38 @@ impl WebRenderable for CustomElement {
         Ok(())
     }
 
-    fn set_fallback_id(&mut self, id: String) {
-        if self.id.is_empty() {
-            self.id = id;
-            self.children
-                .iter_mut()
-                .for_each(|c| c.set_parent_id(format!("{}-{}", self.parent_id, self.id)));
-        }
+    fn set_parent(&mut self, parent: ElementId) {
+        self.parent = Some(parent);
     }
 
-    fn set_id(&mut self, id: String) {
-        self.id = id;
-        self.children
-            .iter_mut()
-            .for_each(|c| c.set_parent_id(format!("{}-{}", self.parent_id, self.id)));
+    fn parent(&self) -> Option<ElementId> {
+        self.parent
     }
 
-    fn set_parent_id(&mut self, id: String) {
-        self.parent_id = id;
+    fn id(&self) -> ElementId {
+        self.id
+    }
+
+    fn set_name(&mut self, id: String) {
+        self.name = id;
         self.children
             .iter_mut()
-            .for_each(|c| c.set_parent_id(format!("{}-{}", self.parent_id, self.id)));
+            .for_each(|c| c.set_namespace(format!("{}-{}", self.namespace, self.name)));
+    }
+
+    fn set_namespace(&mut self, id: String) {
+        self.namespace = id;
+        self.children
+            .iter_mut()
+            .for_each(|c| c.set_namespace(format!("{}-{}", self.namespace, self.name)));
     }
 
     fn element_styling_mut(&mut self) -> &mut crate::BaseElementStyling {
         self.element_styling_mut().base_mut()
+    }
+
+    fn element_styling(&self) -> &crate::BaseElementStyling {
+        self.styling.base()
     }
 
     fn collect_google_font_references(

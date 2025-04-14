@@ -26,7 +26,7 @@ element image_with_caption(img: Image, caption: String):
         valign: VAlign.Stretch,
         halign: HAlign.Stretch,
     }
-    let lbl = 
+    let lbl =
         label(caption) {
             valign: VAlign.Bottom,
             halign: HAlign.Right,
@@ -38,7 +38,7 @@ element image_with_caption(img: Image, caption: String):
 
 template page_number(color: Color = c"black"):
     let number = slide_index - 3;
-    let page_number = 
+    let page_number =
         l'{number}' {
             valign: VAlign.Bottom,
             halign: HAlign.Center,
@@ -48,22 +48,22 @@ template page_number(color: Color = c"black"):
         };
 
 slide code:
-    let bg = 
+    let bg =
         image_with_caption(
-            image(p"./pros-assets/code.jpg"), 
+            image(p"./pros-assets/code.jpg"),
             "Image by Christopher Kuszajewski from Pixabay");
 
 slide threads:
-    let bg = 
+    let bg =
         image_with_caption(
-            image(p"./pros-assets/threads.jpg"), 
+            image(p"./pros-assets/threads.jpg"),
             "Bild von Myriams-Fotos auf Pixabay");
 
 slide frozen:
     let bg = image_with_caption(image(p"./pros-assets/frozen.jpg"), "Bild von adege auf Pixabay");
 
 slide title:
-    let title = 
+    let title =
         l"# Einseitige Synchronisation und Deadlocks" {
             text_align: TextAlign.Center,
             font_size: 2.5,
@@ -73,7 +73,7 @@ slide title:
                 bottom: 50%,
             },
         }
-    let subtitle = 
+    let subtitle =
         l"## Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
             text_align: TextAlign.Center,
             font_size: 1.3,
@@ -89,7 +89,7 @@ slide title:
 
 slide toc:
     page_number();
-    let toc = 
+    let toc =
         l"""
             # Übersicht
 
@@ -101,16 +101,16 @@ slide toc:
         };
 
 slide example:
-    let bg = 
+    let bg =
         image_with_caption(
             image(p"./pros-assets/car-repair.jpg") {
                 filter: brightness(0.4),
-            }, 
+            },
             "Bild von emkanicepic auf Pixabay");
 
     page_number(c"white");
 
-    let text = 
+    let text =
         l"""
             # Beispiel
 
@@ -126,7 +126,7 @@ slide example:
 
 slide one_sided_sync:
     page_number();
-    let text = 
+    let text =
         l"""
             # Einseitige Synchronisation
 
@@ -139,13 +139,13 @@ slide one_sided_sync:
         """;
 
 element two_icons(icon1: String, icon2: String):
-    let img1 = 
+    let img1 =
         image(p'./pros-assets/{icon1}.png') {
             width: 50%,
             halign: HAlign.Left,
             valign: VAlign.Stretch,
         };
-    let img2 = 
+    let img2 =
         image(p'./pros-assets/{icon2}.png') {
             width: 50%,
             halign: HAlign.Right,
@@ -155,7 +155,6 @@ element two_icons(icon1: String, icon2: String):
 element four_icons(left: TwoIcons, right: TwoIcons):
     left = left {
         width: 50%,
-
         halign: HAlign.Left,
         valign: VAlign.Stretch,
     };
@@ -164,37 +163,22 @@ element four_icons(left: TwoIcons, right: TwoIcons):
         width: 50%,
         halign: HAlign.Right,
         valign: VAlign.Stretch,
-
     };
 
 slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
-    let icons = 
-        grid("*,*", "*") {
+    let icons =
+        grid("*", "*,*") {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
         };
     // title.column_span = 2;
-    icons.add(
-        two_icons("amanda", "light") {
-            width: 200px,
+    let row =
+        four_icons(two_icons("amanda", "light"), two_icons("wait", "bobbl")) {
+            width: 400px,
             height: 100px,
-        });
-
-    icons.add(
-        two_icons("wait", "bobbl") {
-            width: 200px,
-            height: 100px,
-        });
-
-    let g = 
-        grid("0.2,*,0.2", "*,*") {
-            halign: HAlign.Stretch,
-            valign: VAlign.Stretch,
+            halign: HAlign.Center,
         };
-    let title_placement = g.add(title);
-    title_placement.column = 1;
-    let icon_placement = g.add(icons);
-    icon_placement.column = 1;
-
+    icons.add(title);
+    icons.add(row);

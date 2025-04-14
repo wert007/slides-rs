@@ -6,7 +6,7 @@ use crate::{
     ElementStyling, LabelStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
 };
 
-use super::{WebRenderable, WebRenderableContext};
+use super::{ElementId, WebRenderable, WebRenderableContext};
 
 mod markdown;
 
@@ -39,8 +39,10 @@ impl Display for FormattedText {
 
 #[derive(Debug, Clone)]
 pub struct Label {
-    parent_id: String,
-    id: String,
+    namespace: String,
+    name: String,
+    id: ElementId,
+    parent: Option<ElementId>,
     text: FormattedText,
     styling: ElementStyling<LabelStyling>,
     stylings: Vec<StylingReference>,
@@ -59,7 +61,7 @@ impl WebRenderable for Label {
         emitter: &mut PresentationEmitter<W>,
         ctx: WebRenderableContext,
     ) -> Result<()> {
-        let id = format!("{}-{}", self.parent_id, self.id);
+        let id = format!("{}-{}", self.namespace, self.name());
         self.styling
             .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         // TODO: Maybe in future all text is gonna be inside of svg to allow
@@ -77,30 +79,42 @@ impl WebRenderable for Label {
         Ok(())
     }
 
-    fn set_fallback_id(&mut self, id: String) {
-        if self.id.is_empty() {
-            self.id = id;
-        }
+    fn set_parent(&mut self, parent: ElementId) {
+        self.parent = Some(parent);
     }
 
-    fn set_id(&mut self, id: String) {
-        self.id = id;
+    fn parent(&self) -> Option<ElementId> {
+        self.parent
     }
 
-    fn set_parent_id(&mut self, id: String) {
-        self.parent_id = id;
+    fn id(&self) -> ElementId {
+        self.id
+    }
+
+    fn set_name(&mut self, id: String) {
+        self.name = id;
+    }
+
+    fn set_namespace(&mut self, id: String) {
+        self.namespace = id;
     }
 
     fn element_styling_mut(&mut self) -> &mut crate::BaseElementStyling {
         self.styling.base_mut()
+    }
+
+    fn element_styling(&self) -> &crate::BaseElementStyling {
+        self.styling.base()
     }
 }
 
 impl Label {
     pub fn new(text: impl Into<FormattedText>) -> Self {
         Self {
-            parent_id: String::new(),
-            id: String::new(),
+            namespace: String::new(),
+            name: String::new(),
+            id: ElementId::generate(),
+            parent: None,
             text: text.into(),
             styling: LabelStyling::new(),
             stylings: Vec::new(),
@@ -123,5 +137,13 @@ impl Label {
 
     pub fn add_styling(&mut self, reference: StylingReference) {
         self.stylings.push(reference);
+    }
+
+    pub fn name(&self) -> String {
+        if self.name.is_empty() {
+            format!("{}-{}", self.styling.class_name(), self.id)
+        } else {
+            self.name.clone()
+        }
     }
 }

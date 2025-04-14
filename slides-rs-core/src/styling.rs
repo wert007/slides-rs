@@ -165,6 +165,7 @@ pub struct BaseElementStyling {
     pub height: StyleUnit,
     z_index: Option<usize>,
 }
+
 impl BaseElementStyling {
     pub fn set_background(&mut self, background: Background) {
         self.background = background;

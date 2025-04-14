@@ -4,12 +4,14 @@ use crate::{
     ElementStyling, ImageStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
 };
 
-use super::{WebRenderable, WebRenderableContext};
+use super::{ElementId, WebRenderable, WebRenderableContext};
 
 #[derive(Debug, Clone)]
 pub struct Image {
-    parent_id: String,
-    id: String,
+    namespace: String,
+    name: String,
+    id: ElementId,
+    parent: Option<ElementId>,
     source: ImageSource,
     styling: ElementStyling<ImageStyling>,
     stylings: Vec<StylingReference>,
@@ -44,8 +46,10 @@ impl Display for ImageSource {
 impl Image {
     pub fn new(source: ImageSource) -> Self {
         Self {
-            parent_id: String::new(),
-            id: String::new(),
+            namespace: String::new(),
+            name: String::new(),
+            id: ElementId::generate(),
+            parent: None,
             source,
             styling: ImageStyling::new(),
             stylings: Vec::new(),
@@ -68,6 +72,14 @@ impl Image {
     pub fn add_styling(&mut self, reference: StylingReference) {
         self.stylings.push(reference);
     }
+
+    pub fn name(&self) -> String {
+        if self.name.is_empty() {
+            format!("{}-{}", self.element_styling().class_name(), self.id)
+        } else {
+            self.name.clone()
+        }
+    }
 }
 
 impl WebRenderable for Image {
@@ -76,7 +88,7 @@ impl WebRenderable for Image {
         emitter: &mut PresentationEmitter<W>,
         ctx: WebRenderableContext,
     ) -> Result<()> {
-        let id = format!("{}-{}", self.parent_id, self.id);
+        let id = format!("{}-{}", self.namespace, self.name());
         self.styling
             .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         self.source.add_files(emitter)?;
@@ -88,21 +100,31 @@ impl WebRenderable for Image {
         Ok(())
     }
 
-    fn set_fallback_id(&mut self, id: String) {
-        if self.id.is_empty() {
-            self.id = id;
-        }
+    fn set_parent(&mut self, parent: ElementId) {
+        self.parent = Some(parent);
     }
 
-    fn set_id(&mut self, id: String) {
-        self.id = id;
+    fn parent(&self) -> Option<ElementId> {
+        self.parent
     }
 
-    fn set_parent_id(&mut self, id: String) {
-        self.parent_id = id;
+    fn id(&self) -> ElementId {
+        self.id
+    }
+
+    fn set_name(&mut self, id: String) {
+        self.name = id;
+    }
+
+    fn set_namespace(&mut self, id: String) {
+        self.namespace = id;
     }
 
     fn element_styling_mut(&mut self) -> &mut crate::BaseElementStyling {
         self.element_styling_mut().base_mut()
+    }
+
+    fn element_styling(&self) -> &crate::BaseElementStyling {
+        self.styling.base()
     }
 }

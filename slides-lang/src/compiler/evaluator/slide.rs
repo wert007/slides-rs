@@ -47,28 +47,32 @@ pub fn evaluate_to_slide(
             }
             _ => {}
         }
+        if value.as_mut_base_element().has_parent() {
+            // Is already displayed as part of another element.
+            continue;
+        }
         match value {
             Value::Label(label) => {
                 let mut label = Arc::unwrap_or_clone(label).into_inner();
-                label.set_id(name.into());
+                label.set_name(name.into());
                 label.set_z_index(slide.next_z_index());
                 slide = slide.add_label(label);
             }
             Value::Image(image) => {
                 let mut image = Arc::unwrap_or_clone(image).into_inner();
-                image.set_id(name.into());
+                image.set_name(name.into());
                 image.set_z_index(slide.next_z_index());
                 slide = slide.add_image(image);
             }
             Value::CustomElement(custom_element) => {
                 let mut custom_element = Arc::unwrap_or_clone(custom_element).into_inner();
-                custom_element.set_id(name.into());
+                custom_element.set_name(name.into());
                 custom_element.set_z_index(slide.next_z_index());
                 slide = slide.add_custom_element(custom_element);
             }
             Value::Grid(grid) => {
                 let mut grid = Arc::unwrap_or_clone(grid).into_inner();
-                grid.set_id(name.into());
+                grid.set_name(name.into());
                 grid.set_z_index(slide.next_z_index());
                 slide = slide.add_element(Element::Grid(grid));
             }
@@ -421,19 +425,40 @@ fn execute_function(
 fn execute_member_function(
     base: Value,
     name: String,
-    arguments: Vec<Value>,
+    mut arguments: Vec<Value>,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
     match base {
-        Value::Grid(base) => {
-            match name.as_str() {
-                "add" => Value::GridEntry(base.borrow_mut().add_element(
-                    Arc::unwrap_or_clone(arguments[0].as_element().clone()).into_inner(),
-                )),
-                _ => todo!(),
+        Value::Grid(base) => match name.as_str() {
+            "add" => {
+                let element = match arguments.swap_remove(0) {
+                    Value::Label(it) => {
+                        it.borrow_mut().set_parent(base.borrow().id());
+                        Arc::unwrap_or_clone(it).into_inner().into()
+                    }
+                    Value::Grid(it) => {
+                        it.borrow_mut().set_parent(base.borrow().id());
+                        Arc::unwrap_or_clone(it).into_inner().into()
+                    }
+                    Value::Image(it) => {
+                        it.borrow_mut().set_parent(base.borrow().id());
+                        Arc::unwrap_or_clone(it).into_inner().into()
+                    }
+                    Value::CustomElement(it) => {
+                        it.borrow_mut().set_parent(base.borrow().id());
+                        Arc::unwrap_or_clone(it).into_inner().into()
+                    }
+                    Value::Element(it) => {
+                        it.borrow_mut().set_parent(base.borrow().id());
+                        Arc::unwrap_or_clone(it).into_inner().into()
+                    }
+                    _ => unreachable!("Invalid argument!"),
+                };
+                Value::GridEntry(base.borrow_mut().add_element(element))
             }
-        }
+            _ => todo!(),
+        },
         _ => todo!(),
     }
 }
@@ -529,19 +554,25 @@ fn evaluate_user_function(
             Value::Label(label) => {
                 let mut label = Arc::unwrap_or_clone(label).into_inner();
                 let name = context.string_interner.resolve_variable(name);
-                label.set_id(name.into());
+                label.set_name(name.into());
                 elements.push(label.into());
             }
             Value::Image(image) => {
                 let mut image = Arc::unwrap_or_clone(image).into_inner();
                 let name = context.string_interner.resolve_variable(name);
-                image.set_id(name.into());
+                image.set_name(name.into());
                 elements.push(image.into());
             }
             Value::CustomElement(element) => {
                 let mut element = Arc::unwrap_or_clone(element).into_inner();
                 let name = context.string_interner.resolve_variable(name);
-                element.set_id(name.into());
+                element.set_name(name.into());
+                elements.push(element.into());
+            }
+            Value::Grid(element) => {
+                let mut element = Arc::unwrap_or_clone(element).into_inner();
+                let name = context.string_interner.resolve_variable(name);
+                element.set_name(name.into());
                 elements.push(element.into());
             }
 
@@ -596,15 +627,22 @@ fn evaluate_conversion(
             _ => unreachable!("Impossible conversion!"),
         },
         Type::Element => match base {
-            Value::Label(label) => Value::Element(Arc::new(RefCell::new(Element::Label(
-                Arc::unwrap_or_clone(label).into_inner(),
-            )))),
-            Value::Image(image) => Value::Element(Arc::new(RefCell::new(Element::Image(
-                Arc::unwrap_or_clone(image).into_inner(),
-            )))),
-            Value::CustomElement(custom_element) => Value::Element(Arc::new(RefCell::new(
-                Element::CustomElement(Arc::unwrap_or_clone(custom_element).into_inner()),
-            ))),
+            value @ (Value::Label(_)
+            | Value::Image(_)
+            | Value::CustomElement(_)
+            | Value::Grid(_)) => value,
+            // Value::Label(label) => Value::Element(Arc::new(RefCell::new(Element::Label(
+            //     Arc::unwrap_or_clone(label).into_inner(),
+            // )))),
+            // Value::Image(image) => Value::Element(Arc::new(RefCell::new(Element::Image(
+            //     Arc::unwrap_or_clone(image).into_inner(),
+            // )))),
+            // Value::CustomElement(custom_element) => Value::Element(Arc::new(RefCell::new(
+            //     Element::CustomElement(Arc::unwrap_or_clone(custom_element).into_inner()),
+            // ))),
+            // Value::Grid(grid) => Value::Element(Arc::new(RefCell::new(Element::Grid(
+            //     Arc::unwrap_or_clone(grid).into_inner(),
+            // )))),
             _ => unreachable!("Impossible conversion!"),
         },
         Type::Thickness => match base {

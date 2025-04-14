@@ -22,9 +22,8 @@ pub fn grid(columns: String, rows: String) -> Grid {
             _ => todo!(),
         }
     }
-    let columns = columns.split('|').map(parse_grid_cell_size).collect();
-    let rows = rows.split('|').map(parse_grid_cell_size).collect();
-    // TODO: Parse columns and rows and construct grid out of it!
+    let columns = columns.split(',').map(parse_grid_cell_size).collect();
+    let rows = rows.split(',').map(parse_grid_cell_size).collect();
     Grid::new(columns, rows)
 }
 

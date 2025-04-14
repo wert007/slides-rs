@@ -1,8 +1,8 @@
 use std::{
     cell::RefCell,
     collections::HashSet,
-    ops::{Deref, DerefMut},
-    sync::Arc,
+    fmt::Display,
+    sync::{Arc, Once, OnceLock, atomic::AtomicUsize},
 };
 
 use enum_dispatch::enum_dispatch;
@@ -22,6 +22,24 @@ mod grid;
 pub use grid::*;
 
 #[derive(Debug, Clone, Copy)]
+pub struct ElementId(usize);
+
+static NEXT_ELEMENT_INDEX: AtomicUsize = AtomicUsize::new(0);
+
+impl ElementId {
+    pub fn generate() -> Self {
+        let raw = NEXT_ELEMENT_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        ElementId(raw)
+    }
+}
+
+impl Display for ElementId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct WebRenderableContext {
     pub layout: ToCssLayout,
 }
@@ -36,9 +54,12 @@ pub trait WebRenderable {
     fn collect_google_font_references(&self, _: &mut HashSet<String>) -> Result<()> {
         Ok(())
     }
-    fn set_fallback_id(&mut self, id: String);
-    fn set_id(&mut self, id: String);
-    fn set_parent_id(&mut self, id: String);
+    fn set_parent(&mut self, parent: ElementId);
+    fn parent(&self) -> Option<ElementId>;
+    fn id(&self) -> ElementId;
+    fn set_name(&mut self, name: String);
+    fn set_namespace(&mut self, namespace: String);
+    fn element_styling(&self) -> &BaseElementStyling;
     fn element_styling_mut(&mut self) -> &mut BaseElementStyling;
     fn set_z_index(&mut self, z_index: usize) {
         self.element_styling_mut().set_z_index(z_index)
@@ -64,15 +85,14 @@ pub enum ElementRefMut {
 }
 
 impl ElementRefMut {
-    // pub fn element_styling_mut(&mut self) -> &mut BaseElementStyling {
-    //     match self {
-    //         ElementRefMut::Image(image) => image.borrow_mut().element_styling_mut().base_mut(),
-    //         ElementRefMut::Label(label) => label.borrow_mut().element_styling_mut().base_mut(),
-    //         ElementRefMut::CustomElement(custom_element) => {
-    //             custom_element.borrow_mut().element_styling_mut().base_mut()
-    //         }
-    //     }
-    // }
+    pub fn has_parent(&self) -> bool {
+        match self {
+            ElementRefMut::Image(it) => it.borrow().parent().is_some(),
+            ElementRefMut::Label(it) => it.borrow().parent().is_some(),
+            ElementRefMut::CustomElement(it) => it.borrow().parent().is_some(),
+            ElementRefMut::Grid(it) => it.borrow().parent().is_some(),
+        }
+    }
 
     pub fn apply_to_base_element_styling(&mut self, mut cb: impl FnMut(&mut BaseElementStyling)) {
         match self {
