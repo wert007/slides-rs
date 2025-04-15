@@ -16,10 +16,25 @@ pub fn label(text: String) -> Label {
 
 pub fn grid(columns: String, rows: String) -> Grid {
     fn parse_grid_cell_size(text: &str) -> GridCellSize {
-        match text {
-            "*" => GridCellSize::Fraction(1),
+        let (index, number) = text
+            .char_indices()
+            .take_while(|(_, c)| c.is_digit(10))
+            .map(|(i, c)| {
+                (
+                    i + 1,
+                    c.to_digit(10).expect("Filtered digits before") as usize,
+                )
+            })
+            .reduce(|acc, val| {
+                let number = acc.1 * 10 + val.1;
+                (val.0, number)
+            })
+            .unwrap_or_else(|| (0, 1));
+
+        match &text[index..] {
+            "*" => GridCellSize::Fraction(number),
             "min" => GridCellSize::Minimum,
-            _ => todo!(),
+            unknown => todo!("Unknown unit {unknown}"),
         }
     }
     let columns = columns.split(',').map(parse_grid_cell_size).collect();

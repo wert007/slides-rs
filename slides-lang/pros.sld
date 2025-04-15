@@ -141,27 +141,29 @@ slide one_sided_sync:
 element two_icons(icon1: String, icon2: String):
     let img1 =
         image(p'./pros-assets/{icon1}.png') {
-            width: 50%,
-            halign: HAlign.Left,
+        margin: {right: 50%},
+        halign: HAlign.Right,
             valign: VAlign.Stretch,
         };
     let img2 =
         image(p'./pros-assets/{icon2}.png') {
-            width: 50%,
-            halign: HAlign.Right,
+        halign: HAlign.Left,
+        margin: {left: 50%},
             valign: VAlign.Stretch,
         };
 
 element four_icons(left: TwoIcons, right: TwoIcons):
     left = left {
         width: 50%,
-        halign: HAlign.Left,
+        margin: {right: 50%},
+        halign: HAlign.Right,
         valign: VAlign.Stretch,
     };
 
     right = right {
         width: 50%,
-        halign: HAlign.Right,
+        halign: HAlign.Left,
+        margin: {left: 50%},
         valign: VAlign.Stretch,
     };
 
@@ -169,7 +171,7 @@ slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
     let icons =
-        grid("*", "4*,*") {
+        grid("*", "*,*,*,*,*,*") {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
             margin: {left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh},
@@ -178,7 +180,6 @@ slide base_problem:
     let row =
         four_icons(two_icons("amanda", "light"), two_icons("wait", "bobbl")) {
             width: 0.60sw,
-            height: 0.30sh,
             halign: HAlign.Center,
         };
     icons.add(title);

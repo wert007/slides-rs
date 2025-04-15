@@ -357,7 +357,7 @@ ol {
 
 #base_problem-icons {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
 #base_problem-icons-label-25 {
@@ -367,7 +367,6 @@ ol {
 #base_problem-icons--33 {
     left: 50%;
     right: unset;
-    height: calc(0.3 * var(--slide-height));
     width: calc(0.6 * var(--slide-width));
     transform: translate(-50%, 0%);
 }
@@ -378,8 +377,8 @@ ol {
     top: 0px;
     bottom: 0px;
     height: 100%;
-    left: 0px;
-    right: unset;
+    right: 50%;
+    left: unset;
     width: 50%;
 }
 
@@ -389,20 +388,18 @@ ol {
     top: 0px;
     bottom: 0px;
     height: 100%;
-    left: 0px;
+    right: 50%;
+    left: unset;
+}
+
+#base_problem-icons--left-img2 {
+}
+#base_problem-icons--left-img2 {
+    top: 0px;
+    bottom: 0px;
+    height: 100%;
+    left: 50%;
     right: unset;
-    width: 50%;
-}
-
-#base_problem-icons--left-img2 {
-}
-#base_problem-icons--left-img2 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    right: 0px;
-    left: unset;
-    width: 50%;
 }
 
 #base_problem-icons--right {
@@ -411,8 +408,8 @@ ol {
     top: 0px;
     bottom: 0px;
     height: 100%;
-    right: 0px;
-    left: unset;
+    left: 50%;
+    right: unset;
     width: 50%;
 }
 
@@ -422,9 +419,8 @@ ol {
     top: 0px;
     bottom: 0px;
     height: 100%;
-    left: 0px;
-    right: unset;
-    width: 50%;
+    right: 50%;
+    left: unset;
 }
 
 #base_problem-icons--right-img2 {
@@ -433,9 +429,8 @@ ol {
     top: 0px;
     bottom: 0px;
     height: 100%;
-    right: 0px;
-    left: unset;
-    width: 50%;
+    left: 50%;
+    right: unset;
 }
 
 .label .label-text {
@@ -448,7 +443,7 @@ ol {
 }
 
 .slide {
-    padding: calc(0.1 * var(--slide-height)) calc(0.1 * var(--slide-width)) calc(0.1 * var(--slide-height)) calc(0.1 * var(--slide-width));
+    padding: calc(0.2 * var(--slide-height)) calc(0.1 * var(--slide-width)) calc(0.2 * var(--slide-height)) calc(0.1 * var(--slide-width));
     background: rgb(243, 243, 243, 1);
 }
 
