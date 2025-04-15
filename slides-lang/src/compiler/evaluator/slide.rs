@@ -289,11 +289,11 @@ fn assign_to_slide_type(
     match member {
         "width" => {
             base.as_mut_base_element()
-                .set_width(value.into_style_unit());
+                .set_width(value.into_style_unit().into());
         }
         "height" => {
             base.as_mut_base_element()
-                .set_height(value.into_style_unit());
+                .set_height(value.into_style_unit().into());
         }
         "z_index" => {
             base.as_mut_base_element()
@@ -650,10 +650,10 @@ fn evaluate_conversion(
                 let mut thickness = Thickness::default();
                 for (name, value) in entries {
                     match name.as_str() {
-                        "top" => thickness.top = value.into_style_unit(),
-                        "left" => thickness.left = value.into_style_unit(),
-                        "bottom" => thickness.bottom = value.into_style_unit(),
-                        "right" => thickness.right = value.into_style_unit(),
+                        "top" => thickness.top = value.into_style_unit().into(),
+                        "left" => thickness.left = value.into_style_unit().into(),
+                        "bottom" => thickness.bottom = value.into_style_unit().into(),
+                        "right" => thickness.right = value.into_style_unit().into(),
                         _ => unreachable!("Impossible conversion"),
                     }
                 }

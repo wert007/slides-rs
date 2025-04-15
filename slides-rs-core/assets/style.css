@@ -40,13 +40,15 @@ ol {
 }
 
 .slide {
-    /* height: 100dvh; */
+    width: calc(min(100dvw, 100dvh * 16 / 9));
+    --slide-width: calc(min(100dvw, 100dvh * 16 / 9));
+    height: calc(min(100dvh, 100dvw * 9 / 16));
+    --slide-height: calc(min(100dvh, 100dvw * 9 / 16));
     position: relative;
-    width: 100dvw;
     padding: 0;
     margin: auto 0;
     display: none;
-    aspect-ratio: 16/9;
+    overflow: hidden;
 }
 
 .slide.active {

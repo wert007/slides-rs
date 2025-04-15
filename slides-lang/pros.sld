@@ -14,10 +14,10 @@ styling default(Label):
 styling default(Slide):
     background = c"#f3f3f3";
     padding = {
-        top: 10%,
-        right: 10%,
-        bottom: 10%,
-        left: 10%,
+        top: 0.2sh,
+        right: 0.1sw,
+        bottom: 0.2sh,
+        left: 0.1sw,
     };
 
 element image_with_caption(img: Image, caption: String):
@@ -70,7 +70,7 @@ slide title:
             valign: VAlign.Bottom,
             halign: HAlign.Stretch,
             margin: {
-                bottom: 50%,
+                bottom: 0.50sh,
             },
         }
     let subtitle =
@@ -81,9 +81,9 @@ slide title:
             halign: HAlign.Stretch,
             text_color: c"#595959",
             margin: {
-                top: 50%,
-                left: 15%,
-                right: 15%,
+                top: 0.50sh,
+                left: 0.15sw,
+                right: 0.15sw,
             },
         }
 
@@ -169,15 +169,16 @@ slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
     let icons =
-        grid("*", "*,*") {
+        grid("*", "4*,*") {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
+            margin: {left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh},
         };
     // title.column_span = 2;
     let row =
         four_icons(two_icons("amanda", "light"), two_icons("wait", "bobbl")) {
-            width: 400px,
-            height: 100px,
+            width: 0.60sw,
+            height: 0.30sh,
             halign: HAlign.Center,
         };
     icons.add(title);

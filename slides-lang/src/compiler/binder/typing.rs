@@ -207,6 +207,9 @@ impl Type {
             Some(Self::GridEntry)
         } else if const_str::compare!(==, rust_string, "Element") {
             Some(Self::Element)
+        } else if const_str::compare!(==, rust_string, "SlidePercent") {
+            // TODO: Add type slide percent??
+            Some(Self::Float)
         } else {
             None
         }

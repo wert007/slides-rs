@@ -40,13 +40,15 @@ ol {
 }
 
 .slide {
-    /* height: 100dvh; */
+    width: calc(min(100dvw, 100dvh * 16 / 9));
+    --slide-width: calc(min(100dvw, 100dvh * 16 / 9));
+    height: calc(min(100dvh, 100dvw * 9 / 16));
+    --slide-height: calc(min(100dvh, 100dvw * 9 / 16));
     position: relative;
-    width: 100dvw;
     padding: 0;
     margin: auto 0;
     display: none;
-    aspect-ratio: 16/9;
+    overflow: hidden;
 }
 
 .slide.active {
@@ -207,7 +209,7 @@ ol {
 }
 
 #title-title {
-    bottom: 50%;
+    bottom: calc(0.5 * var(--slide-height));
     top: unset;
     left: 0px;
     right: 0px;
@@ -221,11 +223,11 @@ ol {
 }
 
 #title-subtitle {
-    top: 50%;
+    top: calc(0.5 * var(--slide-height));
     bottom: unset;
-    left: 15%;
-    right: 15%;
-    width: 70%;
+    left: calc(0.15 * var(--slide-width));
+    right: calc(0.15 * var(--slide-width));
+    width: calc(+ 100%+ (-0.3 * var(--slide-width)));
     z-index: 1;
 }
 
@@ -344,12 +346,12 @@ ol {
 }
 
 #base_problem-icons {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    left: 0px;
-    right: 0px;
-    width: 100%;
+    top: calc(0.2 * var(--slide-height));
+    bottom: calc(0.2 * var(--slide-height));
+    height: calc(+ 100%+ (-0.4 * var(--slide-height)));
+    left: calc(0.1 * var(--slide-width));
+    right: calc(0.1 * var(--slide-width));
+    width: calc(+ 100%+ (-0.2 * var(--slide-width)));
     z-index: 0;
 }
 
@@ -365,8 +367,8 @@ ol {
 #base_problem-icons--33 {
     left: 50%;
     right: unset;
-    height: 100px;
-    width: 400px;
+    height: calc(0.3 * var(--slide-height));
+    width: calc(0.6 * var(--slide-width));
     transform: translate(-50%, 0%);
 }
 
@@ -446,7 +448,7 @@ ol {
 }
 
 .slide {
-    padding: 10% 10% 10% 10%;
+    padding: calc(0.1 * var(--slide-height)) calc(0.1 * var(--slide-width)) calc(0.1 * var(--slide-height)) calc(0.1 * var(--slide-width));
     background: rgb(243, 243, 243, 1);
 }
 

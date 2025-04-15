@@ -171,7 +171,8 @@ pub struct Thickness {
 }
 
 impl Thickness {
-    pub fn all(value: StyleUnit) -> Thickness {
+    pub fn all(value: impl Into<StyleUnit>) -> Thickness {
+        let value = value.into();
         Self {
             left: value,
             top: value,
@@ -186,8 +187,95 @@ impl Display for Thickness {
         write!(
             f,
             "{} {} {} {}",
-            self.left, self.top, self.right, self.bottom
+            self.top, self.right, self.bottom, self.left,
         )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct CalcData {
+    pixel: f64,
+    percent: f64,
+    point: f64,
+    slide_width: f64,
+    slide_height: f64,
+}
+impl CalcData {
+    fn add_pixel(mut self, px: f64) -> Self {
+        self.pixel += px;
+        self
+    }
+
+    fn add_percent(mut self, percent: f64) -> CalcData {
+        self.percent += percent;
+        self
+    }
+
+    fn from_units(a: StyleUnit, b: StyleUnit) -> CalcData {
+        CalcData::from_unit(a).apply(b)
+    }
+
+    fn from_unit(a: StyleUnit) -> Self {
+        match a {
+            StyleUnit::Unspecified => Self::default(),
+            StyleUnit::Pixel(pixel) => Self {
+                pixel,
+                ..Self::default()
+            },
+            StyleUnit::Point(point) => Self {
+                point,
+                ..Self::default()
+            },
+            StyleUnit::Percent(percent) => Self {
+                percent,
+                ..Self::default()
+            },
+            StyleUnit::SlideWidthRatio(slide_width) => Self {
+                slide_width,
+                ..Self::default()
+            },
+            StyleUnit::SlideHeightRatio(slide_height) => Self {
+                slide_height,
+                ..Self::default()
+            },
+            StyleUnit::Calc(calc_data) => calc_data,
+        }
+    }
+
+    fn apply(mut self, b: StyleUnit) -> CalcData {
+        match b {
+            StyleUnit::Unspecified => {}
+            StyleUnit::Pixel(pixel) => self.pixel += pixel,
+            StyleUnit::Point(point) => self.point += point,
+            StyleUnit::Percent(percent) => self.percent += percent,
+            StyleUnit::SlideWidthRatio(slide_width) => self.slide_width += slide_width,
+            StyleUnit::SlideHeightRatio(slide_height) => self.slide_height += slide_height,
+            StyleUnit::Calc(calc_data) => todo!(),
+        }
+        self
+    }
+}
+
+impl Display for CalcData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "calc(")?;
+        if self.pixel != 0.0 {
+            write!(f, "+ {:}px", self.pixel)?;
+        }
+        if self.percent != 0.0 {
+            write!(f, "+ {:}%", self.percent)?;
+        }
+        if self.point != 0.0 {
+            write!(f, "+ {:}pt", self.point)?;
+        }
+        if self.slide_width != 0.0 {
+            write!(f, "+ ({:} * var(--slide-width))", self.slide_width)?;
+        }
+        if self.slide_height != 0.0 {
+            write!(f, "+ ({:} * var(--slide-height))", self.slide_height)?;
+        }
+        write!(f, ")")?;
+        Ok(())
     }
 }
 
@@ -202,6 +290,12 @@ pub enum StyleUnit {
     Point(f64),
     #[strum(to_string = "{0}%")]
     Percent(f64),
+    #[strum(to_string = "calc({0} * var(--slide-width))")]
+    SlideWidthRatio(f64),
+    #[strum(to_string = "calc({0} * var(--slide-height))")]
+    SlideHeightRatio(f64),
+    #[strum(to_string = "{0}")]
+    Calc(CalcData),
 }
 
 impl StyleUnit {
@@ -211,6 +305,9 @@ impl StyleUnit {
             StyleUnit::Pixel(spx) => StyleUnit::Pixel(spx + px),
             StyleUnit::Point(pt) => todo!(),
             StyleUnit::Percent(percent) => todo!(),
+            StyleUnit::SlideWidthRatio(_) => todo!(),
+            StyleUnit::SlideHeightRatio(_) => todo!(),
+            StyleUnit::Calc(calc_data) => StyleUnit::Calc(calc_data.add_pixel(px)),
         }
     }
 
@@ -220,6 +317,9 @@ impl StyleUnit {
             StyleUnit::Pixel(_) => todo!(),
             StyleUnit::Point(pt) => todo!(),
             StyleUnit::Percent(spercent) => Self::Percent(*spercent + percent),
+            StyleUnit::SlideWidthRatio(_) => todo!(),
+            StyleUnit::SlideHeightRatio(_) => todo!(),
+            StyleUnit::Calc(calc_data) => StyleUnit::Calc(calc_data.add_percent(percent)),
         }
     }
 
@@ -251,6 +351,17 @@ impl Add for StyleUnit {
             StyleUnit::Pixel(px) => self.add_pixel(px),
             StyleUnit::Point(pt) => todo!(),
             StyleUnit::Percent(percent) => self.add_percent(percent),
+            StyleUnit::SlideWidthRatio(_) => todo!(),
+            StyleUnit::SlideHeightRatio(_) => todo!(),
+            StyleUnit::Calc(calc_data) => match self {
+                StyleUnit::Unspecified => rhs,
+                StyleUnit::Pixel(px) => StyleUnit::Calc(calc_data.add_pixel(px)),
+                StyleUnit::Point(_) => todo!(),
+                StyleUnit::Percent(percent) => StyleUnit::Calc(calc_data.add_percent(percent)),
+                StyleUnit::SlideWidthRatio(_) => todo!(),
+                StyleUnit::SlideHeightRatio(_) => todo!(),
+                StyleUnit::Calc(calc_data) => todo!(),
+            },
         }
     }
 }
@@ -264,6 +375,21 @@ impl Sub for StyleUnit {
             StyleUnit::Pixel(px) => self.add_pixel(-px),
             StyleUnit::Point(pt) => todo!(),
             StyleUnit::Percent(percent) => self.add_percent(-percent),
+            StyleUnit::SlideWidthRatio(it) => {
+                StyleUnit::Calc(CalcData::from_units(self, StyleUnit::SlideWidthRatio(-it)))
+            }
+            StyleUnit::SlideHeightRatio(it) => {
+                StyleUnit::Calc(CalcData::from_units(self, StyleUnit::SlideHeightRatio(-it)))
+            }
+            StyleUnit::Calc(calc_data) => match self {
+                StyleUnit::Unspecified => rhs,
+                StyleUnit::Pixel(px) => todo!(),
+                StyleUnit::Point(_) => todo!(),
+                StyleUnit::Percent(percent) => todo!(),
+                StyleUnit::SlideWidthRatio(_) => todo!(),
+                StyleUnit::SlideHeightRatio(_) => todo!(),
+                StyleUnit::Calc(calc_data) => todo!(),
+            },
         }
     }
 }
@@ -288,6 +414,8 @@ impl FromStr for StyleUnit {
             "%" => StyleUnit::Percent(number),
             "px" => StyleUnit::Pixel(number),
             "pt" => StyleUnit::Point(number),
+            "sw" => StyleUnit::SlideWidthRatio(number),
+            "sh" => StyleUnit::SlideHeightRatio(number),
             _ => return Err(StyleUnitParseError::UnknownUnits),
         })
     }
