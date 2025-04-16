@@ -11,16 +11,28 @@ pub mod typing;
 
 use super::{
     DebugLang,
+    diagnostics::Diagnostics,
     evaluator::{self, Parameter, Value},
     lexer::{Token, TokenKind},
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
 use crate::{Context, Location, StringInterner, VariableId, compiler::lexer::Trivia};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Io: {0}")]
+    IoError(#[from] std::io::Error),
+    #[error("Slides: {0}")]
+    SlideError(#[from] slides_rs_core::error::SlidesError),
+    #[error("Language errors")]
+    LanguageErrors(#[from] Diagnostics),
+}
 
 pub(crate) fn create_presentation_from_file(
     file: PathBuf,
     debug: DebugLang,
-) -> slides_rs_core::Result<Presentation> {
+) -> Result<Presentation, Error> {
     let mut context = Context::new();
     context.debug = debug;
     let file = context.load_file(file)?;

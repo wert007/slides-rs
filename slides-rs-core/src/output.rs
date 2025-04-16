@@ -40,6 +40,10 @@ impl PresentationEmitter<File> {
         }
         Ok(())
     }
+
+    pub fn referenced_files(&self) -> &[PathBuf] {
+        &self.referenced_files
+    }
 }
 
 impl<W: Write> PresentationEmitter<W> {

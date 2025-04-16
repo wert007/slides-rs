@@ -1,3 +1,5 @@
+use std::{error::Error, fmt::Display};
+
 use super::{
     binder::{Variable, typing::Type},
     lexer::Token,
@@ -5,6 +7,7 @@ use super::{
 
 use crate::{Files, Location};
 
+#[derive(Debug)]
 pub struct Diagnostic {
     error_message: String,
     location: Location,
@@ -32,9 +35,19 @@ impl Diagnostic {
     }
 }
 
+#[derive(Debug)]
 pub struct Diagnostics {
     diagnostics: Vec<Diagnostic>,
 }
+
+impl Display for Diagnostics {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Diagnotics ({})", self.diagnostics.len())
+    }
+}
+
+impl Error for Diagnostics {}
+
 impl Diagnostics {
     pub fn new() -> Self {
         Self {

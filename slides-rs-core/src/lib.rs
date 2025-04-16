@@ -10,11 +10,11 @@ pub type Result<T> = std::result::Result<T, error::SlidesError>;
 const BASE_STYLE: &str = include_str!("../assets/style.css");
 const NAVIGATION_JS: &str = include_str!("../assets/navigation.js");
 
-mod error;
+pub mod error;
 mod layout;
 pub use layout::*;
 mod styling;
-use output::PresentationEmitter;
+pub use output::PresentationEmitter;
 pub use styling::*;
 mod elements;
 pub use elements::*;
@@ -39,6 +39,7 @@ pub struct Presentation {
     slides: Vec<Slide>,
     stylings: Vec<DynamicElementStyling>,
     extern_texts: HashMap<FilePlacement, String>,
+    used_files: Vec<PathBuf>,
 }
 
 impl Presentation {
@@ -47,6 +48,7 @@ impl Presentation {
             slides: Vec::new(),
             stylings: Vec::new(),
             extern_texts: HashMap::new(),
+            used_files: Vec::new(),
         }
     }
 
@@ -56,10 +58,10 @@ impl Presentation {
         unsafe { Index::new(index) }
     }
 
-    pub fn output_to_directory(self, directory: impl Into<PathBuf>) -> Result<()> {
-        let directory: PathBuf = directory.into();
-        let mut emitter = PresentationEmitter::new(directory)?;
-
+    pub fn output_to_directory(
+        self,
+        emitter: &mut PresentationEmitter<std::fs::File>,
+    ) -> Result<()> {
         writeln!(
             emitter.raw_html(),
             r#"<html>
@@ -99,7 +101,7 @@ impl Presentation {
         )?;
         for (index, mut slide) in self.slides.into_iter().enumerate() {
             slide.set_fallback_id(format!("slide-{index}"));
-            slide.output_to_html(&mut emitter)?
+            slide.output_to_html(emitter)?
         }
 
         for styling in self.stylings {
@@ -127,6 +129,7 @@ impl Presentation {
     ) -> std::io::Result<()> {
         use std::fmt::Write;
         let path = path.into();
+        self.used_files.push(path.clone());
         let file = std::fs::read_to_string(&path)?;
         let extern_text = self.extern_texts.entry(placement).or_default();
         writeln!(extern_text, "<!-- From {} -->", path.display()).expect("infallible");
@@ -136,6 +139,10 @@ impl Presentation {
 
     pub fn slide_count(&self) -> usize {
         self.slides.len()
+    }
+
+    pub fn used_files(&self) -> &[PathBuf] {
+        &self.used_files
     }
 }
 

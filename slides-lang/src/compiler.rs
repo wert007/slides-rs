@@ -1,4 +1,7 @@
-use std::str::FromStr;
+use std::{path::PathBuf, str::FromStr};
+
+use diagnostics::Diagnostics;
+use slides_rs_core::{Presentation, PresentationEmitter};
 
 pub mod binder;
 pub mod diagnostics;
@@ -36,15 +39,42 @@ impl FromStr for DebugLang {
     }
 }
 
+#[derive(Debug)]
+pub struct CompilationResult {
+    pub diagnostics: Diagnostics,
+    pub used_files: Vec<PathBuf>,
+}
+
 pub fn compile_project(
-    file: std::path::PathBuf,
-    output: std::path::PathBuf,
+    file: impl Into<std::path::PathBuf>,
+    output: impl Into<std::path::PathBuf>,
     debug: DebugLang,
-) -> slides_rs_core::Result<()> {
-    let presentation = binder::create_presentation_from_file(file, debug)?;
+) -> slides_rs_core::Result<CompilationResult> {
+    let file = file.into();
+    let output = output.into();
+    let mut result = CompilationResult {
+        diagnostics: Diagnostics::new(),
+        used_files: vec![file.clone()],
+    };
+    let presentation = match binder::create_presentation_from_file(file, debug) {
+        Ok(it) => it,
+        Err(binder::Error::LanguageErrors(diagnostics)) => {
+            result.diagnostics = diagnostics;
+            Presentation::new()
+        }
+        Err(binder::Error::IoError(err)) => return Err(err.into()),
+        Err(binder::Error::SlideError(err)) => return Err(err.into()),
+    };
+    result
+        .used_files
+        .extend_from_slice(presentation.used_files());
     if debug.presentation {
         dbg!(&presentation);
     }
-    presentation.output_to_directory(output)?;
-    Ok(())
+    let mut emitter = PresentationEmitter::new(output)?;
+    presentation.output_to_directory(&mut emitter)?;
+    result
+        .used_files
+        .extend_from_slice(emitter.referenced_files());
+    Ok(result)
 }
