@@ -9,6 +9,6 @@ csscolorparser = "0.7.0"
 enum_dispatch = "0.3.13"
 html-escape = "0.2.13"
 markdown = "1.0.0-alpha.23"
-struct-field-names-as-array = { version = "0.3.0", path = "../struct_field_names_as_array/struct-field-names-as-array" }
+struct-field-names-as-array = { git = "https://github.com/wert007/struct_field_names_as_array.git" }
 strum = { version = "0.27.1", features = ["derive"] }
 thiserror = "2.0.12"

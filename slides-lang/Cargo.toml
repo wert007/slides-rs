@@ -17,7 +17,7 @@ konst = { version = "0.3.16", features = ["rust_latest_stable"] }
 notify = "8.0.0"
 slides-rs-core = { version = "0.1.0", path = "../slides-rs-core" }
 string-interner = "0.19.0"
-struct-field-names-as-array = { version = "0.3.0", path = "../struct_field_names_as_array/struct-field-names-as-array" }
+struct-field-names-as-array = { git = "https://github.com/wert007/struct_field_names_as_array.git" }
 strum = { version = "0.27.1", features = ["derive"] }
 summum-types = "0.1.4"
 thiserror = "2.0.12"

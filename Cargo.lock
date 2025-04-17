@@ -561,6 +561,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 [[package]]
 name = "struct-field-names-as-array"
 version = "0.3.0"
+source = "git+https://github.com/wert007/struct_field_names_as_array.git#d12124357d383f2e7581f2dd6e5b315353252d4b"
 dependencies = [
  "struct-field-names-as-array-derive",
 ]
@@ -568,6 +569,7 @@ dependencies = [
 [[package]]
 name = "struct-field-names-as-array-derive"
 version = "0.3.0"
+source = "git+https://github.com/wert007/struct_field_names_as_array.git#d12124357d383f2e7581f2dd6e5b315353252d4b"
 dependencies = [
  "proc-macro2",
  "quote",
