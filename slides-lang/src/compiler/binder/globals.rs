@@ -68,7 +68,7 @@ macro_rules! default_element {
             MemberDeclarations {
                 name: $name,
                 members_names: &["styles"],
-                members_rust_types: &["#ArrayOfStyleReferences",],
+                members_rust_types: &["Array:StyleReference",],
             }
         )
     };
@@ -87,8 +87,8 @@ pub const MEMBERS: [MemberDeclarations; 12] = [
     default_element!("Grid"),
     MemberDeclarations {
         name: "Grid",
-        members_names: &["add"],
-        members_rust_types: &["#Fn(Element):GridEntry"],
+        members_names: &["add", "children"],
+        members_rust_types: &["#Fn(Element):GridEntry", "Array:Element"],
     },
     MemberDeclarations::rename::<GridEntry>("GridEntry"),
 ];

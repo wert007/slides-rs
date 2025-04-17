@@ -171,16 +171,20 @@ slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
     let icons =
-        grid("*", "*,*,*,*,*,*") {
+        grid("*", "min,*") {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
             margin: {left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh},
         };
     // title.column_span = 3;
     let row =
-        four_icons(two_icons("amanda", "light"), two_icons("wait", "bobbl")) {
-            width: 0.30sw,
-            halign: HAlign.Center,
+        grid("*,*", "") {
+            height: 0.35sh,
+            children: [
+                cast grid("*", "*,min") { children: [cast two_icons("amanda", "light"): Element, l"Amanda hat das Licht"]}: Element, two_icons("wait", "bobbl")
+            ]
+            // width: 0.30sw,
+            // halign: HAlign.Center,
         };
     icons.add(title);
     icons.add(row);

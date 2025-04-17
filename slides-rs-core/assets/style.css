@@ -60,6 +60,7 @@ ol {
 .custom-element,
 .grid {
     position: absolute;
+    overflow: hidden;
 }
 
 .emphasis {

@@ -31,6 +31,7 @@ impl TypeId {
     pub const STYLING: TypeId = TypeId(7);
     pub const BACKGROUND: TypeId = TypeId(8);
     pub const COLOR: TypeId = TypeId(9);
+    pub const ELEMENT: TypeId = TypeId(17);
 }
 
 pub struct TypeInterner {
@@ -50,6 +51,7 @@ impl TypeInterner {
         debug_assert_eq!(result.get_or_intern(Type::Styling), TypeId::STYLING);
         debug_assert_eq!(result.get_or_intern(Type::Background), TypeId::BACKGROUND);
         debug_assert_eq!(result.get_or_intern(Type::Color), TypeId::COLOR);
+        debug_assert_eq!(result.get_or_intern(Type::Element), TypeId::ELEMENT);
         result
     }
 
@@ -159,59 +161,18 @@ impl Type {
     }
 
     pub const fn from_rust_string(rust_string: &str) -> Option<Self> {
-        if const_str::compare!(==, rust_string, "()" ) {
-            Some(Self::Void)
-        } else if const_str::compare!(==, rust_string, "f64") {
-            Some(Self::Float)
-        } else if const_str::compare!(==, rust_string, "i64") {
-            Some(Self::Integer)
-        } else if const_str::compare!(==, rust_string, "String") {
-            Some(Self::String)
-        } else if const_str::compare!(==, rust_string, "Background") {
-            Some(Self::Background)
-        } else if const_str::compare!(==, rust_string, "Color") {
-            Some(Self::Color)
-        } else if const_str::compare!(==, rust_string, "Label") {
-            Some(Self::Label)
-        } else if const_str::compare!(==, rust_string, "Grid") {
-            Some(Self::Grid)
-        } else if const_str::compare!(==, rust_string, "Image") {
-            Some(Self::Image)
-        } else if const_str::compare!(==, rust_string, "ObjectFit") {
-            Some(Self::ObjectFit)
-        } else if const_str::compare!(==, rust_string, "PathBuf") {
-            Some(Self::Path)
-        } else if const_str::compare!(==, rust_string, "TextAlign") {
-            Some(Self::TextAlign)
-        } else if const_str::compare!(==, rust_string, "Font") {
-            Some(Self::Font)
-        } else if const_str::compare!(==, rust_string, "HorizontalAlignment") {
-            Some(Self::HAlign)
-        } else if const_str::compare!(==, rust_string, "VerticalAlignment") {
-            Some(Self::VAlign)
-        } else if const_str::compare!(==, rust_string, "Thickness") {
-            Some(Self::Thickness)
-        } else if const_str::compare!(==, rust_string, "#ArrayOfStyleReferences") {
-            Some(Self::Array(TypeId::STYLING))
-        } else if const_str::compare!(==, rust_string, "StringArray") {
-            Some(Self::Array(TypeId::STRING))
-        } else if const_str::compare!(==, rust_string, "StyleUnit") {
-            Some(Self::StyleUnit)
-        } else if const_str::compare!(==, rust_string, "usize") {
-            Some(Self::Integer)
-        } else if const_str::compare!(==, rust_string, "Filter") {
-            Some(Self::Filter)
-        } else if const_str::compare!(==, rust_string, "TextStyling") {
-            Some(Self::TextStyling)
-        } else if const_str::compare!(==, rust_string, "GridEntry") {
-            Some(Self::GridEntry)
-        } else if const_str::compare!(==, rust_string, "Element") {
-            Some(Self::Element)
-        } else if const_str::compare!(==, rust_string, "SlidePercent") {
-            // TODO: Add type slide percent??
-            Some(Self::Float)
+        if let Some((desc, type_)) = konst::string::split_once(rust_string, ':') {
+            let Some(type_) = Self::from_rust_string_primitive_id(type_) else {
+                return None;
+            };
+
+            if konst::eq_str(desc, "Array") {
+                Some(Self::Array(type_))
+            } else {
+                panic!("Invalid descriptor");
+            }
         } else {
-            None
+            Self::from_rust_string_primitive(rust_string)
         }
     }
 
@@ -245,5 +206,70 @@ impl Type {
             argument_types: parameters,
             return_type,
         }))
+    }
+
+    const fn from_rust_string_primitive_id(rust_string: &str) -> Option<TypeId> {
+        if konst::eq_str(rust_string, "Element") {
+            Some(TypeId::ELEMENT)
+        } else if konst::eq_str(rust_string, "StyleReference") {
+            Some(TypeId::STYLING)
+        } else {
+            None
+        }
+    }
+
+    const fn from_rust_string_primitive(rust_string: &str) -> Option<Type> {
+        if konst::eq_str(rust_string, "()") {
+            Some(Self::Void)
+        } else if konst::eq_str(rust_string, "f64") {
+            Some(Self::Float)
+        } else if konst::eq_str(rust_string, "i64") {
+            Some(Self::Integer)
+        } else if konst::eq_str(rust_string, "String") {
+            Some(Self::String)
+        } else if konst::eq_str(rust_string, "Background") {
+            Some(Self::Background)
+        } else if konst::eq_str(rust_string, "Color") {
+            Some(Self::Color)
+        } else if konst::eq_str(rust_string, "Label") {
+            Some(Self::Label)
+        } else if konst::eq_str(rust_string, "Grid") {
+            Some(Self::Grid)
+        } else if konst::eq_str(rust_string, "Image") {
+            Some(Self::Image)
+        } else if konst::eq_str(rust_string, "ObjectFit") {
+            Some(Self::ObjectFit)
+        } else if konst::eq_str(rust_string, "PathBuf") {
+            Some(Self::Path)
+        } else if konst::eq_str(rust_string, "TextAlign") {
+            Some(Self::TextAlign)
+        } else if konst::eq_str(rust_string, "Font") {
+            Some(Self::Font)
+        } else if konst::eq_str(rust_string, "HorizontalAlignment") {
+            Some(Self::HAlign)
+        } else if konst::eq_str(rust_string, "VerticalAlignment") {
+            Some(Self::VAlign)
+        } else if konst::eq_str(rust_string, "Thickness") {
+            Some(Self::Thickness)
+        } else if konst::eq_str(rust_string, "StringArray") {
+            Some(Self::Array(TypeId::STRING))
+        } else if konst::eq_str(rust_string, "StyleUnit") {
+            Some(Self::StyleUnit)
+        } else if konst::eq_str(rust_string, "usize") {
+            Some(Self::Integer)
+        } else if konst::eq_str(rust_string, "Filter") {
+            Some(Self::Filter)
+        } else if konst::eq_str(rust_string, "TextStyling") {
+            Some(Self::TextStyling)
+        } else if konst::eq_str(rust_string, "GridEntry") {
+            Some(Self::GridEntry)
+        } else if konst::eq_str(rust_string, "Element") {
+            Some(Self::Element)
+        } else if konst::eq_str(rust_string, "SlidePercent") {
+            // TODO: Add type slide percent??
+            Some(Self::Float)
+        } else {
+            None
+        }
     }
 }

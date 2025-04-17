@@ -29,7 +29,7 @@ pub struct Grid {
     name: String,
     id: ElementId,
     parent: Option<ElementId>,
-    elements: Vec<Element>,
+    children: Vec<Element>,
     element_grid_data: Vec<Arc<RefCell<GridEntry>>>,
     // text: FormattedText,
     styling: ElementStyling<GridStyling>,
@@ -43,7 +43,7 @@ impl Grid {
             name: String::new(),
             id: ElementId::generate(),
             parent: None,
-            elements: Vec::new(),
+            children: Vec::new(),
             element_grid_data: Vec::new(),
             styling: GridStyling::new(columns, rows),
             stylings: Vec::new(),
@@ -58,7 +58,7 @@ impl Grid {
     pub fn add_element(&mut self, element: Element) -> Arc<RefCell<GridEntry>> {
         let entry = Arc::new(RefCell::new(GridEntry::new()));
         // element.set
-        self.elements.push(element);
+        self.children.push(element);
         self.element_grid_data.push(entry.clone());
         entry
     }
@@ -83,7 +83,7 @@ impl WebRenderable for Grid {
             .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         writeln!(emitter.raw_html(), "<div id=\"{id}\" class=\"grid\">")?;
         for (index, (mut element, data)) in self
-            .elements
+            .children
             .into_iter()
             .zip(self.element_grid_data)
             .enumerate()
