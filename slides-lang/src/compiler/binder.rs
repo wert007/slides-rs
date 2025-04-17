@@ -265,7 +265,7 @@ impl Scope {
                 .expect("infallible");
         }
 
-        debug_scope("globals", &global, string_interner);
+        // debug_scope("globals", &global, string_interner);
 
         global
     }
@@ -1350,7 +1350,6 @@ fn bind_typed_string(
 
 fn bind_string(string: Token, binder: &mut Binder, context: &mut Context) -> BoundNode {
     let text = string.text(&context.loaded_files);
-    dbg!(text, string);
     if string.kind == TokenKind::String {
         let value = Value::parse_string_literal(text, true, true);
         let type_ = context.type_interner.get_or_intern(value.infer_type());
@@ -1370,7 +1369,6 @@ fn bind_string(string: Token, binder: &mut Binder, context: &mut Context) -> Bou
                 (None, part)
             };
             if let Some(expression) = expression {
-                dbg!(expression);
                 let location = Location {
                     file: string.location.file,
                     start: string.location.start + offset,

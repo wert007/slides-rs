@@ -1,10 +1,23 @@
+/**
+ * @type Element[]
+ */
 let slides;
+/**
+ * @type number
+ */
 let activeSlide;
 
 function init() {
     slides = document.getElementsByClassName("slide");
-    slides[0].classList.add("active");
+    var slide_id = window.location.hash.slice(1);
     activeSlide = 0;
+    for (let i = 0; i < slides.length; i++) {
+        if (slides[i].id == slide_id) {
+            activeSlide = i;
+            break;
+        }
+    }
+    slides[activeSlide].classList.add("active");
 }
 
 /**
@@ -35,4 +48,5 @@ function move_to_slide(target) {
     slides[activeSlide].classList.remove("active");
     activeSlide = target;
     slides[activeSlide].classList.add("active");
+    window.location.hash = slides[activeSlide].id;
 }

@@ -226,10 +226,6 @@ pub(crate) fn lex_source(location: Location, context: &mut Context) -> Vec<Token
     } = context;
     let file = location.file;
     let offset = location.start;
-    if offset > 0 {
-        dbg!(&loaded_files[location]);
-    }
-
     let text_len = loaded_files[location].len();
 
     let mut iter = loaded_files[location]

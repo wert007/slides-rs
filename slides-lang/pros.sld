@@ -176,10 +176,10 @@ slide base_problem:
             valign: VAlign.Stretch,
             margin: {left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh},
         };
-    // title.column_span = 2;
+    // title.column_span = 3;
     let row =
         four_icons(two_icons("amanda", "light"), two_icons("wait", "bobbl")) {
-            width: 0.60sw,
+            width: 0.30sw,
             halign: HAlign.Center,
         };
     icons.add(title);

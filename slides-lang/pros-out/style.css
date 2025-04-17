@@ -367,7 +367,7 @@ ol {
 #base_problem-icons--33 {
     left: 50%;
     right: unset;
-    width: calc(0.6 * var(--slide-width));
+    width: calc(0.3 * var(--slide-width));
     transform: translate(-50%, 0%);
 }
 
