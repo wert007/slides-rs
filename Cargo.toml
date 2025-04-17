@@ -1,0 +1,2 @@
+[workspace]
+members = ["slides-lang", "slides-rs-core"]

@@ -2,6 +2,7 @@
 name = "slides-lang"
 version = "0.1.0"
 edition = "2024"
+default-run = "slides-lang"
 
 [dependencies]
 anyhow = "1.0.97"
