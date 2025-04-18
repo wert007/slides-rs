@@ -357,131 +357,6 @@ ol {
     text-align: center;
 }
 
-#base_problem-title {
-    z-index: 0;
-}
-
-#base_problem-amanda {
-    z-index: 1;
-}
-
-#base_problem-amanda {
-    flex-direction: column;
-}
-
-#base_problem-amanda--img1 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    right: 50%;
-    left: unset;
-}
-
-#base_problem-amanda--img2 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    left: 50%;
-    right: unset;
-}
-
-#base_problem-amanda-label-29, #base_problem-amanda-label-29 .label-text {
-    text-align: center;
-}
-
-#base_problem-bobbl {
-    z-index: 2;
-}
-
-#base_problem-bobbl {
-    flex-direction: column;
-}
-
-#base_problem-bobbl--img1 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    right: 50%;
-    left: unset;
-}
-
-#base_problem-bobbl--img2 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    left: 50%;
-    right: unset;
-}
-
-#base_problem-bobbl-label-34, #base_problem-bobbl-label-34 .label-text {
-    text-align: center;
-}
-
-#base_problem-row {
-    height: calc(0.35 * var(--slide-height));
-    z-index: 3;
-}
-
-#base_problem-row {
-    flex-direction: row;
-}
-
-#base_problem-row-amanda {
-    z-index: 1;
-}
-
-#base_problem-row-amanda {
-    flex-direction: column;
-}
-
-#base_problem-row-amanda--img1 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    right: 50%;
-    left: unset;
-}
-
-#base_problem-row-amanda--img2 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    left: 50%;
-    right: unset;
-}
-
-#base_problem-row-amanda-label-29, #base_problem-row-amanda-label-29 .label-text {
-    text-align: center;
-}
-
-#base_problem-row-bobbl {
-    z-index: 2;
-}
-
-#base_problem-row-bobbl {
-    flex-direction: column;
-}
-
-#base_problem-row-bobbl--img1 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    right: 50%;
-    left: unset;
-}
-
-#base_problem-row-bobbl--img2 {
-    top: 0px;
-    bottom: 0px;
-    height: 100%;
-    left: 50%;
-    right: unset;
-}
-
-#base_problem-row-bobbl-label-34, #base_problem-row-bobbl-label-34 .label-text {
-    text-align: center;
-}
-
 #base_problem-content {
     top: calc(0.2 * var(--slide-height));
     bottom: calc(0.2 * var(--slide-height));
@@ -489,35 +364,26 @@ ol {
     left: calc(0.1 * var(--slide-width));
     right: calc(0.1 * var(--slide-width));
     width: calc(+ 100%+ (-0.2 * var(--slide-width)));
-    z-index: 4;
+    z-index: 0;
 }
 
 #base_problem-content {
     flex-direction: column;
 }
 
-#base_problem-content-title {
-    z-index: 0;
-}
-
-#base_problem-content-row {
+#base_problem-content-flex-36 {
     height: calc(0.35 * var(--slide-height));
-    z-index: 3;
 }
 
-#base_problem-content-row {
+#base_problem-content-flex-36 {
     flex-direction: row;
 }
 
-#base_problem-content-row-amanda {
-    z-index: 1;
-}
-
-#base_problem-content-row-amanda {
+#base_problem-content-flex-36-flex-30 {
     flex-direction: column;
 }
 
-#base_problem-content-row-amanda--img1 {
+#base_problem-content-flex-36-flex-30--img1 {
     top: 0px;
     bottom: 0px;
     height: 100%;
@@ -525,7 +391,7 @@ ol {
     left: unset;
 }
 
-#base_problem-content-row-amanda--img2 {
+#base_problem-content-flex-36-flex-30--img2 {
     top: 0px;
     bottom: 0px;
     height: 100%;
@@ -533,19 +399,15 @@ ol {
     right: unset;
 }
 
-#base_problem-content-row-amanda-label-29, #base_problem-content-row-amanda-label-29 .label-text {
+#base_problem-content-flex-36-flex-30-label-29, #base_problem-content-flex-36-flex-30-label-29 .label-text {
     text-align: center;
 }
 
-#base_problem-content-row-bobbl {
-    z-index: 2;
-}
-
-#base_problem-content-row-bobbl {
+#base_problem-content-flex-36-flex-35 {
     flex-direction: column;
 }
 
-#base_problem-content-row-bobbl--img1 {
+#base_problem-content-flex-36-flex-35--img1 {
     top: 0px;
     bottom: 0px;
     height: 100%;
@@ -553,7 +415,7 @@ ol {
     left: unset;
 }
 
-#base_problem-content-row-bobbl--img2 {
+#base_problem-content-flex-36-flex-35--img2 {
     top: 0px;
     bottom: 0px;
     height: 100%;
@@ -561,7 +423,7 @@ ol {
     right: unset;
 }
 
-#base_problem-content-row-bobbl-label-34, #base_problem-content-row-bobbl-label-34 .label-text {
+#base_problem-content-flex-36-flex-35-label-34, #base_problem-content-flex-36-flex-35-label-34 .label-text {
     text-align: center;
 }
 

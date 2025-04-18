@@ -17,11 +17,13 @@ pub struct Flex {
 }
 
 impl Flex {
-    pub fn new(children: Vec<Element>) -> Self {
+    pub fn new(mut children: Vec<Element>) -> Self {
+        let id = ElementId::generate();
+        children.iter_mut().for_each(|c| c.set_parent(id));
         Self {
             namespace: String::new(),
             name: String::new(),
-            id: ElementId::generate(),
+            id,
             parent: None,
             children,
             styling: FlexStyling::new(),
