@@ -688,14 +688,9 @@ impl BoundNode {
         }
     }
 
-    fn dict(
-        dict: parser::Dict,
-        location: Location,
-        entries: Vec<(String, BoundNode)>,
-        type_: TypeId,
-    ) -> BoundNode {
+    fn dict(location: Location, entries: Vec<(String, BoundNode)>, type_: TypeId) -> BoundNode {
         BoundNode {
-            base: Some(SyntaxNodeKind::Dict(dict)),
+            base: None,
             location,
             kind: BoundNodeKind::Dict(entries),
             type_,
@@ -963,10 +958,13 @@ fn bind_array(
         }
     }
     for (entry, _) in array.entries {
+        binder.push_expected_type(inner_type);
         let entry = bind_node(entry, binder, context);
         if inner_type == TypeId::ERROR {
             inner_type = entry.type_;
         }
+        let entry = bind_conversion(entry, inner_type, ConversionKind::Implicit, binder, context);
+        binder.drop_expected_type();
         entries.push(entry);
     }
     if inner_type == TypeId::ERROR {
@@ -1176,14 +1174,23 @@ fn bind_post_initialization(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
-    let base = bind_node(*post_initialization.expression, binder, context);
-    let mut dict = bind_node(*post_initialization.dict, binder, context);
-    for (entry, entry_type) in dict.kind.as_mut_dict() {
-        let member = context.string_interner.create_or_get(&entry);
+    let mut base = bind_node(*post_initialization.expression, binder, context);
+    let dict_location = post_initialization.dict.location;
+    let dict = (*post_initialization.dict)
+        .kind
+        .try_as_dict()
+        .expect("Parser ensures, this is dictionary");
+    let mut entries = Vec::with_capacity(dict.entries.len());
+    for (entry_node, _) in dict.entries {
+        let entry = entry_node
+            .kind
+            .try_as_dict_entry()
+            .expect("Parser ensures this is a dict entry!");
+        let member_str = entry.identifier.text(&context.loaded_files).to_owned();
+        let member = context.string_interner.create_or_get(&member_str);
         let base_type = context.type_interner.resolve(base.type_).clone();
-        let mut base = base.clone();
         if let Some(target) = access_member(
-            entry_type.location,
+            entry.value.location,
             binder,
             context,
             // TODO: This is iffy, but it is also very much not clear what
@@ -1192,19 +1199,24 @@ fn bind_post_initialization(
             member,
             base_type,
         ) {
-            let mut fallback = BoundNode::error(entry_type.location);
-            std::mem::swap(entry_type, &mut fallback);
-            *entry_type =
-                bind_conversion(fallback, target, ConversionKind::Implicit, binder, context)
+            binder.push_expected_type(target);
+            let entry = bind_node(*entry.value, binder, context);
+            let entry = bind_conversion(entry, target, ConversionKind::Implicit, binder, context);
+            entries.push((member_str.clone(), entry));
         } else {
             context.diagnostics.report_unknown_member(
-                dict.location,
+                entry.identifier.location,
                 &context.type_interner.resolve(base.type_),
-                &entry,
+                &member_str,
             );
-            *entry_type = BoundNode::error(entry_type.location);
         }
     }
+    let dict_type = Type::DynamicDict;
+    let dict = BoundNode::dict(
+        dict_location,
+        entries,
+        context.type_interner.get_or_intern(dict_type),
+    );
     BoundNode::post_initialization(location, base, dict)
 }
 
@@ -1300,7 +1312,7 @@ fn bind_dict(
         })
         .collect();
     let type_ = context.type_interner.get_or_intern(Type::TypedDict(types));
-    BoundNode::dict(dict, location, entries, type_)
+    BoundNode::dict(location, entries, type_)
 }
 
 fn bind_variable_declaration(
