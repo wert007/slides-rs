@@ -135,37 +135,16 @@ element two_icons(icon1: String, icon2: String):
 slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
-    // title.column_span = 3;
-    // let row =
-    //     grid("*,*", "*") {
-    //         height: 0.35sh,
-    //         children: [
-    //             grid("*", "*,min") {
-    //                 children: [
-    //                     two_icons("amanda", "light"),
-    //                     l"Amanda hat das Licht" { text_align: TextAlign.Center, },
-    //                 ],
-    //             },
-    //             grid("*", "*,min") {
-    //                 children: [
-    //                     two_icons("wait", "bobbl"),
-    //                     l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
-    //                 ],
-    //             }
-    //         ],
-    //     };
     let amanda =
-        stackv(
-            [
-                two_icons("amanda", "light"),
-                l"Amanda hat das Licht" { text_align: TextAlign.Center, },
-            ]);
+        stackv([
+            two_icons("amanda", "light"),
+            l"Amanda hat das Licht" { text_align: TextAlign.Center, },
+        ]);
     let bobbl =
-        stackv(
-            [
-                two_icons("wait", "bobbl"),
-                l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
-            ]);
+        stackv([
+            two_icons("wait", "bobbl"),
+            l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
+        ]);
     let row = stackh([ amanda, bobbl ]) { height: 50% };
     let content =
         stackv([title, row]) {

@@ -723,15 +723,16 @@ fn format_variable_declaration<W: Write + fmt::Debug>(
     formatter.emit_token(
         variable_declaration.equals,
         &context.loaded_files,
-        TokenConfig::TRAILING_SPACE,
+        TokenConfig::default(),
     )?;
     formatter.indent += 4;
     let needed_space = variable_declaration.semicolon.location.end()
         - variable_declaration.expression.location.start;
     if formatter.available_space() < needed_space {
         formatter.ensure_indented_line()?;
+    } else {
+        formatter.ensure_space()?;
     }
-    // TODO: formatter.reserve(variable_declaration.expression.location.length)
     format_node(*variable_declaration.expression, formatter, context)?;
     formatter.emit_token(
         variable_declaration.semicolon,
