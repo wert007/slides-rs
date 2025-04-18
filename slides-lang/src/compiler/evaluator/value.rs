@@ -101,6 +101,17 @@ impl Value {
         }
     }
 
+    pub fn convert_to_element(self) -> slides_rs_core::Element {
+        match self {
+            Value::Label(element) => Arc::unwrap_or_clone(element).into_inner().into(),
+            Value::Grid(element) => Arc::unwrap_or_clone(element).into_inner().into(),
+            Value::Image(element) => Arc::unwrap_or_clone(element).into_inner().into(),
+            Value::CustomElement(element) => Arc::unwrap_or_clone(element).into_inner().into(),
+            Value::Element(element) => Arc::unwrap_or_clone(element).into_inner().into(),
+            _ => panic!("Cannot be converted to Element"),
+        }
+    }
+
     pub fn as_mut_base_element(&self) -> slides_rs_core::ElementRefMut {
         match self {
             Value::Label(label) => slides_rs_core::ElementRefMut::Label(label.clone()),

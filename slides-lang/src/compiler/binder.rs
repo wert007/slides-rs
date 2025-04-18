@@ -964,7 +964,6 @@ fn bind_array(
                 .report_cannot_convert(&Type::Array(TypeId::ERROR), type_, location);
         }
     }
-    dbg!(context.type_interner.resolve(inner_type));
     for (entry, _) in array.entries {
         binder.push_expected_type(inner_type);
         let entry = bind_node(entry, binder, context);
@@ -1198,7 +1197,7 @@ fn bind_post_initialization(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
-    let mut base = bind_node(*post_initialization.expression, binder, context);
+    let base = bind_node(*post_initialization.expression, binder, context);
     let dict_location = post_initialization.dict.location;
     let dict = (*post_initialization.dict)
         .kind
@@ -1219,7 +1218,7 @@ fn bind_post_initialization(
             context,
             // TODO: This is iffy, but it is also very much not clear what
             // should happen here!
-            &mut base,
+            &mut base.clone(),
             member,
             base_type,
         ) {
@@ -1530,7 +1529,7 @@ fn bind_conversion(
             }
             [Type::Color, Type::Background] => {}
             [
-                Type::Label | Type::Image | Type::CustomElement(_),
+                Type::Label | Type::Image | Type::CustomElement(_) | Type::Grid,
                 Type::Element,
             ] => {}
             [Type::Error, _] => {

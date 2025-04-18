@@ -355,6 +355,13 @@ fn assign_to_slide_type(
         "column_span" => {
             base.as_grid_entry().borrow_mut().column_span = value.into_integer() as _;
         }
+        "children" => {
+            for element in value.into_array() {
+                base.as_grid()
+                    .borrow_mut()
+                    .add_element(element.convert_to_element());
+            }
+        }
         missing => unreachable!("Missing Member {missing}"),
     }
 }

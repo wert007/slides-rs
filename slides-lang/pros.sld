@@ -178,7 +178,7 @@ slide base_problem:
         };
     // title.column_span = 3;
     let row =
-        grid("*,*", "") {
+        grid("*,*", "*") {
             height: 0.35sh,
             children: [
                 grid("*", "*,min") { children: [two_icons("amanda", "light"), l"Amanda hat das Licht"]}, two_icons("wait", "bobbl")

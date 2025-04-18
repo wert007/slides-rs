@@ -65,7 +65,7 @@ impl Grid {
 
     pub fn name(&self) -> String {
         if self.name.is_empty() {
-            format!("{}-{}", self.element_styling().class_name(), self.id)
+            format!("{}-{}", self.styling.class_name(), self.id)
         } else {
             self.name.clone()
         }
