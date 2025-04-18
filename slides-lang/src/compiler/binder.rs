@@ -302,13 +302,19 @@ impl Scope {
     }
 }
 
-fn debug_scope(name: &str, scope: &Scope, interner: &StringInterner) {
-    println!("Scope {name}");
-    println!();
-    for (id, variable) in &scope.variables {
-        let name = interner.resolve_variable(*id);
-        println!("Variable {name}: {:?}", variable.type_);
+fn debug_scope(name: &str, scope: &Scope, context: &Context) {
+    if !context.debug.scopes {
+        return;
     }
+    println!("Scope '{name}':");
+    for (id, variable) in &scope.variables {
+        let name = context.string_interner.resolve_variable(*id);
+        println!(
+            "  Variable {name}: {:?}",
+            context.type_interner.resolve(variable.type_)
+        );
+    }
+    println!();
 }
 
 struct Binder {
@@ -318,15 +324,17 @@ struct Binder {
 }
 
 impl Binder {
-    pub fn new(interner: &mut StringInterner, type_interner: &mut TypeInterner) -> Self {
+    pub fn new(context: &mut Context) -> Self {
+        let global_scope = Scope::global(&mut context.string_interner, &mut context.type_interner);
+        debug_scope("global", &global_scope, &context);
         Self {
-            scopes: vec![Scope::global(interner, type_interner)],
+            scopes: vec![global_scope],
             types: Type::simple_types()
                 .into_iter()
                 .map(|t| {
                     (
-                        interner.create_or_get(t.as_ref()),
-                        type_interner.get_or_intern(t),
+                        context.string_interner.create_or_get(t.as_ref()),
+                        context.type_interner.get_or_intern(t),
                     )
                 })
                 .collect(),
@@ -378,9 +386,8 @@ impl Binder {
         self.scopes.last_mut().unwrap()
     }
 
-    fn drop_scope(&mut self) {
-        assert!(self.scopes.len() > 1);
-        self.scopes.pop();
+    fn drop_scope(&mut self) -> Scope {
+        self.scopes.pop().expect("Should exist")
     }
 
     fn look_up_variable(&self, id: VariableId) -> Option<&Variable> {
@@ -852,7 +859,7 @@ pub struct BoundAst {
 }
 
 fn bind_ast(ast: parser::Ast, context: &mut Context) -> BoundAst {
-    let mut binder = Binder::new(&mut context.string_interner, &mut context.type_interner);
+    let mut binder = Binder::new(context);
     let mut statements = Vec::with_capacity(ast.statements.len());
     for statement in ast.statements {
         statements.push(bind_node(statement, &mut binder, context));
@@ -957,6 +964,7 @@ fn bind_array(
                 .report_cannot_convert(&Type::Array(TypeId::ERROR), type_, location);
         }
     }
+    dbg!(context.type_interner.resolve(inner_type));
     for (entry, _) in array.entries {
         binder.push_expected_type(inner_type);
         let entry = bind_node(entry, binder, context);
@@ -1057,7 +1065,15 @@ fn bind_element_statement(
     for statement in element_statement.body {
         body.push(bind_node(statement, binder, context));
     }
-    binder.drop_scope();
+    let scope = binder.drop_scope();
+    debug_scope(
+        &format!(
+            "element {}",
+            element_statement.name.text(&context.loaded_files)
+        ),
+        &scope,
+        &context,
+    );
     let Some(name) = binder.expect_register_variable_token(
         element_statement.name,
         function_type,
@@ -1113,7 +1129,15 @@ fn bind_template_statement(
     for statement in template_statement.body {
         body.push(bind_node(statement, binder, context));
     }
-    binder.drop_scope();
+    let scope = binder.drop_scope();
+    debug_scope(
+        &format!(
+            "template {}",
+            template_statement.name.text(&context.loaded_files)
+        ),
+        &scope,
+        &context,
+    );
     let Some(name) = binder.expect_register_variable_token(
         template_statement.name,
         function_type,
@@ -1351,7 +1375,12 @@ fn bind_slide_statement(
     for statement in slide_statement.body {
         statements.push(bind_node(statement, binder, context));
     }
-    binder.drop_scope();
+    let scope = binder.drop_scope();
+    debug_scope(
+        &format!("slide {}", slide_statement.name.text(&context.loaded_files)),
+        &scope,
+        &context,
+    );
     slide_statement.body = Vec::new();
     let type_ = context.type_interner.get_or_intern(Type::Slide);
     let Some(name) = binder.expect_register_variable_token(
@@ -1677,7 +1706,15 @@ fn bind_styling_statement(
 
     styling_statement.body = Vec::new();
 
-    binder.drop_scope();
+    let scope = binder.drop_scope();
+    debug_scope(
+        &format!(
+            "styling {}",
+            styling_statement.name.text(&context.loaded_files)
+        ),
+        &scope,
+        &context,
+    );
 
     // Bind name last to check the body for errors!
     let styling_type = context.type_interner.get_or_intern(Type::Styling);

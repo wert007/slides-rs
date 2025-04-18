@@ -14,6 +14,7 @@ pub struct DebugLang {
     pub tokens: bool,
     pub parser: bool,
     pub binder: bool,
+    pub scopes: bool,
     pub presentation: bool,
 }
 
@@ -23,16 +24,21 @@ impl FromStr for DebugLang {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut result = Self::default();
         for part in s.split(',') {
-            let part = part.trim();
+            let part = part.trim().to_lowercase();
             if part.is_empty() {
                 continue;
             }
-            match part {
+            match part.as_str() {
                 "t" | "tok" | "token" | "tokens" => result.tokens = true,
                 "p" | "par" | "parse" | "parser" => result.parser = true,
                 "b" | "bin" | "bind" | "binder" => result.binder = true,
+                "s" | "scop" | "scope" => result.scopes = true,
                 "pres" | "presentation" => result.presentation = true,
-                unknown_field => return Err(unknown_field.into()),
+                _unknown_field => {
+                    return Err(format!(
+                        "Following parts can be debugged [tokens], [parser], [binder], [scope] or [presentation] you can use shortened names as well and combine multiple by comma"
+                    ));
+                }
             }
         }
         Ok(result)
