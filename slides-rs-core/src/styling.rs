@@ -36,7 +36,7 @@ impl ToCss for () {
         String::new()
     }
 
-    fn to_css_style(&self, layout: ToCssLayout) -> String {
+    fn to_css_style(&self, _layout: ToCssLayout) -> String {
         String::new()
     }
 
@@ -121,7 +121,7 @@ impl ToCss for DynamicElementStyling {
         self.specific.to_css_rule(layout, selector, w)?;
         Ok(())
     }
-    fn to_css_style(&self, layout: ToCssLayout) -> String {
+    fn to_css_style(&self, _layout: ToCssLayout) -> String {
         unreachable!("PANIC");
     }
 
@@ -400,12 +400,12 @@ impl ToCssLayout {
         }
     }
 
-    pub(crate) fn new(base: &BaseElementStyling) -> Self {
-        Self {
-            outer_padding: base.padding,
-            grid_data: None,
-        }
-    }
+    // pub(crate) fn new(base: &BaseElementStyling) -> Self {
+    //     Self {
+    //         outer_padding: base.padding,
+    //         grid_data: None,
+    //     }
+    // }
 }
 
 impl<S: ToCss> ToCss for ElementStyling<S> {
@@ -429,7 +429,7 @@ impl<S: ToCss> ToCss for ElementStyling<S> {
         self.specific.to_css_rule(layout, selector, w)?;
         Ok(())
     }
-    fn to_css_style(&self, layout: ToCssLayout) -> String {
+    fn to_css_style(&self, _layout: ToCssLayout) -> String {
         unreachable!("PANIC");
     }
 
@@ -519,7 +519,7 @@ impl SlideStyling {
 }
 
 impl ToCss for SlideStyling {
-    fn to_css_style(&self, layout: ToCssLayout) -> String {
+    fn to_css_style(&self, _layout: ToCssLayout) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         if let Some(text_color) = self.text_color {
@@ -683,7 +683,7 @@ impl ElementStyling<LabelStyling> {
 impl ToCss for LabelStyling {
     fn to_css_rule(
         &self,
-        layout: ToCssLayout,
+        _layout: ToCssLayout,
         selector: &str,
         w: &mut dyn Write,
     ) -> std::io::Result<()> {
@@ -719,7 +719,7 @@ impl ToCss for LabelStyling {
         Ok(())
     }
 
-    fn to_css_style(&self, layout: ToCssLayout) -> String {
+    fn to_css_style(&self, _layout: ToCssLayout) -> String {
         unreachable!("PANIC!");
     }
 
@@ -805,7 +805,7 @@ impl ElementStyling<ImageStyling> {
 }
 
 impl ToCss for ImageStyling {
-    fn to_css_style(&self, layout: ToCssLayout) -> String {
+    fn to_css_style(&self, _layout: ToCssLayout) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         if self.object_fit != ObjectFit::Unspecified {
@@ -864,7 +864,7 @@ impl ToCss for GridStyling {
         "grid".into()
     }
 
-    fn to_css_style(&self, layout: ToCssLayout) -> String {
+    fn to_css_style(&self, _layout: ToCssLayout) -> String {
         use std::fmt::Write;
         let mut result = String::new();
         if !self.columns.is_empty() {
@@ -899,6 +899,69 @@ impl ToCss for GridStyling {
         _: &mut std::collections::HashSet<String>,
     ) -> Result<()> {
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FlexDirection {
+    Unspecified,
+    Row,
+    Column,
+    RowReverse,
+    ColumnReverse,
+}
+
+impl FlexDirection {
+    pub fn to_css(&self) -> String {
+        match self {
+            FlexDirection::Unspecified => "unset".into(),
+            FlexDirection::Row => "row".into(),
+            FlexDirection::Column => "column".into(),
+            FlexDirection::RowReverse => "row-reverse".into(),
+            FlexDirection::ColumnReverse => "column-reverse".into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, FieldNamesAsSlice)]
+pub struct FlexStyling {
+    direction: FlexDirection,
+}
+
+impl FlexStyling {
+    pub fn new() -> ElementStyling<Self> {
+        ElementStyling::new(FlexStyling {
+            direction: FlexDirection::Unspecified,
+        })
+    }
+}
+
+impl ToCss for FlexStyling {
+    fn class_name(&self) -> String {
+        "flex".into()
+    }
+
+    fn to_css_style(&self, _layout: ToCssLayout) -> String {
+        use std::fmt::Write;
+        let mut result = String::new();
+        if self.direction != FlexDirection::Unspecified {
+            writeln!(result, "    flex-direction: {};", self.direction.to_css())
+                .expect("infallibe");
+        }
+        result
+    }
+
+    fn collect_google_font_references(
+        &self,
+        _: &mut std::collections::HashSet<String>,
+    ) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl ElementStyling<FlexStyling> {
+    pub fn set_direction(&mut self, direction: FlexDirection) {
+        self.specific.direction = direction;
     }
 }
 

@@ -250,7 +250,7 @@ impl CalcData {
             StyleUnit::Percent(percent) => self.percent += percent,
             StyleUnit::SlideWidthRatio(slide_width) => self.slide_width += slide_width,
             StyleUnit::SlideHeightRatio(slide_height) => self.slide_height += slide_height,
-            StyleUnit::Calc(calc_data) => todo!(),
+            StyleUnit::Calc(_calc_data) => todo!(),
         }
         self
     }
@@ -303,8 +303,8 @@ impl StyleUnit {
         match self {
             StyleUnit::Unspecified => StyleUnit::Pixel(px),
             StyleUnit::Pixel(spx) => StyleUnit::Pixel(spx + px),
-            StyleUnit::Point(pt) => todo!(),
-            StyleUnit::Percent(percent) => todo!(),
+            StyleUnit::Point(_pt) => todo!(),
+            StyleUnit::Percent(_percent) => todo!(),
             StyleUnit::SlideWidthRatio(_) => todo!(),
             StyleUnit::SlideHeightRatio(_) => todo!(),
             StyleUnit::Calc(calc_data) => StyleUnit::Calc(calc_data.add_pixel(px)),
@@ -315,7 +315,7 @@ impl StyleUnit {
         match self {
             StyleUnit::Unspecified => StyleUnit::Percent(percent),
             StyleUnit::Pixel(_) => todo!(),
-            StyleUnit::Point(pt) => todo!(),
+            StyleUnit::Point(_pt) => todo!(),
             StyleUnit::Percent(spercent) => Self::Percent(*spercent + percent),
             StyleUnit::SlideWidthRatio(_) => todo!(),
             StyleUnit::SlideHeightRatio(_) => todo!(),
@@ -349,7 +349,7 @@ impl Add for StyleUnit {
         match rhs {
             StyleUnit::Unspecified => self,
             StyleUnit::Pixel(px) => self.add_pixel(px),
-            StyleUnit::Point(pt) => todo!(),
+            StyleUnit::Point(_pt) => todo!(),
             StyleUnit::Percent(percent) => self.add_percent(percent),
             StyleUnit::SlideWidthRatio(_) => todo!(),
             StyleUnit::SlideHeightRatio(_) => todo!(),
@@ -360,7 +360,7 @@ impl Add for StyleUnit {
                 StyleUnit::Percent(percent) => StyleUnit::Calc(calc_data.add_percent(percent)),
                 StyleUnit::SlideWidthRatio(_) => todo!(),
                 StyleUnit::SlideHeightRatio(_) => todo!(),
-                StyleUnit::Calc(calc_data) => todo!(),
+                StyleUnit::Calc(_calc_data) => todo!(),
             },
         }
     }
@@ -373,7 +373,7 @@ impl Sub for StyleUnit {
         match rhs {
             StyleUnit::Unspecified => self,
             StyleUnit::Pixel(px) => self.add_pixel(-px),
-            StyleUnit::Point(pt) => todo!(),
+            StyleUnit::Point(_pt) => todo!(),
             StyleUnit::Percent(percent) => self.add_percent(-percent),
             StyleUnit::SlideWidthRatio(it) => {
                 StyleUnit::Calc(CalcData::from_units(self, StyleUnit::SlideWidthRatio(-it)))
@@ -381,14 +381,14 @@ impl Sub for StyleUnit {
             StyleUnit::SlideHeightRatio(it) => {
                 StyleUnit::Calc(CalcData::from_units(self, StyleUnit::SlideHeightRatio(-it)))
             }
-            StyleUnit::Calc(calc_data) => match self {
+            StyleUnit::Calc(_calc_data) => match self {
                 StyleUnit::Unspecified => rhs,
-                StyleUnit::Pixel(px) => todo!(),
+                StyleUnit::Pixel(_px) => todo!(),
                 StyleUnit::Point(_) => todo!(),
-                StyleUnit::Percent(percent) => todo!(),
+                StyleUnit::Percent(_percent) => todo!(),
                 StyleUnit::SlideWidthRatio(_) => todo!(),
                 StyleUnit::SlideHeightRatio(_) => todo!(),
-                StyleUnit::Calc(calc_data) => todo!(),
+                StyleUnit::Calc(_calc_data) => todo!(),
             },
         }
     }

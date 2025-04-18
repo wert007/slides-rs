@@ -3,8 +3,8 @@ use std::{cell::RefCell, sync::Arc};
 use struct_field_names_as_array::FieldNamesAsSlice;
 
 use crate::{
-    BaseElementStyling, ElementStyling, GridCellSize, GridStyling, Result, StyleUnit,
-    StylingReference, ToCss, output::PresentationEmitter,
+    BaseElementStyling, ElementStyling, GridCellSize, GridStyling, Result, StylingReference, ToCss,
+    output::PresentationEmitter,
 };
 
 use super::{Element, ElementId, WebRenderable, WebRenderableContext};
@@ -31,7 +31,6 @@ pub struct Grid {
     parent: Option<ElementId>,
     children: Vec<Element>,
     element_grid_data: Vec<Arc<RefCell<GridEntry>>>,
-    // text: FormattedText,
     styling: ElementStyling<GridStyling>,
     stylings: Vec<StylingReference>,
 }
@@ -82,12 +81,7 @@ impl WebRenderable for Grid {
         self.styling
             .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         writeln!(emitter.raw_html(), "<div id=\"{id}\" class=\"grid\">")?;
-        for (index, (mut element, data)) in self
-            .children
-            .into_iter()
-            .zip(self.element_grid_data)
-            .enumerate()
-        {
+        for (mut element, data) in self.children.into_iter().zip(self.element_grid_data) {
             let grid_data = Arc::unwrap_or_clone(data).into_inner();
             element.set_namespace(id.clone());
             // element.set_fallback_id(index.to_string());

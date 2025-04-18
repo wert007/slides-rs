@@ -17,7 +17,7 @@ styling default(Slide):
 
 element image_with_caption(img: Image, caption: String):
     img = img { object_fit: ObjectFit.Cover, valign: VAlign.Stretch, halign: HAlign.Stretch, }
-    let lbl = 
+    let lbl =
         label(caption) {
             valign: VAlign.Bottom,
             halign: HAlign.Right,
@@ -29,7 +29,7 @@ element image_with_caption(img: Image, caption: String):
 
 template page_number(color: Color = c"black"):
     let number = slide_index - 3;
-    let page_number = 
+    let page_number =
         l'{number}' {
             valign: VAlign.Bottom,
             halign: HAlign.Center,
@@ -39,22 +39,22 @@ template page_number(color: Color = c"black"):
         };
 
 slide code:
-    let bg = 
+    let bg =
         image_with_caption(
-            image(p"./pros-assets/code.jpg"), 
+            image(p"./pros-assets/code.jpg"),
             "Image by Christopher Kuszajewski from Pixabay");
 
 slide threads:
-    let bg = 
+    let bg =
         image_with_caption(
-            image(p"./pros-assets/threads.jpg"), 
+            image(p"./pros-assets/threads.jpg"),
             "Bild von Myriams-Fotos auf Pixabay");
 
 slide frozen:
     let bg = image_with_caption(image(p"./pros-assets/frozen.jpg"), "Bild von adege auf Pixabay");
 
 slide title:
-    let title = 
+    let title =
         l"# Einseitige Synchronisation und Deadlocks" {
             text_align: TextAlign.Center,
             font_size: 2.5,
@@ -62,7 +62,7 @@ slide title:
             halign: HAlign.Stretch,
             margin: { bottom: 0.50sh, },
         }
-    let subtitle = 
+    let subtitle =
         l"## Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
             text_align: TextAlign.Center,
             font_size: 1.3,
@@ -74,7 +74,7 @@ slide title:
 
 slide toc:
     page_number();
-    let toc = 
+    let toc =
         l"""
             # Übersicht
 
@@ -85,14 +85,14 @@ slide toc:
         """ { };
 
 slide example:
-    let bg = 
+    let bg =
         image_with_caption(
-            image(p"./pros-assets/car-repair.jpg") { filter: brightness(0.4), }, 
+            image(p"./pros-assets/car-repair.jpg") { filter: brightness(0.4), },
             "Bild von emkanicepic auf Pixabay");
 
     page_number(c"white");
 
-    let text = 
+    let text =
         l"""
             # Beispiel
 
@@ -106,7 +106,7 @@ slide example:
 
 slide one_sided_sync:
     page_number();
-    let text = 
+    let text =
         l"""
             # Einseitige Synchronisation
 
@@ -119,13 +119,13 @@ slide one_sided_sync:
         """;
 
 element two_icons(icon1: String, icon2: String):
-    let img1 = 
+    let img1 =
         image(p'./pros-assets/{icon1}.png') {
             margin: { right: 50%, },
             halign: HAlign.Right,
             valign: VAlign.Stretch,
         };
-    let img2 = 
+    let img2 =
         image(p'./pros-assets/{icon2}.png') {
             halign: HAlign.Left,
             margin: { left: 50%, },
@@ -135,31 +135,42 @@ element two_icons(icon1: String, icon2: String):
 slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
-    let icons = 
-        grid("*", "min,*") {
+    // title.column_span = 3;
+    // let row =
+    //     grid("*,*", "*") {
+    //         height: 0.35sh,
+    //         children: [
+    //             grid("*", "*,min") {
+    //                 children: [
+    //                     two_icons("amanda", "light"),
+    //                     l"Amanda hat das Licht" { text_align: TextAlign.Center, },
+    //                 ],
+    //             },
+    //             grid("*", "*,min") {
+    //                 children: [
+    //                     two_icons("wait", "bobbl"),
+    //                     l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
+    //                 ],
+    //             }
+    //         ],
+    //     };
+    let amanda =
+        stackv(
+            [
+                two_icons("amanda", "light"),
+                l"Amanda hat das Licht" { text_align: TextAlign.Center, },
+            ]);
+    let bobbl =
+        stackv(
+            [
+                two_icons("wait", "bobbl"),
+                l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
+            ]);
+    let row = stackh([ amanda, bobbl ]) { height: 0.35sh, };
+    let content =
+        stackv([title, row]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
             margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
         };
-    // title.column_span = 3;
-    let row = 
-        grid("*,*", "*") {
-            height: 0.35sh,
-            children: [ 
-                grid("*", "*,min") {
-                    children: [ 
-                        two_icons("amanda", "light"), 
-                        l"Amanda hat das Licht" { text_align: TextAlign.Center, }, 
-                    ],
-                }, 
-                grid("*", "*,min") {
-                    children: [ 
-                        two_icons("wait", "bobbl"), 
-                        l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, }, 
-                    ],
-                }
-            ],
-        };
-    icons.add(title);
-    icons.add(row);
 

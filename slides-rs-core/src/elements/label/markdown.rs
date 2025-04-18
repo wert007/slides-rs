@@ -43,6 +43,7 @@ pub const SLIDE_MARKDOWN_PARSE_OPTIONS: ParseOptions = ParseOptions {
     mdx_esm_parse: None,
 };
 
+#[allow(unused_variables)]
 pub fn render_markdown<W: std::io::Write>(w: &mut W, node: mdast::Node) -> std::io::Result<()> {
     match node {
         mdast::Node::Root(root) => render_root(w, root),

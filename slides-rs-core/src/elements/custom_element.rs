@@ -1,4 +1,4 @@
-use std::{cell::RefCell, io::Write, sync::Arc};
+use std::io::Write;
 
 use crate::{ElementStyling, Result, StylingReference, ToCss, output::PresentationEmitter};
 

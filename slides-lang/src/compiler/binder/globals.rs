@@ -2,8 +2,7 @@
 
 use constcat::concat_slices;
 use slides_rs_core::{
-    BaseElementStyling, GridEntry, GridStyling, HorizontalAlignment, ImageStyling, LabelStyling,
-    ObjectFit, SlideStyling, SlidesEnum, TextAlign, TextStyling, VerticalAlignment,
+    BaseElementStyling, FlexStyling, GridEntry, GridStyling, HorizontalAlignment, ImageStyling, LabelStyling, ObjectFit, SlideStyling, SlidesEnum, TextAlign, TextStyling, VerticalAlignment
 };
 
 include!(concat!(env!("OUT_DIR"), "/global_functions.rs"));
@@ -74,7 +73,7 @@ macro_rules! default_element {
     };
 }
 
-pub const MEMBERS: [MemberDeclarations; 12] = [
+pub const MEMBERS: [MemberDeclarations; 14] = [
     MemberDeclarations::rename::<TextStyling>("TextStyling"),
     MemberDeclarations::rename::<LabelStyling>("Label"),
     default_element!("Label"),
@@ -91,6 +90,8 @@ pub const MEMBERS: [MemberDeclarations; 12] = [
         members_rust_types: &["#Fn(Element):GridEntry", "Array:Element"],
     },
     MemberDeclarations::rename::<GridEntry>("GridEntry"),
+    MemberDeclarations::rename::<FlexStyling>("Flex"),
+    default_element!("Flex"),
 ];
 
 pub(crate) fn normalize_type_name(mut name: &str) -> &str {

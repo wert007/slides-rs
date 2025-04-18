@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf};
 
 use convert_case::Casing;
 use slides_rs_core::Presentation;
@@ -529,7 +529,7 @@ impl BoundBinaryOperator {
             BoundBinaryOperator::Subtraction => (lhs.into_integer() - rhs.into_integer()).into(),
             BoundBinaryOperator::Multiplication => todo!(),
             BoundBinaryOperator::Division => todo!(),
-            BoundBinaryOperator::Unknown(symbol_usize) => unreachable!(),
+            BoundBinaryOperator::Unknown(_symbol_usize) => unreachable!(),
         }
     }
 }
@@ -836,7 +836,7 @@ impl BoundNode {
     }
 }
 
-fn constant_conversion(value: Value, target: TypeId, kind: ConversionKind) -> Option<Value> {
+fn constant_conversion(value: Value, target: TypeId, _kind: ConversionKind) -> Option<Value> {
     match target {
         TypeId::PATH => match value {
             Value::String(value) => Some(PathBuf::from(value).into()),
@@ -934,7 +934,7 @@ fn bind_binary(
 
 fn bind_binary_operator(
     operator: Token,
-    binder: &mut Binder,
+    _binder: &mut Binder,
     context: &mut Context,
 ) -> BoundBinaryOperator {
     match operator.text(&context.loaded_files) {
@@ -1097,7 +1097,7 @@ fn bind_template_statement(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
-    let scope = binder.create_scope();
+    let _scope = binder.create_scope();
     let id = context
         .string_interner
         .create_or_get_variable("slide_index");
@@ -1529,7 +1529,7 @@ fn bind_conversion(
             }
             [Type::Color, Type::Background] => {}
             [
-                Type::Label | Type::Image | Type::CustomElement(_) | Type::Grid,
+                Type::Label | Type::Image | Type::CustomElement(_) | Type::Grid | Type::Flex,
                 Type::Element,
             ] => {}
             [Type::Error, _] => {

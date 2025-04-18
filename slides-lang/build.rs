@@ -42,14 +42,7 @@ fn main() {
             .iter()
             .enumerate()
             .map(|(i, p)| {
-                let type_name = match p.as_str() {
-                    "i64" => "integer".to_owned(),
-                    "f64" => "float".to_owned(),
-                    "PathBuf" => "path".to_owned(),
-                    "String" | "Background" | "Color" | "Label" | "Image" => p.to_ascii_lowercase(),
-                    "StringArray" => "string_array".to_owned(),
-                    _ => unreachable!("Unexpected type {p}"),
-                };
+                let type_name = convert_type_name(p);
                 format!("args[{i}].as_{type_name}().clone()")
             })
             .collect::<Vec<String>>()
@@ -107,6 +100,18 @@ pub const FUNCTIONS: [FunctionDefinition; {}] = [
     .unwrap();
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed=src/compiler/evaluator/functions.rs");
+}
+
+fn convert_type_name(p: &String) -> String {
+    match p.as_str() {
+        "i64" => "integer".to_owned(),
+        "f64" => "float".to_owned(),
+        "PathBuf" => "path".to_owned(),
+        "String" | "Background" | "Color" | "Label" | "Image" | "Flex" => p.to_ascii_lowercase(),
+        "StringArray" => "string_array".to_owned(),
+        "Vec<Element>" => "element_array".to_owned(),
+        _ => unreachable!("Unexpected type {p}"),
+    }
 }
 
 fn parse_parameters(parameters: &str) -> Vec<String> {

@@ -1,7 +1,5 @@
 use std::fmt::Display;
 
-use ::markdown::Constructs;
-
 use crate::{
     ElementStyling, LabelStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
 };

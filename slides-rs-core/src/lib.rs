@@ -177,12 +177,12 @@ impl Slide {
     }
 
     pub fn add_label(mut self, label: Label) -> Slide {
-        self.elements.push(Element::Label(label));
+        self.elements.push(label.into());
         self
     }
 
     pub fn add_image(mut self, image: Image) -> Slide {
-        self.elements.push(Element::Image(image));
+        self.elements.push(image.into());
         self
     }
 
@@ -191,7 +191,7 @@ impl Slide {
         self.styling
             .to_css_rule(ToCssLayout::unknown(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(emitter.raw_html(), "<section id=\"{id}\" class=\"slide\">")?;
-        for (index, mut element) in self.elements.into_iter().enumerate() {
+        for mut element in self.elements {
             element.set_namespace(id.clone());
             element.output_to_html(
                 emitter,

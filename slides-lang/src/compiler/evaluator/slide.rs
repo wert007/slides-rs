@@ -51,34 +51,43 @@ pub fn evaluate_to_slide(
             // Is already displayed as part of another element.
             continue;
         }
-        match value {
-            Value::Label(label) => {
-                let mut label = Arc::unwrap_or_clone(label).into_inner();
-                label.set_name(name.into());
-                label.set_z_index(slide.next_z_index());
-                slide = slide.add_label(label);
-            }
-            Value::Image(image) => {
-                let mut image = Arc::unwrap_or_clone(image).into_inner();
-                image.set_name(name.into());
-                image.set_z_index(slide.next_z_index());
-                slide = slide.add_image(image);
-            }
-            Value::CustomElement(custom_element) => {
-                let mut custom_element = Arc::unwrap_or_clone(custom_element).into_inner();
-                custom_element.set_name(name.into());
-                custom_element.set_z_index(slide.next_z_index());
-                slide = slide.add_custom_element(custom_element);
-            }
-            Value::Grid(grid) => {
-                let mut grid = Arc::unwrap_or_clone(grid).into_inner();
-                grid.set_name(name.into());
-                grid.set_z_index(slide.next_z_index());
-                slide = slide.add_element(Element::Grid(grid));
-            }
-
-            _ => {}
-        }
+        let mut element = value.convert_to_element();
+        element.set_name(name.into());
+        element.set_z_index(slide.next_z_index());
+        slide = slide.add_element(element);
+        // match value {
+        //     Value::Label(label) => {
+        //         let mut label = Arc::unwrap_or_clone(label).into_inner();
+        //         label.set_name(name.into());
+        //         label.set_z_index(slide.next_z_index());
+        //         slide = slide.add_label(label);
+        //     }
+        //     Value::Image(image) => {
+        //         let mut image = Arc::unwrap_or_clone(image).into_inner();
+        //         image.set_name(name.into());
+        //         image.set_z_index(slide.next_z_index());
+        //         slide = slide.add_image(image);
+        //     }
+        //     Value::CustomElement(custom_element) => {
+        //         let mut custom_element = Arc::unwrap_or_clone(custom_element).into_inner();
+        //         custom_element.set_name(name.into());
+        //         custom_element.set_z_index(slide.next_z_index());
+        //         slide = slide.add_custom_element(custom_element);
+        //     }
+        //     Value::Grid(grid) => {
+        //         let mut grid = Arc::unwrap_or_clone(grid).into_inner();
+        //         grid.set_name(name.into());
+        //         grid.set_z_index(slide.next_z_index());
+        //         slide = slide.add_element();
+        //     }
+        //     Value::Flex(flex) => {
+        //         let mut flex = Arc::unwrap_or_clone(flex).into_inner();
+        //         flex.set_name(name.into());
+        //         flex.set_z_index(slide.next_z_index());
+        //         slide = slide.add_element(Element::Flex(flex));
+        //     }
+        //     _ => {}
+        // }
     }
     evaluator.slide = Some(slide);
     Ok(())
@@ -256,9 +265,12 @@ fn evaluate_post_initialization(
         let member = context.string_interner.create_or_get(&member);
         let base_type = context.type_interner.resolve(base_type).clone();
         match base_type {
-            Type::Element | Type::Label | Type::CustomElement(_) | Type::Image | Type::Grid => {
-                assign_to_slide_type(base_type, &mut base, member, value, context)
-            }
+            Type::Element
+            | Type::Label
+            | Type::CustomElement(_)
+            | Type::Image
+            | Type::Grid
+            | Type::Flex => assign_to_slide_type(base_type, &mut base, member, value, context),
             _ => {
                 todo!();
             }
@@ -433,8 +445,8 @@ fn execute_member_function(
     base: Value,
     name: String,
     mut arguments: Vec<Value>,
-    evaluator: &mut Evaluator,
-    context: &mut Context,
+    _evaluator: &mut Evaluator,
+    _context: &mut Context,
 ) -> Value {
     match base {
         Value::Grid(base) => match name.as_str() {
@@ -445,6 +457,10 @@ fn execute_member_function(
                         Arc::unwrap_or_clone(it).into_inner().into()
                     }
                     Value::Grid(it) => {
+                        it.borrow_mut().set_parent(base.borrow().id());
+                        Arc::unwrap_or_clone(it).into_inner().into()
+                    }
+                    Value::Flex(it) => {
                         it.borrow_mut().set_parent(base.borrow().id());
                         Arc::unwrap_or_clone(it).into_inner().into()
                     }
@@ -600,16 +616,6 @@ fn evaluate_user_function(
     result
 }
 
-fn extract_function_name(base: BoundNode, context: &mut Context) -> String {
-    match base.kind {
-        BoundNodeKind::VariableReference(variable) => context
-            .string_interner
-            .resolve_variable(variable.id)
-            .to_string(),
-        _ => todo!("Handle dynamic functions!"),
-    }
-}
-
 fn evaluate_conversion(
     conversion: crate::compiler::binder::Conversion,
     evaluator: &mut Evaluator,
@@ -637,7 +643,8 @@ fn evaluate_conversion(
             value @ (Value::Label(_)
             | Value::Image(_)
             | Value::CustomElement(_)
-            | Value::Grid(_)) => value,
+            | Value::Grid(_)
+            | Value::Flex(_)) => value,
             // Value::Label(label) => Value::Element(Arc::new(RefCell::new(Element::Label(
             //     Arc::unwrap_or_clone(label).into_inner(),
             // )))),

@@ -2,7 +2,7 @@ use std::{
     cell::RefCell,
     collections::HashSet,
     fmt::Display,
-    sync::{Arc, Once, OnceLock, atomic::AtomicUsize},
+    sync::{Arc, atomic::AtomicUsize},
 };
 
 use enum_dispatch::enum_dispatch;
@@ -20,6 +20,8 @@ mod custom_element;
 pub use custom_element::*;
 mod grid;
 pub use grid::*;
+mod flex;
+pub use flex::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ElementId(usize);
@@ -66,13 +68,95 @@ pub trait WebRenderable {
     }
 }
 
+impl<T: WebRenderable + Clone> WebRenderable for Arc<RefCell<T>> {
+    fn output_to_html<W: std::io::Write>(
+        self,
+        emitter: &mut PresentationEmitter<W>,
+        ctx: WebRenderableContext,
+    ) -> Result<()> {
+        Arc::unwrap_or_clone(self)
+            .into_inner()
+            .output_to_html(emitter, ctx)
+    }
+
+    fn set_parent(&mut self, parent: ElementId) {
+        self.borrow_mut().set_parent(parent);
+    }
+
+    fn parent(&self) -> Option<ElementId> {
+        self.borrow().parent()
+    }
+
+    fn id(&self) -> ElementId {
+        self.borrow().id()
+    }
+
+    fn set_name(&mut self, name: String) {
+        self.borrow_mut().set_name(name);
+    }
+
+    fn set_namespace(&mut self, namespace: String) {
+        self.borrow_mut().set_namespace(namespace);
+    }
+
+    fn element_styling(&self) -> &BaseElementStyling {
+        todo!("How would we do that?")
+        // self.borrow().element_styling()
+    }
+
+    fn element_styling_mut(&mut self) -> &mut BaseElementStyling {
+        todo!("How would we do that?")
+        // self.borrow_mut().element_styling_mut()
+    }
+
+    fn collect_google_font_references(&self, fonts: &mut HashSet<String>) -> Result<()> {
+        self.borrow().collect_google_font_references(fonts)
+    }
+
+    fn set_z_index(&mut self, z_index: usize) {
+        self.borrow_mut().set_z_index(z_index);
+    }
+}
+
 #[enum_dispatch(WebRenderable)]
 #[derive(Debug, Clone)]
 pub enum Element {
-    Image,
-    Label,
-    CustomElement,
-    Grid,
+    Image(Arc<RefCell<Image>>),
+    Label(Arc<RefCell<Label>>),
+    CustomElement(Arc<RefCell<CustomElement>>),
+    Grid(Arc<RefCell<Grid>>),
+    Flex(Arc<RefCell<Flex>>),
+    Element(Arc<RefCell<Element>>),
+}
+
+impl From<Label> for Element {
+    fn from(value: Label) -> Self {
+        Self::Label(Arc::new(RefCell::new(value)))
+    }
+}
+
+impl From<Image> for Element {
+    fn from(value: Image) -> Self {
+        Self::Image(Arc::new(RefCell::new(value)))
+    }
+}
+
+impl From<CustomElement> for Element {
+    fn from(value: CustomElement) -> Self {
+        Self::CustomElement(Arc::new(RefCell::new(value)))
+    }
+}
+
+impl From<Grid> for Element {
+    fn from(value: Grid) -> Self {
+        Self::Grid(Arc::new(RefCell::new(value)))
+    }
+}
+
+impl From<Flex> for Element {
+    fn from(value: Flex) -> Self {
+        Self::Flex(Arc::new(RefCell::new(value)))
+    }
 }
 
 // #[enum_dispatch(WebRenderable)]
@@ -82,6 +166,7 @@ pub enum ElementRefMut {
     Label(Arc<RefCell<Label>>),
     CustomElement(Arc<RefCell<CustomElement>>),
     Grid(Arc<RefCell<Grid>>),
+    Flex(Arc<RefCell<Flex>>),
 }
 
 impl ElementRefMut {
@@ -91,6 +176,7 @@ impl ElementRefMut {
             ElementRefMut::Label(it) => it.borrow().parent().is_some(),
             ElementRefMut::CustomElement(it) => it.borrow().parent().is_some(),
             ElementRefMut::Grid(it) => it.borrow().parent().is_some(),
+            ElementRefMut::Flex(it) => it.borrow().parent().is_some(),
         }
     }
 
@@ -102,6 +188,7 @@ impl ElementRefMut {
                 cb(it.borrow_mut().element_styling_mut().base_mut())
             }
             ElementRefMut::Grid(it) => cb(it.borrow_mut().element_styling_mut()),
+            ElementRefMut::Flex(it) => cb(it.borrow_mut().element_styling_mut()),
         }
     }
 
@@ -113,6 +200,7 @@ impl ElementRefMut {
                 custom_element.borrow_mut().add_styling(reference)
             }
             ElementRefMut::Grid(it) => it.borrow_mut().add_styling(reference),
+            ElementRefMut::Flex(it) => it.borrow_mut().add_styling(reference),
         }
     }
 

@@ -1,5 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, path::PathBuf, sync::Arc};
 
+use slides_rs_core::Element;
 use summum_types::summum;
 
 use crate::{
@@ -37,6 +38,7 @@ summum! {
         Color(slides_rs_core::Color),
         Label(Arc<RefCell<slides_rs_core::Label>>),
         Grid(Arc<RefCell<slides_rs_core::Grid>>),
+        Flex(Arc<RefCell<slides_rs_core::Flex>>),
         GridEntry(Arc<RefCell<slides_rs_core::GridEntry>>),
         Path(PathBuf),
         Image(Arc<RefCell<slides_rs_core::Image>>),
@@ -69,6 +71,7 @@ impl Value {
             Value::Color(_) => Type::Color,
             Value::Label(_) => Type::Label,
             Value::Grid(_) => Type::Grid,
+            Value::Flex(_) => Type::Flex,
             Value::GridEntry(_) => Type::GridEntry,
             Value::Path(_) => Type::Path,
             Value::Image(_) => Type::Image,
@@ -103,11 +106,12 @@ impl Value {
 
     pub fn convert_to_element(self) -> slides_rs_core::Element {
         match self {
-            Value::Label(element) => Arc::unwrap_or_clone(element).into_inner().into(),
-            Value::Grid(element) => Arc::unwrap_or_clone(element).into_inner().into(),
-            Value::Image(element) => Arc::unwrap_or_clone(element).into_inner().into(),
-            Value::CustomElement(element) => Arc::unwrap_or_clone(element).into_inner().into(),
-            Value::Element(element) => Arc::unwrap_or_clone(element).into_inner().into(),
+            Value::Label(element) => element.into(),
+            Value::Grid(element) => element.into(),
+            Value::Flex(element) => element.into(),
+            Value::Image(element) => element.into(),
+            Value::CustomElement(element) => element.into(),
+            Value::Element(element) => element.into(),
             _ => panic!("Cannot be converted to Element"),
         }
     }
@@ -120,6 +124,7 @@ impl Value {
                 slides_rs_core::ElementRefMut::CustomElement(custom_element.clone())
             }
             Value::Grid(grid) => slides_rs_core::ElementRefMut::Grid(grid.clone()),
+            Value::Flex(flex) => slides_rs_core::ElementRefMut::Flex(flex.clone()),
             _ => unreachable!("Self is not a base element!"),
         }
     }
@@ -127,6 +132,16 @@ impl Value {
     pub fn as_string_array(&self) -> Vec<String> {
         match self {
             Value::Array(values) => values.into_iter().map(|v| v.as_string().clone()).collect(),
+            _ => unreachable!("Value is not a string array!"),
+        }
+    }
+
+    pub fn as_element_array(&self) -> Vec<Element> {
+        match self {
+            Value::Array(values) => values
+                .into_iter()
+                .map(|v| v.clone().convert_to_element())
+                .collect(),
             _ => unreachable!("Value is not a string array!"),
         }
     }
@@ -223,5 +238,11 @@ impl From<slides_rs_core::CustomElement> for Value {
 impl From<slides_rs_core::Grid> for Value {
     fn from(value: slides_rs_core::Grid) -> Self {
         Self::Grid(Arc::new(RefCell::new(value)))
+    }
+}
+
+impl From<slides_rs_core::Flex> for Value {
+    fn from(value: slides_rs_core::Flex) -> Self {
+        Self::Flex(Arc::new(RefCell::new(value)))
     }
 }

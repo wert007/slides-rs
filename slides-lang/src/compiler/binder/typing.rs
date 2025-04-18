@@ -102,6 +102,7 @@ pub enum Type {
     Element,
     Label,
     Grid,
+    Flex,
     GridEntry,
     Image,
     Thickness,
@@ -167,6 +168,18 @@ impl Type {
             };
 
             if konst::eq_str(desc, "Array") {
+                Some(Self::Array(type_))
+            } else {
+                panic!("Invalid descriptor");
+            }
+        } else if let Some((desc, type_)) = konst::string::split_once(rust_string, '<') {
+            let type_ = konst::string::strip_suffix(type_, '>')
+                .expect("Leading < should be followed by >.");
+            let Some(type_) = Self::from_rust_string_primitive_id(type_) else {
+                return None;
+            };
+
+            if konst::eq_str(desc, "Vec") {
                 Some(Self::Array(type_))
             } else {
                 panic!("Invalid descriptor");
@@ -265,9 +278,8 @@ impl Type {
             Some(Self::GridEntry)
         } else if konst::eq_str(rust_string, "Element") {
             Some(Self::Element)
-        } else if konst::eq_str(rust_string, "SlidePercent") {
-            // TODO: Add type slide percent??
-            Some(Self::Float)
+        } else if konst::eq_str(rust_string, "Flex") {
+            Some(Self::Flex)
         } else {
             None
         }

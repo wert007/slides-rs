@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use slides_rs_core::{Color, Filter, Font, Grid, GridCellSize, Image, ImageSource, Label};
+use slides_rs_core::{
+    Color, Element, Filter, Flex, Font, Grid, GridCellSize, Image, ImageSource, Label,
+};
 
 pub fn rgb(r: i64, g: i64, b: i64) -> Color {
     Color::rgb(r as _, g as _, b as _)
@@ -58,4 +60,20 @@ type StringArray = Vec<String>;
 
 pub fn concat(value: StringArray) -> String {
     value.join("")
+}
+
+pub fn stackv(elements: Vec<Element>) -> Flex {
+    let mut result = Flex::new(elements);
+    result
+        .styling_mut()
+        .set_direction(slides_rs_core::FlexDirection::Column);
+    result
+}
+
+pub fn stackh(elements: Vec<Element>) -> Flex {
+    let mut result = Flex::new(elements);
+    result
+        .styling_mut()
+        .set_direction(slides_rs_core::FlexDirection::Row);
+    result
 }
