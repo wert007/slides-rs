@@ -314,6 +314,7 @@ fn debug_scope(name: &str, scope: &Scope, interner: &StringInterner) {
 struct Binder {
     scopes: Vec<Scope>,
     types: HashMap<SymbolUsize, TypeId>,
+    current_expected_type: Vec<TypeId>,
 }
 
 impl Binder {
@@ -329,6 +330,7 @@ impl Binder {
                     )
                 })
                 .collect(),
+            current_expected_type: Vec::new(),
         }
     }
 
@@ -399,6 +401,20 @@ impl Binder {
         }
         self.types.insert(name, type_);
         Some(name)
+    }
+
+    fn push_expected_type(&mut self, type_: TypeId) {
+        self.current_expected_type.push(type_);
+    }
+
+    fn drop_expected_type(&mut self) {
+        self.current_expected_type
+            .pop()
+            .expect("Should contain value!");
+    }
+
+    fn currently_expected_type(&self) -> Option<TypeId> {
+        self.current_expected_type.last().copied()
     }
 }
 
@@ -907,7 +923,9 @@ fn bind_binary(
     context: &mut Context,
 ) -> BoundNode {
     let lhs = bind_node(*binary.lhs, binder, context);
+    binder.push_expected_type(lhs.type_);
     let rhs = bind_node(*binary.rhs, binder, context);
+    binder.drop_expected_type();
     let operator = bind_binary_operator(binary.operator, binder, context);
     BoundNode::binary(location, lhs, operator, rhs)
 }
@@ -934,6 +952,16 @@ fn bind_array(
 ) -> BoundNode {
     let mut entries = Vec::with_capacity(array.entries.len());
     let mut inner_type = TypeId::ERROR;
+    if let Some(type_) = binder.currently_expected_type() {
+        let type_ = context.type_interner.resolve(type_);
+        if let Some(type_) = type_.try_as_array_ref() {
+            inner_type = *type_;
+        } else {
+            context
+                .diagnostics
+                .report_cannot_convert(&Type::Array(TypeId::ERROR), type_, location);
+        }
+    }
     for (entry, _) in array.entries {
         let entry = bind_node(entry, binder, context);
         if inner_type == TypeId::ERROR {
@@ -1331,7 +1359,9 @@ fn bind_typed_string(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
+    binder.push_expected_type(TypeId::STRING);
     let literal = bind_string(typed_string.string, binder, context);
+    binder.drop_expected_type();
     let type_ = typed_string.type_.text(&context.loaded_files);
     let type_ = match type_ {
         "c" => Type::Color,
@@ -1557,6 +1587,7 @@ fn bind_function_call(
         .into_iter()
         .zip(&function_type.argument_types)
     {
+        binder.push_expected_type(*type_);
         arguments.push(bind_conversion(
             bind_node(argument, binder, context),
             *type_,
@@ -1564,6 +1595,7 @@ fn bind_function_call(
             binder,
             context,
         ));
+        binder.drop_expected_type();
     }
     if !(function_type.min_argument_count..=function_type.argument_types.len())
         .contains(&arguments.len())
@@ -1584,8 +1616,10 @@ fn bind_assignment_statement(
     context: &mut Context,
 ) -> BoundNode {
     let lhs = bind_node(*assignment_statement.lhs, binder, context);
+    binder.push_expected_type(lhs.type_);
     let value = bind_node(*assignment_statement.assignment, binder, context);
     let value = bind_conversion(value, lhs.type_, ConversionKind::Implicit, binder, context);
+    binder.drop_expected_type();
     BoundNode::assignment_statement(location, lhs, value)
 }
 

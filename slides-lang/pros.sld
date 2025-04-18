@@ -181,7 +181,7 @@ slide base_problem:
         grid("*,*", "") {
             height: 0.35sh,
             children: [
-                cast grid("*", "*,min") { children: [cast two_icons("amanda", "light"): Element, l"Amanda hat das Licht"]}: Element, two_icons("wait", "bobbl")
+                grid("*", "*,min") { children: [two_icons("amanda", "light"), l"Amanda hat das Licht"]}, two_icons("wait", "bobbl")
             ]
             // width: 0.30sw,
             // halign: HAlign.Center,
