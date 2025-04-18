@@ -13,20 +13,11 @@ styling default(Label):
 
 styling default(Slide):
     background = c"#f3f3f3";
-    padding = {
-        top: 0.2sh,
-        right: 0.1sw,
-        bottom: 0.2sh,
-        left: 0.1sw,
-    };
+    padding = { top: 0.2sh, right: 0.1sw, bottom: 0.2sh, left: 0.1sw, };
 
 element image_with_caption(img: Image, caption: String):
-    img = img {
-        object_fit: ObjectFit.Cover,
-        valign: VAlign.Stretch,
-        halign: HAlign.Stretch,
-    }
-    let lbl =
+    img = img { object_fit: ObjectFit.Cover, valign: VAlign.Stretch, halign: HAlign.Stretch, }
+    let lbl = 
         label(caption) {
             valign: VAlign.Bottom,
             halign: HAlign.Right,
@@ -38,7 +29,7 @@ element image_with_caption(img: Image, caption: String):
 
 template page_number(color: Color = c"black"):
     let number = slide_index - 3;
-    let page_number =
+    let page_number = 
         l'{number}' {
             valign: VAlign.Bottom,
             halign: HAlign.Center,
@@ -48,48 +39,42 @@ template page_number(color: Color = c"black"):
         };
 
 slide code:
-    let bg =
+    let bg = 
         image_with_caption(
-            image(p"./pros-assets/code.jpg"),
+            image(p"./pros-assets/code.jpg"), 
             "Image by Christopher Kuszajewski from Pixabay");
 
 slide threads:
-    let bg =
+    let bg = 
         image_with_caption(
-            image(p"./pros-assets/threads.jpg"),
+            image(p"./pros-assets/threads.jpg"), 
             "Bild von Myriams-Fotos auf Pixabay");
 
 slide frozen:
     let bg = image_with_caption(image(p"./pros-assets/frozen.jpg"), "Bild von adege auf Pixabay");
 
 slide title:
-    let title =
+    let title = 
         l"# Einseitige Synchronisation und Deadlocks" {
             text_align: TextAlign.Center,
             font_size: 2.5,
             valign: VAlign.Bottom,
             halign: HAlign.Stretch,
-            margin: {
-                bottom: 0.50sh,
-            },
+            margin: { bottom: 0.50sh, },
         }
-    let subtitle =
+    let subtitle = 
         l"## Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
             text_align: TextAlign.Center,
             font_size: 1.3,
             valign: VAlign.Top,
             halign: HAlign.Stretch,
             text_color: c"#595959",
-            margin: {
-                top: 0.50sh,
-                left: 0.15sw,
-                right: 0.15sw,
-            },
+            margin: { top: 0.50sh, left: 0.15sw, right: 0.15sw, },
         }
 
 slide toc:
     page_number();
-    let toc =
+    let toc = 
         l"""
             # Übersicht
 
@@ -97,20 +82,17 @@ slide toc:
             2. Beispiel
             3. Einseitige Synchronisation
             4. Deadlocks
-        """ {
-        };
+        """ { };
 
 slide example:
-    let bg =
+    let bg = 
         image_with_caption(
-            image(p"./pros-assets/car-repair.jpg") {
-                filter: brightness(0.4),
-            },
+            image(p"./pros-assets/car-repair.jpg") { filter: brightness(0.4), }, 
             "Bild von emkanicepic auf Pixabay");
 
     page_number(c"white");
 
-    let text =
+    let text = 
         l"""
             # Beispiel
 
@@ -120,13 +102,11 @@ slide example:
              - Zwei Arten von Problemen
                 - Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation
                 - Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks
-        """ {
-            text_color: c"white",
-        };
+        """ { text_color: c"white", };
 
 slide one_sided_sync:
     page_number();
-    let text =
+    let text = 
         l"""
             # Einseitige Synchronisation
 
@@ -139,68 +119,46 @@ slide one_sided_sync:
         """;
 
 element two_icons(icon1: String, icon2: String):
-    let img1 =
+    let img1 = 
         image(p'./pros-assets/{icon1}.png') {
-            margin: {
-                right: 50%,
-            },
+            margin: { right: 50%, },
             halign: HAlign.Right,
             valign: VAlign.Stretch,
         };
-    let img2 =
+    let img2 = 
         image(p'./pros-assets/{icon2}.png') {
             halign: HAlign.Left,
-            margin: {
-                left: 50%,
-            },
+            margin: { left: 50%, },
             valign: VAlign.Stretch,
         };
-
-element four_icons(left: TwoIcons, right: TwoIcons):
-    left = left {
-        width: 50%,
-        margin: {
-            right: 50%,
-        },
-        halign: HAlign.Right,
-        valign: VAlign.Stretch,
-    };
-
-    right = right {
-        width: 50%,
-        halign: HAlign.Left,
-        margin: {
-            left: 50%,
-        },
-        valign: VAlign.Stretch,
-    };
 
 slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
-    let icons =
+    let icons = 
         grid("*", "min,*") {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: {
-                left: 0.10sw,
-                top: 0.20sh,
-                right: 0.10sw,
-                bottom: 0.20sh,
-            },
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
         };
     // title.column_span = 3;
-    let row =
+    let row = 
         grid("*,*", "*") {
             height: 0.35sh,
-            children: [
+            children: [ 
                 grid("*", "*,min") {
-                    children: [ two_icons("amanda", "light"), l"Amanda hat das Licht" ],
-                },
-                two_icons("wait", "bobbl")
-
+                    children: [ 
+                        two_icons("amanda", "light"), 
+                        l"Amanda hat das Licht" { text_align: TextAlign.Center, }, 
+                    ],
+                }, 
+                grid("*", "*,min") {
+                    children: [ 
+                        two_icons("wait", "bobbl"), 
+                        l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, }, 
+                    ],
+                }
             ],
-        // width: 0.30sw,
         };
     icons.add(title);
     icons.add(row);

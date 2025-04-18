@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    Context, Location,
+    Context, Files, Location,
     compiler::{
         self, DebugLang,
         evaluator::Value,
@@ -13,6 +13,28 @@ use crate::{
         parser::{SyntaxNodeKind, debug_ast},
     },
 };
+
+fn char_windows<'a>(src: &'a str, win_size: usize) -> impl Iterator<Item = &'a str> {
+    src.char_indices().flat_map(move |(from, _)| {
+        src[from..]
+            .char_indices()
+            .skip(win_size - 1)
+            .next()
+            .map(|(to, c)| &src[from..from + to + c.len_utf8()])
+    })
+}
+
+fn calculate_minimum_length(location: Location, files: &Files) -> usize {
+    let mut difference = 0;
+    let base = location.length;
+    for window in char_windows(&files[location], 2) {
+        match window {
+            "  " | "\n " | " \n" => difference += 1,
+            _ => {}
+        }
+    }
+    base - difference
+}
 
 #[derive(Debug, Clone, Copy, Default)]
 struct TokenConfig {
@@ -375,7 +397,10 @@ fn format_binary<W: Write + fmt::Debug>(
 ) -> std::result::Result<(), std::io::Error> {
     format_node(*binary.lhs, formatter, context)?;
     let new_line = formatter.available_space()
-        < Location::combine(binary.operator.location, binary.rhs.location).length;
+        < calculate_minimum_length(
+            Location::combine(binary.operator.location, binary.rhs.location),
+            &context.loaded_files,
+        );
     formatter.indent += 4;
     if new_line {
         formatter.ensure_indented_line()?;
@@ -397,7 +422,10 @@ fn format_array<W: Write + fmt::Debug>(
     context: &mut Context,
 ) -> std::result::Result<(), std::io::Error> {
     let split = formatter.available_space()
-        < Location::combine(array.lbracket.location, array.rbracket.location).length;
+        < calculate_minimum_length(
+            Location::combine(array.lbracket.location, array.rbracket.location),
+            &context.loaded_files,
+        );
     formatter.emit_token(
         array.lbracket,
         &context.loaded_files,
@@ -414,14 +442,15 @@ fn format_array<W: Write + fmt::Debug>(
         }
     }
     formatter.indent -= 4;
-    formatter.ensure_space()?;
+    if split {
+        formatter.ensure_new_line()?;
+    } else {
+        formatter.ensure_space()?;
+    }
     formatter.emit_token(
         array.rbracket,
         &context.loaded_files,
-        TokenConfig {
-            leading_blank_line: split,
-            ..Default::default()
-        },
+        TokenConfig::default(),
     )?;
     Ok(())
 }
@@ -613,8 +642,17 @@ fn format_dict<W: Write + fmt::Debug>(
     formatter: &mut Formatter<W>,
     context: &mut Context,
 ) -> Result<()> {
+    let split = formatter.available_space()
+        < calculate_minimum_length(
+            Location::combine(dict.lbrace.location, dict.rbrace.location),
+            &context.loaded_files,
+        );
     formatter.emit_token(dict.lbrace, &context.loaded_files, TokenConfig::default())?;
-    formatter.ensure_new_line()?;
+    if split {
+        formatter.ensure_new_line()?;
+    } else {
+        formatter.ensure_space()?;
+    }
     formatter.indent += 4;
     for (entry, comma) in dict.entries {
         format_node(entry, formatter, context)?;
@@ -622,7 +660,11 @@ fn format_dict<W: Write + fmt::Debug>(
             Some(it) => formatter.emit_token(it, &context.loaded_files, TokenConfig::default())?,
             None => write!(formatter, ",")?,
         }
-        formatter.ensure_new_line()?;
+        if split {
+            formatter.ensure_new_line()?;
+        } else {
+            formatter.ensure_space()?;
+        }
     }
     formatter.indent -= 4;
     formatter.emit_token(dict.rbrace, &context.loaded_files, TokenConfig::default())?;
@@ -798,15 +840,17 @@ fn format_function_call<W: Write + fmt::Debug>(
         TokenConfig::default(),
     )?;
     let split = formatter.available_space()
-        < Location::combine(
-            function_call
-                .arguments
-                .first()
-                .map(|(a, _)| a.location)
-                .unwrap_or(function_call.rparen.location),
-            function_call.rparen.location,
-        )
-        .length;
+        < calculate_minimum_length(
+            Location::combine(
+                function_call
+                    .arguments
+                    .first()
+                    .map(|(a, _)| a.location)
+                    .unwrap_or(function_call.rparen.location),
+                function_call.rparen.location,
+            ),
+            &context.loaded_files,
+        );
     let arguments_count = function_call.arguments.len();
     formatter.indent += 4;
     for (i, (argument, comma)) in function_call.arguments.into_iter().enumerate() {

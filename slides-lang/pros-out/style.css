@@ -405,11 +405,22 @@ ol {
 
 #base_problem-icons-grid-27-grid-28-label-32 {
 }
-#base_problem-icons-grid-27--35 {
+#base_problem-icons-grid-27-grid-28-label-32, #base_problem-icons-grid-27-grid-28-label-32 .label-text {
+    text-align: center;
 }
-#base_problem-icons-grid-27--img1 {
+
+#base_problem-icons-grid-27-grid-33 {
 }
-#base_problem-icons-grid-27--img1 {
+#base_problem-icons-grid-27-grid-33 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr min-content;
+}
+
+#base_problem-icons-grid-27-grid-33--36 {
+}
+#base_problem-icons-grid-27-grid-33--img1 {
+}
+#base_problem-icons-grid-27-grid-33--img1 {
     top: 0px;
     bottom: 0px;
     height: 100%;
@@ -417,14 +428,20 @@ ol {
     left: unset;
 }
 
-#base_problem-icons-grid-27--img2 {
+#base_problem-icons-grid-27-grid-33--img2 {
 }
-#base_problem-icons-grid-27--img2 {
+#base_problem-icons-grid-27-grid-33--img2 {
     top: 0px;
     bottom: 0px;
     height: 100%;
     left: 50%;
     right: unset;
+}
+
+#base_problem-icons-grid-27-grid-33-label-37 {
+}
+#base_problem-icons-grid-27-grid-33-label-37, #base_problem-icons-grid-27-grid-33-label-37 .label-text {
+    text-align: center;
 }
 
 .label .label-text {
