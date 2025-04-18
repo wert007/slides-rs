@@ -141,21 +141,27 @@ slide one_sided_sync:
 element two_icons(icon1: String, icon2: String):
     let img1 =
         image(p'./pros-assets/{icon1}.png') {
-        margin: {right: 50%},
-        halign: HAlign.Right,
+            margin: {
+                right: 50%,
+            },
+            halign: HAlign.Right,
             valign: VAlign.Stretch,
         };
     let img2 =
         image(p'./pros-assets/{icon2}.png') {
-        halign: HAlign.Left,
-        margin: {left: 50%},
+            halign: HAlign.Left,
+            margin: {
+                left: 50%,
+            },
             valign: VAlign.Stretch,
         };
 
 element four_icons(left: TwoIcons, right: TwoIcons):
     left = left {
         width: 50%,
-        margin: {right: 50%},
+        margin: {
+            right: 50%,
+        },
         halign: HAlign.Right,
         valign: VAlign.Stretch,
     };
@@ -163,7 +169,9 @@ element four_icons(left: TwoIcons, right: TwoIcons):
     right = right {
         width: 50%,
         halign: HAlign.Left,
-        margin: {left: 50%},
+        margin: {
+            left: 50%,
+        },
         valign: VAlign.Stretch,
     };
 
@@ -174,17 +182,26 @@ slide base_problem:
         grid("*", "min,*") {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: {left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh},
+            margin: {
+                left: 0.10sw,
+                top: 0.20sh,
+                right: 0.10sw,
+                bottom: 0.20sh,
+            },
         };
     // title.column_span = 3;
     let row =
         grid("*,*", "*") {
             height: 0.35sh,
             children: [
-                grid("*", "*,min") { children: [two_icons("amanda", "light"), l"Amanda hat das Licht"]}, two_icons("wait", "bobbl")
-            ]
-            // width: 0.30sw,
-            // halign: HAlign.Center,
+                grid("*", "*,min") {
+                    children: [ two_icons("amanda", "light"), l"Amanda hat das Licht" ],
+                },
+                two_icons("wait", "bobbl")
+
+            ],
+        // width: 0.30sw,
         };
     icons.add(title);
     icons.add(row);
+
