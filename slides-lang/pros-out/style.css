@@ -105,8 +105,8 @@ ol {
     position: relative;
 }
 
-.flex {
-    display: flex;
+.flex>.label {
+    flex-basis: content;
 }
 
 .horizontal-center {
@@ -372,7 +372,7 @@ ol {
 }
 
 #base_problem-content-flex-36 {
-    height: calc(0.35 * var(--slide-height));
+    height: 50%;
 }
 
 #base_problem-content-flex-36 {

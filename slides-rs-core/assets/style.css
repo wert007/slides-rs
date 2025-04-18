@@ -105,8 +105,8 @@ ol {
     position: relative;
 }
 
-.flex {
-    display: flex;
+.flex>.label {
+    flex-basis: content;
 }
 
 .horizontal-center {

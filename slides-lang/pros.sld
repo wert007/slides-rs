@@ -166,7 +166,7 @@ slide base_problem:
                 two_icons("wait", "bobbl"),
                 l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
             ]);
-    let row = stackh([ amanda, bobbl ]) { height: 0.35sh, };
+    let row = stackh([ amanda, bobbl ]) { height: 50% };
     let content =
         stackv([title, row]) {
             halign: HAlign.Stretch,
