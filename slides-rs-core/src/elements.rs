@@ -8,7 +8,7 @@ use std::{
 use enum_dispatch::enum_dispatch;
 
 use crate::{
-    BaseElementStyling, Result, StyleUnit, StylingReference, ToCssLayout,
+    BaseElementStyling, Result, StyleUnit, StylingReference, ToCssLayout, animations::Animation,
     output::PresentationEmitter,
 };
 
@@ -41,9 +41,10 @@ impl Display for ElementId {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct WebRenderableContext {
     pub layout: ToCssLayout,
+    pub slide_name: String,
 }
 
 #[enum_dispatch]
@@ -238,5 +239,15 @@ impl ElementRefMut {
 
     pub fn set_filter(&mut self, value: crate::Filter) {
         self.apply_to_base_element_styling(|base| base.set_filter(value));
+    }
+
+    pub fn set_animations(&mut self, value: Vec<Animation>) {
+        match self {
+            ElementRefMut::Image(it) => it.borrow_mut().animations = value,
+            ElementRefMut::Label(it) => it.borrow_mut().animations = value,
+            ElementRefMut::CustomElement(it) => it.borrow_mut().animations = value,
+            ElementRefMut::Grid(it) => it.borrow_mut().animations = value,
+            ElementRefMut::Flex(it) => it.borrow_mut().animations = value,
+        }
     }
 }

@@ -119,40 +119,33 @@ slide one_sided_sync:
         """;
 
 element icon(name: String):
-    let icon = image(p'./pros-assets/{name}.png') {
-        width: 100%,
-        height: 100%,
-    };
+    let icon = image(p'./pros-assets/{name}.png') { width: 100%, height: 100%, };
 
 element two_icons(icon1: String, icon2: String, size: StyleUnit = 30%):
-    let body = stackh([
-        icon(icon1) {
-            width: size
-        },
-        icon(icon2) {
-            width: size,
-        },
-    ]) {
-        width: 100%,
-        height: 100%,
-    };
+    let body =
+        stackh([ icon(icon1) { width: size, }, icon(icon2) { width: size, }, ]) {
+            width: 100%,
+            height: 100%,
+        };
 
 slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
     let amanda =
-        stackv([
-            two_icons("amanda", "light", 50%),
-            l"Amanda hat das Licht" { text_align: TextAlign.Center, },
-        ]);
+        stackv(
+            [
+                two_icons("amanda", "light", 50%),
+                l"Amanda hat das Licht" { text_align: TextAlign.Center, },
+            ]);
     let bobbl =
-        stackv([
-            two_icons("wait", "bobbl", 50%),
-            l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
-        ]);
-    let row = stackh([ amanda, bobbl ]) { height: 50% };
+        stackv(
+            [
+                two_icons("wait", "bobbl", 50%),
+                l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
+            ]);
+    let row = stackh([ amanda, bobbl ]) { height: 50%, };
     let content =
-        stackv([title, row]) {
+        stackv([ title, row ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
             margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
@@ -162,14 +155,99 @@ element empty():
     // Not sure how well we support empty statements
     let i = 42;
 
-slide continous_checking_1:
+slide continous_checking:
+    steps = 3;
     page_number();
     let title = l"# Ständiges Überprüfen";
-    let row1 = stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) { height: 30% };
-    let row2 = stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) { height: 30% };
-    let row3 = stackh([ stackh([icon('amanda'), empty()]), two_icons('light', 'bobbl') ]) { height: 30% };
+    let row1 =
+        stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
+            height: 30%,
+            animations: [ showAfterStep(1) ],
+        };
+    let row2 =
+        stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
+            height: 30%,
+            animations: [ showAfterStep(2) ],
+        };
+    let row3 =
+        stackh([ stackh([ icon('amanda'), empty() ]), two_icons('light', 'bobbl') ]) {
+            height: 30%,
+            animations: [ showAfterStep(3) ],
+        };
     let content =
-        stackv([title, row1, row2, row3]) {
+        stackv([ title, row1, row2, row3 ]) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+        };
+
+slide occasional_checking_1:
+    steps = 3;
+    page_number();
+    let title = l"# Getaktetes Überprüfen";
+    let row1 =
+        stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
+            height: 30%,
+            animations: [ showAfterStep(1) ],
+        };
+    let row2 =
+        stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) {
+            height: 30%,
+            animations: [ showAfterStep(2) ],
+        };
+    let row3 =
+        stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
+            height: 30%,
+            animations: [ showAfterStep(3) ],
+        };
+    let content =
+        stackv([ title, row1, row2, row3 ]) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+        };
+
+slide occasional_checking_2:
+    steps = 2;
+    page_number();
+    let title = l"# Getaktetes Überprüfen";
+    let row1 =
+        stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
+            height: 30%,
+        };
+    let row2 =
+        stackh([ icon('amanda'), icon('light'), two_icons('wait', 'bobbl') ]) {
+            height: 30%,
+        };
+    let row3 =
+        stackh([ stackh([ icon('amanda'), empty() ]), two_icons('light', 'bobbl') ]) {
+            height: 30%,
+            animations: [ showAfterStep(1) ],
+        };
+    let content =
+        stackv([ title, row1, row2, row3 ]) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+        };
+
+slide checking_when_requested:
+    page_number();
+    let title = l"# Überprüfen auf Anfrage";
+    let row1 =
+        stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
+            height: 30%,
+        };
+    let row2 =
+        stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) {
+            height: 30%,
+        };
+    let row3 =
+        stackh([ empty(),empty(), icon('amanda') { height: 100% }, icon('light') { height: 100% }, icon('bobbl') { height: 100% }, empty() ]) {
+            height: 30%,
+        };
+    let content =
+        stackv([ title, row1, row2, row3 ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
             margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },

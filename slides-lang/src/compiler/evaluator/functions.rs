@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use slides_rs_core::{
     Color, Element, Filter, Flex, Font, Grid, GridCellSize, Image, ImageSource, Label,
+    animations::{Animation, AnimationValue, Trigger},
 };
 
 pub fn rgb(r: i64, g: i64, b: i64) -> Color {
@@ -76,4 +77,12 @@ pub fn stackh(elements: Vec<Element>) -> Flex {
         .styling_mut()
         .set_direction(slides_rs_core::FlexDirection::Row);
     result
+}
+
+#[allow(non_snake_case)]
+pub fn showAfterStep(step: i64) -> Animation {
+    Animation {
+        trigger: Trigger::StepReached(step as _),
+        value: AnimationValue::ClassRemoval("invisible".into()),
+    }
 }

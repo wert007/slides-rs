@@ -2,7 +2,8 @@
 
 use constcat::concat_slices;
 use slides_rs_core::{
-    BaseElementStyling, FlexStyling, GridEntry, GridStyling, HorizontalAlignment, ImageStyling, LabelStyling, ObjectFit, SlideStyling, SlidesEnum, TextAlign, TextStyling, VerticalAlignment
+    BaseElementStyling, FlexStyling, GridEntry, GridStyling, HorizontalAlignment, ImageStyling,
+    LabelStyling, ObjectFit, SlideStyling, SlidesEnum, TextAlign, TextStyling, VerticalAlignment,
 };
 
 include!(concat!(env!("OUT_DIR"), "/global_functions.rs"));
@@ -66,14 +67,14 @@ macro_rules! default_element {
             MemberDeclarations::rename::<BaseElementStyling>($name),
             MemberDeclarations {
                 name: $name,
-                members_names: &["styles"],
-                members_rust_types: &["Array:StyleReference",],
+                members_names: &["styles", "animations"],
+                members_rust_types: &["Array:StyleReference", "Array:Animation"],
             }
         )
     };
 }
 
-pub const MEMBERS: [MemberDeclarations; 14] = [
+pub const MEMBERS: [MemberDeclarations; 15] = [
     MemberDeclarations::rename::<TextStyling>("TextStyling"),
     MemberDeclarations::rename::<LabelStyling>("Label"),
     default_element!("Label"),
@@ -82,6 +83,11 @@ pub const MEMBERS: [MemberDeclarations; 14] = [
     default_element!("Element"),
     MemberDeclarations::rename::<SlideStyling>("Slide"),
     default_element!("Slide"),
+    MemberDeclarations {
+        name: "Slide",
+        members_names: &["steps"],
+        members_rust_types: &["usize"],
+    },
     MemberDeclarations::rename::<GridStyling>("Grid"),
     default_element!("Grid"),
     MemberDeclarations {

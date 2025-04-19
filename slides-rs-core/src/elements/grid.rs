@@ -4,7 +4,7 @@ use struct_field_names_as_array::FieldNamesAsSlice;
 
 use crate::{
     BaseElementStyling, ElementStyling, GridCellSize, GridStyling, Result, StylingReference, ToCss,
-    output::PresentationEmitter,
+    animations::Animation, output::PresentationEmitter,
 };
 
 use super::{Element, ElementId, WebRenderable, WebRenderableContext};
@@ -33,6 +33,7 @@ pub struct Grid {
     element_grid_data: Vec<Arc<RefCell<GridEntry>>>,
     styling: ElementStyling<GridStyling>,
     stylings: Vec<StylingReference>,
+    pub animations: Vec<Animation>,
 }
 
 impl Grid {
@@ -46,6 +47,7 @@ impl Grid {
             element_grid_data: Vec::new(),
             styling: GridStyling::new(columns, rows),
             stylings: Vec::new(),
+            animations: Vec::new(),
         }
     }
 
@@ -79,7 +81,7 @@ impl WebRenderable for Grid {
     ) -> Result<()> {
         let id = format!("{}-{}", self.namespace, self.name());
         self.styling
-            .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
+            .to_css_rule(ctx.layout.clone(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(emitter.raw_html(), "<div id=\"{id}\" class=\"grid\">")?;
         for (mut element, data) in self.children.into_iter().zip(self.element_grid_data) {
             let grid_data = Arc::unwrap_or_clone(data).into_inner();
@@ -87,7 +89,7 @@ impl WebRenderable for Grid {
             // element.set_fallback_id(index.to_string());
 
             ctx.layout.grid_data = Some(grid_data);
-            element.output_to_html(emitter, ctx)?;
+            element.output_to_html(emitter, ctx.clone())?;
         }
         writeln!(emitter.raw_html(), "</div>")?;
 

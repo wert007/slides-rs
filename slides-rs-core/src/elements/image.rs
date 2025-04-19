@@ -1,7 +1,8 @@
 use std::{fmt::Display, path::PathBuf};
 
 use crate::{
-    ElementStyling, ImageStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
+    ElementStyling, ImageStyling, Result, StylingReference, ToCss, animations::Animation,
+    output::PresentationEmitter,
 };
 
 use super::{ElementId, WebRenderable, WebRenderableContext};
@@ -15,6 +16,7 @@ pub struct Image {
     source: ImageSource,
     styling: ElementStyling<ImageStyling>,
     stylings: Vec<StylingReference>,
+    pub animations: Vec<Animation>,
 }
 
 #[derive(Debug, Clone)]
@@ -53,6 +55,7 @@ impl Image {
             source,
             styling: ImageStyling::new(),
             stylings: Vec::new(),
+            animations: Vec::new(),
         }
     }
     pub fn with_element_styling(mut self, styling: ElementStyling<ImageStyling>) -> Self {

@@ -18,6 +18,7 @@ pub use output::PresentationEmitter;
 pub use styling::*;
 mod elements;
 pub use elements::*;
+pub mod animations;
 mod output;
 
 #[allow(dead_code)]
@@ -158,6 +159,7 @@ pub struct Slide {
     elements: Vec<Element>,
     styling: ElementStyling<SlideStyling>,
     current_z_index: usize,
+    step_count: usize,
 }
 
 impl Slide {
@@ -168,6 +170,7 @@ impl Slide {
             elements: Vec::new(),
             styling: SlideStyling::new(),
             current_z_index: 0,
+            step_count: 0,
         }
     }
 
@@ -190,7 +193,11 @@ impl Slide {
         let id = self.id.expect("id should have been set here!");
         self.styling
             .to_css_rule(ToCssLayout::unknown(), &format!("#{id}"), emitter.raw_css())?;
-        writeln!(emitter.raw_html(), "<section id=\"{id}\" class=\"slide\">")?;
+        writeln!(
+            emitter.raw_html(),
+            "<section id=\"{id}\" class=\"slide\" data-step-count={}>",
+            self.step_count
+        )?;
         for mut element in self.elements {
             element.set_namespace(id.clone());
             element.output_to_html(
@@ -199,7 +206,9 @@ impl Slide {
                     layout: ToCssLayout {
                         outer_padding: self.styling.base().padding,
                         grid_data: None,
+                        animation_init_values: Vec::new(),
                     },
+                    slide_name: id.clone(),
                 },
             )?;
         }
@@ -241,5 +250,9 @@ impl Slide {
     pub fn add_element(mut self, element: Element) -> Slide {
         self.elements.push(element);
         self
+    }
+
+    pub fn set_step_count(&mut self, step_count: usize) {
+        self.step_count = step_count;
     }
 }

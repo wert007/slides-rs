@@ -117,8 +117,8 @@ impl ToCss for DynamicElementStyling {
         selector: &str,
         w: &mut dyn Write,
     ) -> std::io::Result<()> {
-        self.base.to_css_rule(layout, selector, w)?;
-        self.specific.to_css_rule(layout, selector, w)?;
+        self.base.to_css_rule(layout.clone(), selector, w)?;
+        self.specific.to_css_rule(layout.clone(), selector, w)?;
         Ok(())
     }
     fn to_css_style(&self, _layout: ToCssLayout) -> String {
@@ -163,6 +163,7 @@ pub struct BaseElementStyling {
     pub filter: Filter,
     pub width: StyleUnit,
     pub height: StyleUnit,
+    pub is_visible: bool,
     z_index: Option<usize>,
 }
 
@@ -387,16 +388,18 @@ impl<S: ToCss + 'static> ElementStyling<S> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ToCssLayout {
     pub outer_padding: Thickness,
     pub grid_data: Option<GridEntry>,
+    pub animation_init_values: Vec<(String, String)>,
 }
 impl ToCssLayout {
     pub(crate) fn unknown() -> ToCssLayout {
         Self {
             outer_padding: Thickness::default(),
             grid_data: None,
+            animation_init_values: Vec::new(),
         }
     }
 
@@ -423,10 +426,17 @@ impl<S: ToCss> ToCss for ElementStyling<S> {
             if grid_data.row_span != 1 {
                 writeln!(w, "    grid-row: span {};", grid_data.row_span)?;
             }
-            writeln!(w, "}}")?;
+            writeln!(w, "}}\n")?;
         }
-        self.base.to_css_rule(layout, selector, w)?;
-        self.specific.to_css_rule(layout, selector, w)?;
+        self.base.to_css_rule(layout.clone(), selector, w)?;
+        self.specific.to_css_rule(layout.clone(), selector, w)?;
+        if !layout.animation_init_values.is_empty() {
+            writeln!(w, "{selector} {{")?;
+            for (field, value) in layout.animation_init_values {
+                writeln!(w, "    {field}: {value};")?;
+            }
+            writeln!(w, "}}\n")?;
+        }
         Ok(())
     }
     fn to_css_style(&self, _layout: ToCssLayout) -> String {

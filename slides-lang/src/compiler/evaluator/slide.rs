@@ -38,6 +38,10 @@ pub fn evaluate_to_slide(
                 slide.styling_mut().set_text_color(value.into_color());
                 continue;
             }
+            "steps" => {
+                slide.set_step_count(value.into_integer() as usize);
+                continue;
+            }
             "padding" => {
                 slide
                     .styling_mut()
@@ -47,47 +51,16 @@ pub fn evaluate_to_slide(
             }
             _ => {}
         }
-        if value.as_mut_base_element().has_parent() {
+        let Some(mut element) = value.try_convert_to_element() else {
+            continue;
+        };
+        if element.parent().is_some() {
             // Is already displayed as part of another element.
             continue;
         }
-        let mut element = value.convert_to_element();
         element.set_name(name.into());
         element.set_z_index(slide.next_z_index());
         slide = slide.add_element(element);
-        // match value {
-        //     Value::Label(label) => {
-        //         let mut label = Arc::unwrap_or_clone(label).into_inner();
-        //         label.set_name(name.into());
-        //         label.set_z_index(slide.next_z_index());
-        //         slide = slide.add_label(label);
-        //     }
-        //     Value::Image(image) => {
-        //         let mut image = Arc::unwrap_or_clone(image).into_inner();
-        //         image.set_name(name.into());
-        //         image.set_z_index(slide.next_z_index());
-        //         slide = slide.add_image(image);
-        //     }
-        //     Value::CustomElement(custom_element) => {
-        //         let mut custom_element = Arc::unwrap_or_clone(custom_element).into_inner();
-        //         custom_element.set_name(name.into());
-        //         custom_element.set_z_index(slide.next_z_index());
-        //         slide = slide.add_custom_element(custom_element);
-        //     }
-        //     Value::Grid(grid) => {
-        //         let mut grid = Arc::unwrap_or_clone(grid).into_inner();
-        //         grid.set_name(name.into());
-        //         grid.set_z_index(slide.next_z_index());
-        //         slide = slide.add_element();
-        //     }
-        //     Value::Flex(flex) => {
-        //         let mut flex = Arc::unwrap_or_clone(flex).into_inner();
-        //         flex.set_name(name.into());
-        //         flex.set_z_index(slide.next_z_index());
-        //         slide = slide.add_element(Element::Flex(flex));
-        //     }
-        //     _ => {}
-        // }
     }
     evaluator.slide = Some(slide);
     Ok(())
@@ -333,6 +306,14 @@ fn assign_to_slide_type(
         }
         "filter" => {
             base.as_mut_base_element().set_filter(value.into_filter());
+        }
+        "animations" => {
+            let animations = value
+                .into_array()
+                .into_iter()
+                .map(|v| v.into_animation())
+                .collect();
+            base.as_mut_base_element().set_animations(animations);
         }
         "styles" => {
             for value in value.into_array() {

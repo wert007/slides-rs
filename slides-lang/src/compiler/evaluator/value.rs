@@ -54,6 +54,7 @@ summum! {
         Thickness(slides_rs_core::Thickness),
         Array(Vec<Value>),
         Filter(slides_rs_core::Filter),
+        Animation(slides_rs_core::animations::Animation),
         TextStyling(Arc<RefCell<slides_rs_core::TextStyling>>),
         Element(Arc<RefCell<slides_rs_core::Element>>),
     }
@@ -89,6 +90,7 @@ impl Value {
             Value::Filter(_) => Type::Filter,
             Value::TextStyling(_) => Type::TextStyling,
             Value::Element(_) => Type::Element,
+            Value::Animation(_) => Type::Animation,
         }
     }
 

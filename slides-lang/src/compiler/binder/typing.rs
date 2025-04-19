@@ -25,13 +25,15 @@ impl TypeId {
     pub const ERROR: TypeId = TypeId(0);
     pub const VOID: TypeId = TypeId(1);
     pub const INTEGER: TypeId = TypeId(3);
-    pub const STRING: TypeId = TypeId(4);
-    pub const DICT: TypeId = TypeId(5);
-    pub const PATH: TypeId = TypeId(6);
-    pub const STYLING: TypeId = TypeId(7);
-    pub const BACKGROUND: TypeId = TypeId(8);
-    pub const COLOR: TypeId = TypeId(9);
-    pub const ELEMENT: TypeId = TypeId(17);
+    pub const BOOL: TypeId = TypeId(4);
+    pub const STRING: TypeId = TypeId(5);
+    pub const DICT: TypeId = TypeId(6);
+    pub const PATH: TypeId = TypeId(7);
+    pub const STYLING: TypeId = TypeId(8);
+    pub const BACKGROUND: TypeId = TypeId(9);
+    pub const COLOR: TypeId = TypeId(10);
+    pub const ELEMENT: TypeId = TypeId(18);
+    pub const ANIMATION: TypeId = TypeId(27);
 }
 
 pub struct TypeInterner {
@@ -45,6 +47,7 @@ impl TypeInterner {
         debug_assert_eq!(result.get_or_intern(Type::Error), TypeId::ERROR);
         debug_assert_eq!(result.get_or_intern(Type::Void), TypeId::VOID);
         debug_assert_eq!(result.get_or_intern(Type::Integer), TypeId::INTEGER);
+        debug_assert_eq!(result.get_or_intern(Type::Bool), TypeId::BOOL);
         debug_assert_eq!(result.get_or_intern(Type::String), TypeId::STRING);
         debug_assert_eq!(result.get_or_intern(Type::DynamicDict), TypeId::DICT);
         debug_assert_eq!(result.get_or_intern(Type::Path), TypeId::PATH);
@@ -52,6 +55,7 @@ impl TypeInterner {
         debug_assert_eq!(result.get_or_intern(Type::Background), TypeId::BACKGROUND);
         debug_assert_eq!(result.get_or_intern(Type::Color), TypeId::COLOR);
         debug_assert_eq!(result.get_or_intern(Type::Element), TypeId::ELEMENT);
+        debug_assert_eq!(result.get_or_intern(Type::Animation), TypeId::ANIMATION);
         result
     }
 
@@ -84,6 +88,7 @@ pub enum Type {
     Void,
     Float,
     Integer,
+    Bool,
     String,
     DynamicDict,
     Path,
@@ -111,6 +116,7 @@ pub enum Type {
     Array(TypeId),
     Filter,
     TextStyling,
+    Animation,
 }
 
 impl Type {
@@ -226,6 +232,8 @@ impl Type {
             Some(TypeId::ELEMENT)
         } else if konst::eq_str(rust_string, "StyleReference") {
             Some(TypeId::STYLING)
+        } else if konst::eq_str(rust_string, "Animation") {
+            Some(TypeId::ANIMATION)
         } else {
             None
         }
@@ -236,6 +244,8 @@ impl Type {
             Some(Self::Void)
         } else if konst::eq_str(rust_string, "f64") {
             Some(Self::Float)
+        } else if konst::eq_str(rust_string, "bool") {
+            Some(Self::Bool)
         } else if konst::eq_str(rust_string, "i64") {
             Some(Self::Integer)
         } else if konst::eq_str(rust_string, "String") {
@@ -272,6 +282,8 @@ impl Type {
             Some(Self::Integer)
         } else if konst::eq_str(rust_string, "Filter") {
             Some(Self::Filter)
+        } else if konst::eq_str(rust_string, "Animation") {
+            Some(Self::Animation)
         } else if konst::eq_str(rust_string, "TextStyling") {
             Some(Self::TextStyling)
         } else if konst::eq_str(rust_string, "GridEntry") {

@@ -114,3 +114,8 @@ ol {
     justify-content: center;
     width: 100%;
 }
+
+
+.invisible {
+    display: none;
+}

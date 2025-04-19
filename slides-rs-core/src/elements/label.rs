@@ -1,7 +1,8 @@
 use std::fmt::Display;
 
 use crate::{
-    ElementStyling, LabelStyling, Result, StylingReference, ToCss, output::PresentationEmitter,
+    ElementStyling, LabelStyling, Result, StylingReference, ToCss, animations::Animation,
+    output::PresentationEmitter,
 };
 
 use super::{ElementId, WebRenderable, WebRenderableContext};
@@ -44,6 +45,7 @@ pub struct Label {
     text: FormattedText,
     styling: ElementStyling<LabelStyling>,
     stylings: Vec<StylingReference>,
+    pub animations: Vec<Animation>,
 }
 
 impl WebRenderable for Label {
@@ -116,6 +118,7 @@ impl Label {
             text: text.into(),
             styling: LabelStyling::new(),
             stylings: Vec::new(),
+            animations: Vec::new(),
         }
     }
 

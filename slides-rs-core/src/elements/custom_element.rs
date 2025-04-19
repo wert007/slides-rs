@@ -1,6 +1,9 @@
 use std::io::Write;
 
-use crate::{ElementStyling, Result, StylingReference, ToCss, output::PresentationEmitter};
+use crate::{
+    ElementStyling, Result, StylingReference, ToCss, animations::Animation,
+    output::PresentationEmitter,
+};
 
 use super::{Element, ElementId, WebRenderable, WebRenderableContext};
 
@@ -14,6 +17,7 @@ pub struct CustomElement {
     stylings: Vec<StylingReference>,
     type_name: String,
     children: Vec<Element>,
+    pub animations: Vec<Animation>,
 }
 impl CustomElement {
     pub fn new(type_name: impl Into<String>, children: Vec<Element>) -> Self {
@@ -26,6 +30,7 @@ impl CustomElement {
             children,
             styling: ElementStyling::new_base(),
             stylings: Vec::new(),
+            animations: Vec::new(),
         }
     }
     pub fn type_name(&self) -> &str {
@@ -67,7 +72,7 @@ impl WebRenderable for CustomElement {
     ) -> Result<()> {
         let id = format!("{}-{}", self.namespace, self.name());
         self.styling
-            .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
+            .to_css_rule(ctx.layout.clone(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(
             emitter.raw_html(),
             "<div id=\"{id}\" class=\"custom-element {} {}\">",
@@ -78,7 +83,7 @@ impl WebRenderable for CustomElement {
                 .collect::<String>(),
         )?;
         for element in self.children {
-            element.output_to_html(emitter, ctx)?;
+            element.output_to_html(emitter, ctx.clone())?;
         }
         writeln!(emitter.raw_html(), "</div>")?;
         Ok(())
