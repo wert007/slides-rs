@@ -105,15 +105,19 @@ impl Value {
     }
 
     pub fn convert_to_element(self) -> slides_rs_core::Element {
-        match self {
+        self.try_convert_to_element().expect("Valid element")
+    }
+
+    pub fn try_convert_to_element(self) -> Option<slides_rs_core::Element> {
+        Some(match self {
             Value::Label(element) => element.into(),
             Value::Grid(element) => element.into(),
             Value::Flex(element) => element.into(),
             Value::Image(element) => element.into(),
             Value::CustomElement(element) => element.into(),
             Value::Element(element) => element.into(),
-            _ => panic!("Cannot be converted to Element"),
-        }
+            _ => return None,
+        })
     }
 
     pub fn as_mut_base_element(&self) -> slides_rs_core::ElementRefMut {

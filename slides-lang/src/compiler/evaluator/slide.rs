@@ -573,34 +573,12 @@ fn evaluate_user_function(
             }
             _ => {}
         }
-        match value {
-            Value::Label(label) => {
-                let mut label = Arc::unwrap_or_clone(label).into_inner();
-                let name = context.string_interner.resolve_variable(name);
-                label.set_name(name.into());
-                elements.push(label.into());
-            }
-            Value::Image(image) => {
-                let mut image = Arc::unwrap_or_clone(image).into_inner();
-                let name = context.string_interner.resolve_variable(name);
-                image.set_name(name.into());
-                elements.push(image.into());
-            }
-            Value::CustomElement(element) => {
-                let mut element = Arc::unwrap_or_clone(element).into_inner();
-                let name = context.string_interner.resolve_variable(name);
-                element.set_name(name.into());
-                elements.push(element.into());
-            }
-            Value::Grid(element) => {
-                let mut element = Arc::unwrap_or_clone(element).into_inner();
-                let name = context.string_interner.resolve_variable(name);
-                element.set_name(name.into());
-                elements.push(element.into());
-            }
-
-            _ => {}
-        }
+        let Some(mut element) = value.try_convert_to_element() else {
+            continue;
+        };
+        let name = context.string_interner.resolve_variable(name);
+        element.set_name(name.into());
+        elements.push(element);
     }
 
     let result = if user_function.has_implicit_slide_parameter {

@@ -118,31 +118,36 @@ slide one_sided_sync:
             6. Fazit zur einseitigen Synchronisation
         """;
 
-element two_icons(icon1: String, icon2: String):
-    let img1 =
-        image(p'./pros-assets/{icon1}.png') {
-            margin: { right: 50%, },
-            halign: HAlign.Right,
-            valign: VAlign.Stretch,
-        };
-    let img2 =
-        image(p'./pros-assets/{icon2}.png') {
-            halign: HAlign.Left,
-            margin: { left: 50%, },
-            valign: VAlign.Stretch,
-        };
+element icon(name: String):
+    let icon = image(p'./pros-assets/{name}.png') {
+        width: 100%,
+        height: 100%,
+    };
+
+element two_icons(icon1: String, icon2: String, size: StyleUnit = 30%):
+    let body = stackh([
+        icon(icon1) {
+            width: size
+        },
+        icon(icon2) {
+            width: size,
+        },
+    ]) {
+        width: 100%,
+        height: 100%,
+    };
 
 slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
     let amanda =
         stackv([
-            two_icons("amanda", "light"),
+            two_icons("amanda", "light", 50%),
             l"Amanda hat das Licht" { text_align: TextAlign.Center, },
         ]);
     let bobbl =
         stackv([
-            two_icons("wait", "bobbl"),
+            two_icons("wait", "bobbl", 50%),
             l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
         ]);
     let row = stackh([ amanda, bobbl ]) { height: 50% };
@@ -153,12 +158,16 @@ slide base_problem:
             margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
         };
 
+element empty():
+    // Not sure how well we support empty statements
+    let i = 42;
+
 slide continous_checking_1:
     page_number();
     let title = l"# Ständiges Überprüfen";
     let row1 = stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) { height: 30% };
     let row2 = stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) { height: 30% };
-    let row3 = stackh([ two_icons('amanda', 'empty'), two_icons('light', 'bobbl') ]) { height: 30% };
+    let row3 = stackh([ stackh([icon('amanda'), empty()]), two_icons('light', 'bobbl') ]) { height: 30% };
     let content =
         stackv([title, row1, row2, row3]) {
             halign: HAlign.Stretch,
