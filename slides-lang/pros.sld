@@ -153,3 +153,15 @@ slide base_problem:
             margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
         };
 
+slide continous_checking_1:
+    page_number();
+    let title = l"# Ständiges Überprüfen";
+    let row1 = stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) { height: 30% };
+    let row2 = stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) { height: 30% };
+    let row3 = stackh([ two_icons('amanda', 'empty'), two_icons('light', 'bobbl') ]) { height: 30% };
+    let content =
+        stackv([title, row1, row2, row3]) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+        };
