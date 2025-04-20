@@ -42,8 +42,8 @@ fn main() {
             .iter()
             .enumerate()
             .map(|(i, p)| {
-                let type_name = convert_type_name(p);
-                format!("args[{i}].as_{type_name}().clone()")
+                let conversion_function = convert_type_name_to_conversion_function(p);
+                format!("args[{i}].{conversion_function}.clone()")
             })
             .collect::<Vec<String>>()
             .join(", ")
@@ -102,16 +102,22 @@ pub const FUNCTIONS: [FunctionDefinition; {}] = [
     println!("cargo::rerun-if-changed=src/compiler/evaluator/functions.rs");
 }
 
-fn convert_type_name(p: &String) -> String {
-    match p.as_str() {
-        "i64" => "integer".to_owned(),
-        "f64" => "float".to_owned(),
-        "PathBuf" => "path".to_owned(),
-        "String" | "Background" | "Color" | "Label" | "Image" | "Flex" => p.to_ascii_lowercase(),
-        "StringArray" => "string_array".to_owned(),
-        "Vec<Element>" => "element_array".to_owned(),
-        _ => unreachable!("Unexpected type {p}"),
-    }
+fn convert_type_name_to_conversion_function(p: &String) -> String {
+    format!(
+        "as_{}()",
+        match p.as_str() {
+            "i64" => "integer".to_owned(),
+            "f64" => "float".to_owned(),
+            "PathBuf" => "path".to_owned(),
+            "String" | "Background" | "Color" | "Label" | "Image" | "Flex" | "Position" => {
+                p.to_ascii_lowercase()
+            }
+            "StringArray" => "string_array".to_owned(),
+            "Vec<Element>" => "element_array".to_owned(),
+            "Element" => return "clone().convert_to_element()".into(),
+            _ => unreachable!("Unexpected type {p}"),
+        }
+    )
 }
 
 fn parse_parameters(parameters: &str) -> Vec<String> {

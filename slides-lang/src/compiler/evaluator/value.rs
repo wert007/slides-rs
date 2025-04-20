@@ -56,7 +56,8 @@ summum! {
         Filter(slides_rs_core::Filter),
         Animation(slides_rs_core::animations::Animation),
         TextStyling(Arc<RefCell<slides_rs_core::TextStyling>>),
-        Element(Arc<RefCell<slides_rs_core::Element>>),
+        Element(slides_rs_core::Element),
+        Position(slides_rs_core::Position),
     }
 }
 
@@ -91,6 +92,7 @@ impl Value {
             Value::TextStyling(_) => Type::TextStyling,
             Value::Element(_) => Type::Element,
             Value::Animation(_) => Type::Animation,
+            Value::Position(_) => Type::Position,
         }
     }
 

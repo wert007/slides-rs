@@ -77,11 +77,17 @@ fn evaluate_statement(
         }
         BoundNodeKind::FunctionCall(_)
         | BoundNodeKind::VariableReference(_)
+        | BoundNodeKind::PostInitialization(_)
         | BoundNodeKind::Literal(_)
         | BoundNodeKind::Dict(_)
         | BoundNodeKind::MemberAccess(_)
         | BoundNodeKind::Conversion(_) => {
-            evaluate_expression(statement, evaluator, context);
+            let value = evaluate_expression(statement, evaluator, context);
+            if let Some(element) = value.try_convert_to_element() {
+                if element.parent().is_none() {
+                    evaluator.slide.as_mut().unwrap().add_element_ref(element);
+                }
+            }
             Ok(())
         }
         BoundNodeKind::VariableDeclaration(variable_declaration) => {
@@ -453,9 +459,9 @@ fn execute_member_function(
                         it.borrow_mut().set_parent(base.borrow().id());
                         Arc::unwrap_or_clone(it).into_inner().into()
                     }
-                    Value::Element(it) => {
-                        it.borrow_mut().set_parent(base.borrow().id());
-                        Arc::unwrap_or_clone(it).into_inner().into()
+                    Value::Element(mut it) => {
+                        it.set_parent(base.borrow().id());
+                        it
                     }
                     _ => unreachable!("Invalid argument!"),
                 };

@@ -117,6 +117,7 @@ pub enum Type {
     Filter,
     TextStyling,
     Animation,
+    Position,
 }
 
 impl Type {
@@ -292,6 +293,8 @@ impl Type {
             Some(Self::Element)
         } else if konst::eq_str(rust_string, "Flex") {
             Some(Self::Flex)
+        } else if konst::eq_str(rust_string, "Position") {
+            Some(Self::Position)
         } else {
             None
         }

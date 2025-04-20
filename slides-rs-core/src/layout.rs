@@ -279,6 +279,12 @@ impl Display for CalcData {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Position {
+    pub x: StyleUnit,
+    pub y: StyleUnit,
+}
+
 #[derive(Debug, strum::Display, Clone, Copy, PartialEq, Default)]
 pub enum StyleUnit {
     #[strum(to_string = "unset")]

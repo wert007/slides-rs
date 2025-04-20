@@ -252,6 +252,10 @@ impl Slide {
         self
     }
 
+    pub fn add_element_ref(&mut self, element: Element) {
+        self.elements.push(element);
+    }
+
     pub fn set_step_count(&mut self, step_count: usize) {
         self.step_count = step_count;
     }

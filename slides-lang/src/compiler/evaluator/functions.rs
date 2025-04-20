@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use std::{cell::RefCell, path::PathBuf, sync::Arc};
 
 use slides_rs_core::{
-    Color, Element, Filter, Flex, Font, Grid, GridCellSize, Image, ImageSource, Label,
+    Color, Element, Filter, Flex, Font, Grid, GridCellSize, Image, ImageSource, Label, Position,
     animations::{Animation, AnimationValue, Trigger},
 };
 
@@ -84,5 +84,13 @@ pub fn showAfterStep(step: i64) -> Animation {
     Animation {
         trigger: Trigger::StepReached(step as _),
         value: AnimationValue::ClassRemoval("invisible".into()),
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn positionOf(element: Element, x: f64, y: f64) -> Position {
+    Position {
+        x: todo!(),
+        y: todo!(),
     }
 }

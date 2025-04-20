@@ -252,3 +252,90 @@ slide checking_when_requested:
             valign: VAlign.Stretch,
             margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
         };
+
+slide checking_when_requested_without_thread_knowledge:
+    page_number();
+    let title = l"# Überprüfen auf Anfrage ohne Kenntnis anderer Threads";
+    let row1 =
+        stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
+            height: 30%,
+        };
+    let row2 =
+        stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) {
+            height: 30%,
+        };
+    let row3 =
+        stackh([ icon('amanda') { height: 100% }, empty(),empty(), icon('light') { height: 100% }, icon('bobbl') { height: 100% }, empty(), ]) {
+            height: 30%,
+        };
+    let content =
+        stackv([ title, row1, row2, row3 ]) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+        };
+
+slide resume_one_sided:
+    page_number();
+    let title = l"# Fazit zur einseitigen Synchronisation" {
+        halign: HAlign.Stretch,
+        valign: VAlign.Center,
+        font_size: 3.0,
+        text_align: TextAlign.Center,
+    };
+
+slide deadlocks:
+    page_number();
+    let text = l"""
+        # Deadlocks
+
+        1. Grundproblem
+        2. Definition eines Deadlocks
+        3. Präventive Deadlockverhinderung
+        4. Deadlockverhinderung zur Laufzeit
+        5. Deadlockerkennung zur Laufzeit
+        6. Livelocks
+        7. Fazit zu Deadlocks
+    """;
+
+element deadlock_icons():
+    let size = 20%;
+    let amanda = icon('amanda') {
+        width: size,
+        height: size,
+        halign: HAlign.Left,
+        valign: VAlign.Center,
+    };
+    let bobbl = icon('bobbl') {
+        width: size,
+        height: size,
+        halign: HAlign.Right,
+        valign: VAlign.Center,
+    };
+    let light = icon('light') {
+        width: size,
+        height: size,
+        halign: HAlign.Center,
+        valign: VAlign.Bottom,
+    };
+    let lift = icon('lift') {
+        width: size,
+        height: size,
+        halign: HAlign.Center,
+        valign: VAlign.Top,
+    };
+
+slide deadlocks_problem:
+    page_number();
+    let a = deadlock_icons() {
+        halign: HAlign.Stretch,
+        valign: VAlign.Stretch,
+        margin: {
+            left: 0.10sw,
+            right: 0.10sw,
+            top: 0.10sh,
+            bottom: 0.10sh,
+        }
+    };
+    let position = positionOf(a, 0.0, 0.5);
+
