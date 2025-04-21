@@ -1,7 +1,7 @@
 use std::{
     fmt::Display,
     num::ParseFloatError,
-    ops::{Add, Sub},
+    ops::{Add, Mul, Sub},
     str::FromStr,
 };
 
@@ -340,10 +340,55 @@ impl StyleUnit {
         }
     }
 
+    pub fn min(&self, other: Self) -> Self {
+        match (self, &other) {
+            (StyleUnit::Unspecified, min) => *min,
+            (min, StyleUnit::Unspecified) => *min,
+            (StyleUnit::Pixel(a), StyleUnit::Pixel(b)) => StyleUnit::Pixel(a.min(*b)),
+            (StyleUnit::Point(a), StyleUnit::Point(b)) => StyleUnit::Point(a.min(*b)),
+            (StyleUnit::Percent(a), StyleUnit::Percent(b)) => StyleUnit::Percent(a.min(*b)),
+            _ => todo!(),
+        }
+    }
+
     pub fn or_zero(&self) -> StyleUnit {
         match self {
             Self::Unspecified => StyleUnit::Pixel(0.0),
             normal => *normal,
+        }
+    }
+
+    fn add_slide_width_ratio(&self, slide_width: f64) -> StyleUnit {
+        match self {
+            StyleUnit::Unspecified => StyleUnit::SlideWidthRatio(slide_width),
+            StyleUnit::Pixel(px) => StyleUnit::SlideWidthRatio(slide_width).add_pixel(*px),
+            StyleUnit::Point(_) => todo!(),
+            StyleUnit::Percent(percent) => {
+                StyleUnit::SlideWidthRatio(slide_width).add_percent(*percent)
+            }
+            StyleUnit::SlideWidthRatio(this) => StyleUnit::SlideWidthRatio(this + slide_width),
+            StyleUnit::SlideHeightRatio(_) => todo!(),
+            StyleUnit::Calc(calc_data) => StyleUnit::Calc(CalcData {
+                slide_width: calc_data.slide_width + slide_width,
+                ..*calc_data
+            }),
+        }
+    }
+
+    fn add_slide_height_ratio(&self, slide_height: f64) -> StyleUnit {
+        match self {
+            StyleUnit::Unspecified => StyleUnit::SlideHeightRatio(slide_height),
+            StyleUnit::Pixel(px) => StyleUnit::SlideHeightRatio(slide_height).add_pixel(*px),
+            StyleUnit::Point(_) => todo!(),
+            StyleUnit::Percent(percent) => {
+                StyleUnit::SlideHeightRatio(slide_height).add_percent(*percent)
+            }
+            StyleUnit::SlideWidthRatio(_) => todo!(),
+            StyleUnit::SlideHeightRatio(this) => StyleUnit::SlideHeightRatio(this + slide_height),
+            StyleUnit::Calc(calc_data) => StyleUnit::Calc(CalcData {
+                slide_height: calc_data.slide_height + slide_height,
+                ..*calc_data
+            }),
         }
     }
 }
@@ -357,8 +402,8 @@ impl Add for StyleUnit {
             StyleUnit::Pixel(px) => self.add_pixel(px),
             StyleUnit::Point(_pt) => todo!(),
             StyleUnit::Percent(percent) => self.add_percent(percent),
-            StyleUnit::SlideWidthRatio(_) => todo!(),
-            StyleUnit::SlideHeightRatio(_) => todo!(),
+            StyleUnit::SlideWidthRatio(slide_width) => self.add_slide_width_ratio(slide_width),
+            StyleUnit::SlideHeightRatio(slide_height) => self.add_slide_height_ratio(slide_height),
             StyleUnit::Calc(calc_data) => match self {
                 StyleUnit::Unspecified => rhs,
                 StyleUnit::Pixel(px) => StyleUnit::Calc(calc_data.add_pixel(px)),
@@ -396,6 +441,22 @@ impl Sub for StyleUnit {
                 StyleUnit::SlideHeightRatio(_) => todo!(),
                 StyleUnit::Calc(_calc_data) => todo!(),
             },
+        }
+    }
+}
+
+impl Mul<f64> for StyleUnit {
+    type Output = StyleUnit;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        match self {
+            StyleUnit::Unspecified => self,
+            StyleUnit::Pixel(it) => StyleUnit::Pixel(it * rhs),
+            StyleUnit::Point(it) => StyleUnit::Point(it * rhs),
+            StyleUnit::Percent(it) => StyleUnit::Percent(it * rhs),
+            StyleUnit::SlideWidthRatio(it) => StyleUnit::SlideWidthRatio(it * rhs),
+            StyleUnit::SlideHeightRatio(it) => StyleUnit::SlideHeightRatio(it * rhs),
+            StyleUnit::Calc(calc_data) => todo!(),
         }
     }
 }
