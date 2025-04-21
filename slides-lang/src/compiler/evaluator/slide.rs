@@ -5,11 +5,10 @@ use std::{collections::HashMap, path::PathBuf};
 use slides_rs_core::{Background, Color, CustomElement, Element, Label, Thickness, WebRenderable};
 use string_interner::symbol::SymbolUsize;
 
-use crate::Context;
 use crate::compiler::binder::{self, BoundNode, BoundNodeKind, typing::Type};
+use crate::{Context, Location};
 
-use super::Evaluator;
-use super::value::{UserFunctionValue, Value};
+use super::{Evaluator, Value, value};
 
 pub fn evaluate_to_slide(
     body: Vec<BoundNode>,
@@ -19,10 +18,17 @@ pub fn evaluate_to_slide(
     evaluator.push_scope();
     evaluator.set_variable(
         context.string_interner.create_or_get_variable("background"),
-        Value::Background(Background::Unspecified),
+        Value {
+            value: value::Value::Background(Background::Unspecified),
+            location: Location::zero(),
+        },
     );
     for statement in body {
         evaluate_statement(statement, evaluator, context)?;
+        if let Some(exception) = evaluator.exception.take() {
+            exception.print(&context.loaded_files);
+            return Ok(());
+        }
     }
 
     let scope = evaluator.drop_scope();
@@ -31,27 +37,29 @@ pub fn evaluate_to_slide(
         let name = context.string_interner.resolve_variable(name);
         match name {
             "background" => {
-                slide.styling_mut().set_background(value.into_background());
+                slide
+                    .styling_mut()
+                    .set_background(value.value.into_background());
                 continue;
             }
             "text_color" => {
-                slide.styling_mut().set_text_color(value.into_color());
+                slide.styling_mut().set_text_color(value.value.into_color());
                 continue;
             }
             "steps" => {
-                slide.set_step_count(value.into_integer() as usize);
+                slide.set_step_count(evaluator.ensure_unsigned(value));
                 continue;
             }
             "padding" => {
                 slide
                     .styling_mut()
                     .base_mut()
-                    .set_padding(value.into_thickness());
+                    .set_padding(value.value.into_thickness());
                 continue;
             }
             _ => {}
         }
-        let Some(mut element) = value.try_convert_to_element() else {
+        let Some(mut element) = value.value.try_convert_to_element() else {
             continue;
         };
         if element.parent().is_some() {
@@ -83,7 +91,7 @@ fn evaluate_statement(
         | BoundNodeKind::MemberAccess(_)
         | BoundNodeKind::Conversion(_) => {
             let value = evaluate_expression(statement, evaluator, context);
-            if let Some(element) = value.try_convert_to_element() {
+            if let Some(element) = value.value.try_convert_to_element() {
                 if element.parent().is_none() {
                     evaluator.slide.as_mut().unwrap().add_element_ref(element);
                 }
@@ -146,15 +154,15 @@ fn assign_member(
             assign_member(*conversion.base, member, value, evaluator, context);
         }
         BoundNodeKind::VariableReference(variable) => {
-            let base = evaluator.get_variable_mut(variable.id);
-            let base_type = base.infer_type();
+            let base = evaluator.get_variable(variable.id).clone();
+            let base_type = base.value.infer_type();
             match base_type {
                 Type::Element
                 | Type::Label
                 | Type::Image
                 | Type::CustomElement(_)
                 | Type::GridEntry => {
-                    assign_to_slide_type(base_type, base, member, value, context);
+                    assign_to_slide_type(base_type, base, member, value, evaluator, context);
                 }
                 missing => unreachable!("Missing {missing:?}"),
             }
@@ -174,48 +182,68 @@ pub(super) fn evaluate_expression(
             evaluate_function_call(function_call, evaluator, context)
         }
         BoundNodeKind::VariableReference(variable) => evaluator.get_variable(variable.id).clone(),
-        BoundNodeKind::Literal(value) => value,
-        BoundNodeKind::Dict(dict) => evaluate_dict(dict, evaluator, context),
+        BoundNodeKind::Literal(value) => Value {
+            value,
+            location: expression.location,
+        },
+        BoundNodeKind::Dict(dict) => evaluate_dict(dict, expression.location, evaluator, context),
         BoundNodeKind::MemberAccess(member_access) => {
-            evaluate_member_access(member_access, evaluator, context)
+            evaluate_member_access(member_access, expression.location, evaluator, context)
         }
         BoundNodeKind::Conversion(conversion) => {
             evaluate_conversion(conversion, evaluator, context)
         }
-        BoundNodeKind::PostInitialization(post_initialization) => {
-            evaluate_post_initialization(post_initialization, evaluator, context)
+        BoundNodeKind::PostInitialization(post_initialization) => evaluate_post_initialization(
+            post_initialization,
+            expression.location,
+            evaluator,
+            context,
+        ),
+        BoundNodeKind::Array(array) => {
+            evaluate_array(array, expression.location, evaluator, context)
         }
-        BoundNodeKind::Array(array) => evaluate_array(array, evaluator, context),
-        BoundNodeKind::Binary(binary) => evaluate_binary(binary, evaluator, context),
+        BoundNodeKind::Binary(binary) => {
+            evaluate_binary(binary, expression.location, evaluator, context)
+        }
         _ => unreachable!("Only expressions can be evaluated!"),
     }
 }
 
 fn evaluate_binary(
     binary: binder::Binary,
+    location: Location,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
     let lhs = evaluate_expression(*binary.lhs, evaluator, context);
     let rhs = evaluate_expression(*binary.rhs, evaluator, context);
-    binary.operator.execute(lhs, rhs)
+    Value {
+        value: binary.operator.execute(lhs.value, rhs.value),
+        location,
+    }
 }
 
 fn evaluate_array(
     array: Vec<BoundNode>,
+    location: Location,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
     let mut values = Vec::with_capacity(array.len());
     for value in array {
         let value = evaluate_expression(value, evaluator, context);
-        values.push(value);
+        // TODO: Keep Value location in arrays?
+        values.push(value.value);
     }
-    Value::Array(values)
+    Value {
+        value: value::Value::Array(values),
+        location,
+    }
 }
 
 fn evaluate_dict(
     dict: Vec<(String, BoundNode)>,
+    location: Location,
     // slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
@@ -223,22 +251,26 @@ fn evaluate_dict(
     let mut result = HashMap::new();
     for (member, node) in dict {
         let value = evaluate_expression(node, evaluator, context);
-        result.insert(member, value);
+        // TODO: Keep Value location in dicts?
+        result.insert(member, value.value);
     }
-    result.into()
+    Value {
+        value: result.into(),
+        location,
+    }
 }
 
 fn evaluate_post_initialization(
     post_initialization: binder::PostInitialization,
+    location: Location,
     // slide: &mut Slide,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
     let base_type = post_initialization.base.type_;
-    let mut base = evaluate_expression(*post_initialization.base, evaluator, context);
+    let base = evaluate_expression(*post_initialization.base, evaluator, context);
     let dict = evaluate_expression(*post_initialization.dict, evaluator, context);
-    let dict = dict.into_dict();
-    // let value = evaluate_expression_mut(*member_access.base, evaluator, context);
+    let dict = dict.value.into_dict();
 
     for (member, value) in dict {
         let member = context.string_interner.create_or_get(&member);
@@ -249,72 +281,72 @@ fn evaluate_post_initialization(
             | Type::CustomElement(_)
             | Type::Image
             | Type::Grid
-            | Type::Flex => assign_to_slide_type(base_type, &mut base, member, value, context),
+            | Type::Flex => assign_to_slide_type(
+                base_type,
+                base.clone(),
+                member,
+                Value { value, location },
+                evaluator,
+                context,
+            ),
             _ => {
                 todo!();
             }
         }
-        // assign_member(base, slide, member, value, evaluator, context);
-        // assign_member(slide, value, member, &mut base, evaluator, context)
-        // assign(
-        //     slide,
-        //     value,
-        //     AssignmentTarget::Member(member),
-        //     evaluator,
-        //     context,
-        // );
     }
-    // let mut base = Value::Integer(0);
-    // std::mem::swap(&mut base, evaluator.accumulator_mut());
     base
 }
 
 fn assign_to_slide_type(
     _base_type: Type,
-    base: &mut Value,
+    base: Value,
     member: SymbolUsize,
     value: Value,
+    evaluator: &mut Evaluator,
     context: &mut Context,
 ) {
+    let base = base.value;
     let member = context.string_interner.resolve(member);
     match member {
         "width" => {
             base.as_mut_base_element()
-                .set_width(value.into_style_unit().into());
+                .set_width(value.value.into_style_unit().into());
         }
         "height" => {
             base.as_mut_base_element()
-                .set_height(value.into_style_unit().into());
+                .set_height(value.value.into_style_unit().into());
         }
         "z_index" => {
             base.as_mut_base_element()
-                .set_z_index(value.into_integer() as _);
+                .set_z_index(evaluator.ensure_unsigned(value));
         }
         "valign" => {
             base.as_mut_base_element()
-                .set_vertical_alignment(value.into_vertical_alignment());
+                .set_vertical_alignment(value.value.into_vertical_alignment());
         }
         "halign" => {
             base.as_mut_base_element()
-                .set_horizontal_alignment(value.into_horizontal_alignment());
+                .set_horizontal_alignment(value.value.into_horizontal_alignment());
         }
         "margin" => {
             base.as_mut_base_element()
-                .set_margin(value.into_thickness());
+                .set_margin(value.value.into_thickness());
         }
         "padding" => {
             base.as_mut_base_element()
-                .set_padding(value.into_thickness());
+                .set_padding(value.value.into_thickness());
         }
         "background" => {
             base.as_mut_base_element()
-                .set_background(value.into_background());
+                .set_background(value.value.into_background());
         }
         "filter" => {
-            base.as_mut_base_element().set_filter(value.into_filter());
+            base.as_mut_base_element()
+                .set_filter(value.value.into_filter());
         }
         "animations" => {
             let animations = value
+                .value
                 .into_array()
                 .into_iter()
                 .map(|v| v.into_animation())
@@ -322,40 +354,40 @@ fn assign_to_slide_type(
             base.as_mut_base_element().set_animations(animations);
         }
         "styles" => {
-            for value in value.into_array() {
+            for value in value.value.into_array() {
                 base.as_mut_base_element()
                     .add_styling_reference(value.into_style_reference())
             }
         }
         "object_fit" => {
-            base.as_mut_image()
+            base.as_image()
                 .borrow_mut()
                 .element_styling_mut()
-                .set_object_fit(value.into_object_fit());
+                .set_object_fit(value.value.into_object_fit());
         }
         "text_color" => {
-            base.as_mut_label()
+            base.as_label()
                 .borrow_mut()
                 .element_styling_mut()
-                .set_text_color(value.into_color());
+                .set_text_color(value.value.into_color());
         }
         "text_align" => {
-            base.as_mut_label()
+            base.as_label()
                 .borrow_mut()
                 .element_styling_mut()
-                .set_text_align(value.into_text_align());
+                .set_text_align(value.value.into_text_align());
         }
         "font_size" => {
-            base.as_mut_label()
+            base.as_label()
                 .borrow_mut()
                 .element_styling_mut()
-                .set_font_size(value.into_float());
+                .set_font_size(evaluator.ensure_unsigned_float(value));
         }
         "column_span" => {
-            base.as_grid_entry().borrow_mut().column_span = value.into_integer() as _;
+            base.as_grid_entry().borrow_mut().column_span = evaluator.ensure_unsigned(value);
         }
         "children" => {
-            for element in value.into_array() {
+            for element in value.value.into_array() {
                 base.as_grid()
                     .borrow_mut()
                     .add_element(element.convert_to_element());
@@ -367,6 +399,7 @@ fn assign_to_slide_type(
 
 fn evaluate_member_access(
     member_access: binder::MemberAccess,
+    location: Location,
     _evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
@@ -376,13 +409,18 @@ fn evaluate_member_access(
         .try_as_enum_ref()
     {
         let variant = context.string_interner.resolve(member_access.member);
-        match &**enum_type {
-            &Type::ObjectFit => Value::ObjectFit(variant.parse().expect("Valid variant")),
-            &Type::HAlign => Value::HorizontalAlignment(variant.parse().expect("Valid variant")),
-            &Type::VAlign => Value::VerticalAlignment(variant.parse().expect("Valid variant")),
-            &Type::TextAlign => Value::TextAlign(variant.parse().expect("Valid variant")),
+        let value = match &**enum_type {
+            &Type::ObjectFit => value::Value::ObjectFit(variant.parse().expect("Valid variant")),
+            &Type::HAlign => {
+                value::Value::HorizontalAlignment(variant.parse().expect("Valid variant"))
+            }
+            &Type::VAlign => {
+                value::Value::VerticalAlignment(variant.parse().expect("Valid variant"))
+            }
+            &Type::TextAlign => value::Value::TextAlign(variant.parse().expect("Valid variant")),
             _ => unreachable!("Type {enum_type:?} is not an enum!"),
-        }
+        };
+        Value { value, location }
     } else {
         todo!()
     }
@@ -414,7 +452,7 @@ fn execute_function(
                 .string_interner
                 .resolve_variable(variable.id)
                 .to_owned();
-            execute_named_function(name, arguments, evaluator, context)
+            execute_named_function(name, arguments, base.location, evaluator, context)
         }
         BoundNodeKind::MemberAccess(member_access) => {
             let base = evaluate_expression(*member_access.base, evaluator, context);
@@ -435,37 +473,43 @@ fn execute_member_function(
     _evaluator: &mut Evaluator,
     _context: &mut Context,
 ) -> Value {
-    match base {
-        Value::Grid(base) => match name.as_str() {
+    match base.value {
+        value::Value::Grid(base) => match name.as_str() {
             "add" => {
-                let element = match arguments.swap_remove(0) {
-                    Value::Label(it) => {
+                let location = arguments[0].location;
+                let element = match arguments.swap_remove(0).value {
+                    value::Value::Label(it) => {
                         it.borrow_mut().set_parent(base.borrow().id());
                         Arc::unwrap_or_clone(it).into_inner().into()
                     }
-                    Value::Grid(it) => {
+                    value::Value::Grid(it) => {
                         it.borrow_mut().set_parent(base.borrow().id());
                         Arc::unwrap_or_clone(it).into_inner().into()
                     }
-                    Value::Flex(it) => {
+                    value::Value::Flex(it) => {
                         it.borrow_mut().set_parent(base.borrow().id());
                         Arc::unwrap_or_clone(it).into_inner().into()
                     }
-                    Value::Image(it) => {
+                    value::Value::Image(it) => {
                         it.borrow_mut().set_parent(base.borrow().id());
                         Arc::unwrap_or_clone(it).into_inner().into()
                     }
-                    Value::CustomElement(it) => {
+                    value::Value::CustomElement(it) => {
                         it.borrow_mut().set_parent(base.borrow().id());
                         Arc::unwrap_or_clone(it).into_inner().into()
                     }
-                    Value::Element(mut it) => {
+                    value::Value::Element(mut it) => {
                         it.set_parent(base.borrow().id());
                         it
                     }
-                    _ => unreachable!("Invalid argument!"),
+                    _ => {
+                        unreachable!("Invalid argument!")
+                    }
                 };
-                Value::GridEntry(base.borrow_mut().add_element(element))
+                Value {
+                    value: value::Value::GridEntry(base.borrow_mut().add_element(element)),
+                    location,
+                }
             }
             _ => todo!(),
         },
@@ -476,6 +520,7 @@ fn execute_member_function(
 fn execute_named_function(
     name: String,
     arguments: Vec<Value>,
+    location: Location,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
@@ -483,14 +528,18 @@ fn execute_named_function(
         .iter()
         .find(|f| f.name == name.as_str())
     {
-        Some(it) => (it.call)(arguments),
+        Some(it) => Value {
+            value: (it.call)(arguments),
+            location,
+        },
         None => {
             let value = evaluator
                 .get_variable_mut(context.string_interner.create_or_get_variable(&name))
                 .clone();
             evaluate_user_function(
-                value.as_user_function().clone(),
+                value.value.as_user_function().clone(),
                 arguments,
+                location,
                 evaluator,
                 context,
             )
@@ -499,9 +548,9 @@ fn execute_named_function(
 }
 
 fn evaluate_user_function(
-    user_function: UserFunctionValue,
+    user_function: value::UserFunctionValue,
     arguments: Vec<Value>,
-    // slide: &mut Slide,
+    location: Location,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
@@ -511,7 +560,10 @@ fn evaluate_user_function(
                 context
                     .string_interner
                     .create_or_get_variable("slide_index"),
-                Value::Integer(evaluator.slide.as_ref().unwrap().index as i64),
+                Value {
+                    value: value::Value::Integer(evaluator.slide.as_ref().unwrap().index as i64),
+                    location: Location::zero(),
+                },
             )]
         } else {
             &[]
@@ -526,7 +578,9 @@ fn evaluate_user_function(
             .map(|v| Some(v))
             .chain(std::iter::repeat(None)),
     ) {
-        let value = value.or_else(|| parameter.value).unwrap();
+        let value = value
+            .or_else(|| parameter.value.map(|v| Value { value: v, location }))
+            .unwrap();
         scope.set_variable(parameter.id, value);
     }
     for statement in user_function.body {
@@ -551,16 +605,16 @@ fn evaluate_user_function(
     for (name, value) in scope.variables() {
         match context.string_interner.resolve_variable(name) {
             "halign" => {
-                styling.set_horizontal_alignment(value.into_horizontal_alignment());
+                styling.set_horizontal_alignment(value.value.into_horizontal_alignment());
                 continue;
             }
             "valign" => {
-                styling.set_vertical_alignment(value.into_vertical_alignment());
+                styling.set_vertical_alignment(value.value.into_vertical_alignment());
                 continue;
             }
             _ => {}
         }
-        let Some(mut element) = value.try_convert_to_element() else {
+        let Some(mut element) = value.value.try_convert_to_element() else {
             continue;
         };
         let name = context.string_interner.resolve_variable(name);
@@ -572,13 +626,16 @@ fn evaluate_user_function(
         for element in elements {
             slide = slide.add_element(element);
         }
-        Value::Void(())
+        value::Value::Void(())
     } else {
         let custom_element = custom_element.with_elements(elements);
-        Value::CustomElement(Arc::new(RefCell::new(custom_element)))
+        value::Value::CustomElement(Arc::new(RefCell::new(custom_element)))
     };
     evaluator.slide = Some(slide);
-    result
+    Value {
+        value: result,
+        location,
+    }
 }
 
 fn evaluate_conversion(
@@ -586,46 +643,49 @@ fn evaluate_conversion(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
+    let location = conversion.base.location;
     let base = evaluate_expression(*conversion.base, evaluator, context);
-    match context.type_interner.resolve(conversion.target) {
-        Type::Background => match base {
-            Value::Color(color) => Value::Background(Background::Color(color)),
+    let value = match context.type_interner.resolve(conversion.target) {
+        Type::Background => match base.value {
+            value::Value::Color(color) => value::Value::Background(Background::Color(color)),
             _ => unreachable!("Impossible conversion!"),
         },
-        Type::Color => match base {
-            Value::String(text) => Value::Color(Color::from_css(&text)),
+        Type::Color => match base.value {
+            value::Value::String(text) => value::Value::Color(Color::from_css(&text)),
             _ => unreachable!("Impossible conversion!"),
         },
-        Type::Path => match base {
-            Value::String(text) => Value::Path(PathBuf::from(text)),
+        Type::Path => match base.value {
+            value::Value::String(text) => value::Value::Path(PathBuf::from(text)),
             _ => unreachable!("Impossible converion!"),
         },
-        Type::Label => match base {
-            Value::String(text) => Value::Label(Arc::new(RefCell::new(Label::new(text)))),
+        Type::Label => match base.value {
+            value::Value::String(text) => {
+                value::Value::Label(Arc::new(RefCell::new(Label::new(text))))
+            }
             _ => unreachable!("Impossible conversion!"),
         },
-        Type::Element => match base {
-            value @ (Value::Label(_)
-            | Value::Image(_)
-            | Value::CustomElement(_)
-            | Value::Grid(_)
-            | Value::Flex(_)) => value,
-            // Value::Label(label) => Value::Element(Arc::new(RefCell::new(Element::Label(
+        Type::Element => match base.value {
+            value @ (value::Value::Label(_)
+            | value::Value::Image(_)
+            | value::Value::CustomElement(_)
+            | value::Value::Grid(_)
+            | value::Value::Flex(_)) => value,
+            // value::Value::Label(label) => value::Value::Element(Arc::new(RefCell::new(Element::Label(
             //     Arc::unwrap_or_clone(label).into_inner(),
             // )))),
-            // Value::Image(image) => Value::Element(Arc::new(RefCell::new(Element::Image(
+            // value::Value::Image(image) => value::Value::Element(Arc::new(RefCell::new(Element::Image(
             //     Arc::unwrap_or_clone(image).into_inner(),
             // )))),
-            // Value::CustomElement(custom_element) => Value::Element(Arc::new(RefCell::new(
+            // value::Value::CustomElement(custom_element) => value::Value::Element(Arc::new(RefCell::new(
             //     Element::CustomElement(Arc::unwrap_or_clone(custom_element).into_inner()),
             // ))),
-            // Value::Grid(grid) => Value::Element(Arc::new(RefCell::new(Element::Grid(
+            // value::Value::Grid(grid) => value::Value::Element(Arc::new(RefCell::new(Element::Grid(
             //     Arc::unwrap_or_clone(grid).into_inner(),
             // )))),
             _ => unreachable!("Impossible conversion!"),
         },
-        Type::Thickness => match base {
-            Value::Dict(entries) => {
+        Type::Thickness => match base.value {
+            value::Value::Dict(entries) => {
                 let mut thickness = Thickness::default();
                 for (name, value) in entries {
                     match name.as_str() {
@@ -640,13 +700,14 @@ fn evaluate_conversion(
             }
             _ => unreachable!("Impossible conversion"),
         },
-        Type::String => match base {
-            Value::Float(x) => Value::String(x.to_string()),
-            Value::Integer(x) => Value::String(x.to_string()),
-            Value::String(x) => Value::String(x),
-            Value::Path(x) => Value::String(x.to_string_lossy().into_owned()),
+        Type::String => match base.value {
+            value::Value::Float(x) => value::Value::String(x.to_string()),
+            value::Value::Integer(x) => value::Value::String(x.to_string()),
+            value::Value::String(x) => value::Value::String(x),
+            value::Value::Path(x) => value::Value::String(x.to_string_lossy().into_owned()),
             _ => unreachable!("Impossible conversion"),
         },
         unknown => todo!("{unknown:?}"),
-    }
+    };
+    Value { value, location }
 }

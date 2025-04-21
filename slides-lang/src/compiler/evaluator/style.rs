@@ -28,7 +28,7 @@ fn evaluate_assignment_statement(
     context: &mut Context,
 ) {
     let value: Value =
-        super::slide::evaluate_expression(*assignment_statement.value, evaluator, context);
+        super::slide::evaluate_expression(*assignment_statement.value, evaluator, context).value;
     assign_to(*assignment_statement.lhs, value, evaluator, context);
 }
 
@@ -38,7 +38,7 @@ fn assign_to(lhs: BoundNode, value: Value, evaluator: &mut Evaluator, context: &
             assign_to_field(variable.id, value, evaluator, context);
         }
         BoundNodeKind::MemberAccess(member_access) => {
-            let base = evaluate_expression(*member_access.base, evaluator, context);
+            let base = evaluate_expression(*member_access.base, evaluator, context).value;
             let member = context.string_interner.resolve(member_access.member);
             match member {
                 "text_color" => base

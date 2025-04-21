@@ -12,7 +12,10 @@ pub mod typing;
 use super::{
     DebugLang,
     diagnostics::Diagnostics,
-    evaluator::{self, Parameter, Value},
+    evaluator::{
+        self,
+        value::{Parameter, Value},
+    },
     lexer::{Token, TokenKind},
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
@@ -568,7 +571,7 @@ pub enum BoundNodeKind {
 #[allow(dead_code)]
 pub struct BoundNode {
     base: Option<SyntaxNodeKind>,
-    location: Location,
+    pub location: Location,
     pub kind: BoundNodeKind,
     pub type_: TypeId,
     pub constant_value: Option<Value>,
