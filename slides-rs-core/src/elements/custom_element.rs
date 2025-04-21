@@ -1,8 +1,7 @@
 use std::io::Write;
 
 use crate::{
-    ElementStyling, Result, StylingReference, ToCss,
-    animations::Animations,
+    ElementStyling, Result, StylingReference, ToCss, animations::Animations,
     output::PresentationEmitter,
 };
 
