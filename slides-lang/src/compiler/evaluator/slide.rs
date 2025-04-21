@@ -529,7 +529,7 @@ fn execute_named_function(
         .find(|f| f.name == name.as_str())
     {
         Some(it) => Value {
-            value: (it.call)(arguments),
+            value: (it.call)(evaluator, arguments),
             location,
         },
         None => {

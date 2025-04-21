@@ -337,5 +337,5 @@ slide deadlocks_problem:
             bottom: 0.10sh,
         }
     };
-    // let position = positionOf(a, 0.0, 0.5);
+    let position = positionInside(a, 0.0, 0.5);
 

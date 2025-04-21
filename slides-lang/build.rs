@@ -4,8 +4,22 @@ use std::path::Path;
 
 struct FunctionDefinition {
     name: String,
-    parameters: Vec<String>,
+    parameters: Vec<Parameter>,
     return_type: String,
+}
+
+enum Parameter {
+    Type(String),
+    Raw(String),
+}
+
+impl Parameter {
+    pub fn as_type(&self) -> Option<&str> {
+        match self {
+            Parameter::Type(it) => Some(it),
+            _ => None,
+        }
+    }
 }
 
 fn main() {
@@ -38,12 +52,19 @@ fn main() {
     }
 
     let args = |f: &FunctionDefinition| {
+        let mut skipped = 0;
         f.parameters
             .iter()
             .enumerate()
-            .map(|(i, p)| {
-                let conversion_function = convert_type_name_to_conversion_function(p);
-                format!("args[{i}].value.{conversion_function}.clone()")
+            .map(|(i, p)| match p {
+                Parameter::Raw(raw) => {
+                    skipped += 1;
+                    raw.clone()
+                }
+                Parameter::Type(type_) => {
+                    let conversion_function = convert_type_name_to_conversion_function(type_);
+                    format!("args[{}].value.{conversion_function}.clone()", i - skipped)
+                }
             })
             .collect::<Vec<String>>()
             .join(", ")
@@ -57,7 +78,7 @@ fn main() {
         name: {:?},
         parameters: &[{}],
         return_type: Type::from_rust_string({:?}).unwrap(),
-        call: |mut args| {{
+        call: |_evaluator, mut args| {{
         assert_eq!(args.len(), {});
             {}({}).into()
         }}
@@ -65,11 +86,16 @@ fn main() {
                 f.name,
                 f.parameters
                     .iter()
-                    .map(|p| format!("Type::from_rust_string({p:?}).unwrap()"))
+                    .filter_map(|p| p
+                        .as_type()
+                        .map(|p| format!("Type::from_rust_string({p:?}).unwrap()")))
                     .collect::<Vec<String>>()
                     .join(", "),
                 f.return_type,
-                f.parameters.len(),
+                f.parameters
+                    .iter()
+                    .filter(|p| p.as_type().is_some())
+                    .count(),
                 f.name,
                 args(f),
             )
@@ -83,13 +109,13 @@ fn main() {
             "
 use crate::compiler::binder::{{Type}};
 use crate::compiler::evaluator::functions::*;
-use crate::compiler::evaluator::{{Value, value}};
+use crate::compiler::evaluator::{{Value, value, Evaluator}};
 
 pub struct FunctionDefinition {{
     pub name: &'static str,
     pub parameters: &'static [Type],
     pub return_type: Type,
-    pub call: fn(Vec<Value>) -> value::Value,
+    pub call: fn(&mut Evaluator, Vec<Value>) -> value::Value,
 }}
 
 pub const FUNCTIONS: [FunctionDefinition; {}] = [
@@ -121,9 +147,19 @@ fn convert_type_name_to_conversion_function(p: &String) -> String {
     )
 }
 
-fn parse_parameters(parameters: &str) -> Vec<String> {
+fn parse_parameters(parameters: &str) -> Vec<Parameter> {
     parameters
         .split(',')
-        .map(|p| p.trim().split_once(':').unwrap().1.trim().to_owned())
+        .map(|p| {
+            let p = p.trim();
+            let (name, type_) = p.trim().split_once(':').unwrap();
+            let name = name.trim();
+            let type_ = type_.trim();
+            if name == "_evaluator" {
+                Parameter::Raw("_evaluator".into())
+            } else {
+                Parameter::Type(type_.into())
+            }
+        })
         .collect()
 }

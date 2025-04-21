@@ -108,10 +108,12 @@ impl Value {
         }
     }
 
+    #[track_caller]
     pub fn convert_to_element(self) -> slides_rs_core::Element {
         self.try_convert_to_element().expect("Valid element")
     }
 
+    #[track_caller]
     pub fn try_convert_to_element(self) -> Option<slides_rs_core::Element> {
         Some(match self {
             Value::Label(element) => element.into(),
