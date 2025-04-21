@@ -327,7 +327,7 @@ element deadlock_icons():
 
 slide deadlocks_problem:
     page_number();
-    let a = deadlock_icons() {
+    let base = deadlock_icons() {
         halign: HAlign.Stretch,
         valign: VAlign.Stretch,
         margin: {
@@ -337,5 +337,7 @@ slide deadlocks_problem:
             bottom: 0.10sh,
         }
     };
-    let position = positionInside(a, 0.0, 0.5);
+    let start = positionInside(base, 0.0, 0.5);
+    let end = positionInside(base, 0.5, 0.0);
+    let a = arrow(start, end, {});
 
