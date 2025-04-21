@@ -43,7 +43,7 @@ fn main() {
             .enumerate()
             .map(|(i, p)| {
                 let conversion_function = convert_type_name_to_conversion_function(p);
-                format!("args[{i}].{conversion_function}.clone()")
+                format!("args[{i}].value.{conversion_function}.clone()")
             })
             .collect::<Vec<String>>()
             .join(", ")
@@ -81,14 +81,15 @@ fn main() {
         &dest_path,
         format!(
             "
-use crate::compiler::binder::{{Type, Value}};
+use crate::compiler::binder::{{Type}};
 use crate::compiler::evaluator::functions::*;
+use crate::compiler::evaluator::{{Value, value}};
 
 pub struct FunctionDefinition {{
     pub name: &'static str,
     pub parameters: &'static [Type],
     pub return_type: Type,
-    pub call: fn(Vec<Value>) -> Value,
+    pub call: fn(Vec<Value>) -> value::Value,
 }}
 
 pub const FUNCTIONS: [FunctionDefinition; {}] = [

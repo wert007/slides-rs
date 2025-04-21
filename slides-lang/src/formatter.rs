@@ -8,7 +8,7 @@ use crate::{
     Context, Files, Location,
     compiler::{
         self, DebugLang,
-        evaluator::Value,
+        evaluator::value::Value,
         lexer::{Token, TokenKind},
         parser::{SyntaxNodeKind, debug_ast},
     },

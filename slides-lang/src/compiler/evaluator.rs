@@ -7,13 +7,19 @@ use slides_rs_core::{
 };
 
 use super::binder::{BoundAst, BoundNode, BoundNodeKind, StylingType, typing::TypeId};
-use crate::{Context, VariableId};
+use crate::{Context, Location, VariableId};
 
 pub mod functions;
 mod slide;
 mod style;
-mod value;
-pub use value::*;
+pub mod value;
+// pub use value::*;
+
+#[derive(Debug, Clone)]
+pub struct Value {
+    pub value: value::Value,
+    pub location: Location,
+}
 
 struct Scope {
     values: IndexMap<Value>,
@@ -63,10 +69,27 @@ impl Scope {
     }
 }
 
+pub struct Exception {
+    location: Location,
+    message: String,
+}
+impl Exception {
+    fn print(&self, loaded_files: &crate::Files) {
+        eprintln!(
+            "Exception in [{}:{}]: \"{}\"",
+            loaded_files[self.location.file].name.display(),
+            loaded_files[self.location.file].line_number(self.location.start),
+            self.message
+        );
+        eprintln!("Stopping execution.");
+    }
+}
+
 struct Evaluator {
     scopes: Vec<Scope>,
     slide: Option<Slide>,
     styling: Option<DynamicElementStyling>,
+    exception: Option<Exception>,
 }
 impl Evaluator {
     fn new() -> Self {
@@ -74,6 +97,7 @@ impl Evaluator {
             scopes: vec![Scope::global()],
             slide: None,
             styling: None,
+            exception: None,
         }
     }
 
@@ -119,6 +143,32 @@ impl Evaluator {
             .filter_map(|s| s.get_variable(name))
             .next()
     }
+
+    fn ensure_unsigned(&mut self, value: Value) -> usize {
+        let number = value.value.into_integer();
+        if number < 0 {
+            self.exception = Some(Exception {
+                location: value.location,
+                message: "Invalid negative value".into(),
+            });
+            0
+        } else {
+            number as usize
+        }
+    }
+
+    fn ensure_unsigned_float(&mut self, value: Value) -> f64 {
+        let number = value.value.into_float();
+        if number < 0.0 {
+            self.exception = Some(Exception {
+                location: value.location,
+                message: "Invalid negative value".into(),
+            });
+            0.0
+        } else {
+            number
+        }
+    }
 }
 
 pub fn create_presentation_from_ast(
@@ -129,6 +179,10 @@ pub fn create_presentation_from_ast(
 
     for statement in ast.statements {
         evaluate_statement(statement, &mut evaluator, context)?;
+        if let Some(exception) = evaluator.exception.take() {
+            exception.print(&context.loaded_files);
+            break;
+        }
     }
     // dbg!(&context.presentation);
     Ok(())
@@ -142,16 +196,16 @@ fn evaluate_statement(
     match statement.kind {
         BoundNodeKind::Error(()) => unreachable!("Errors should create errors!"),
         BoundNodeKind::StylingStatement(styling_statement) => {
-            evaluate_styling_statement(styling_statement, evaluator, context)
+            evaluate_styling_statement(styling_statement, statement.location, evaluator, context)
         }
         BoundNodeKind::SlideStatement(slide_statement) => {
             evaluate_slide_statement(slide_statement, evaluator, context)
         }
         BoundNodeKind::ElementStatement(element_statement) => {
-            evaluate_element_statement(element_statement, evaluator, context)
+            evaluate_element_statement(element_statement, statement.location, evaluator, context)
         }
         BoundNodeKind::TemplateStatement(template_statement) => {
-            evaluate_template_statement(template_statement, evaluator, context)
+            evaluate_template_statement(template_statement, statement.location, evaluator, context)
         }
         BoundNodeKind::ImportStatement(import_statement) => {
             evaluate_import_statement(import_statement, evaluator, context)
@@ -201,36 +255,44 @@ fn evaluate_import_statement(
 
 fn evaluate_element_statement(
     element_statement: super::binder::ElementStatement,
+    location: Location,
     evaluator: &mut Evaluator,
     _context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     let parameters = element_statement.parameters;
     evaluator.set_variable(
         element_statement.name,
-        Value::UserFunction(UserFunctionValue {
-            has_implicit_slide_parameter: false,
-            parameters,
-            body: element_statement.body,
-            return_type: element_statement.type_,
-        }),
+        Value {
+            value: value::Value::UserFunction(value::UserFunctionValue {
+                has_implicit_slide_parameter: false,
+                parameters,
+                body: element_statement.body,
+                return_type: element_statement.type_,
+            }),
+            location,
+        },
     );
     Ok(())
 }
 
 fn evaluate_template_statement(
     template_statement: super::binder::TemplateStatement,
+    location: Location,
     evaluator: &mut Evaluator,
     _context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     let parameters = template_statement.parameters;
     evaluator.set_variable(
         template_statement.name,
-        Value::UserFunction(UserFunctionValue {
-            has_implicit_slide_parameter: true,
-            parameters,
-            body: template_statement.body,
-            return_type: TypeId::VOID,
-        }),
+        Value {
+            value: value::Value::UserFunction(value::UserFunctionValue {
+                has_implicit_slide_parameter: true,
+                parameters,
+                body: template_statement.body,
+                return_type: TypeId::VOID,
+            }),
+            location,
+        },
     );
     Ok(())
 }
@@ -256,6 +318,7 @@ fn evaluate_slide_statement(
 
 fn evaluate_styling_statement(
     styling_statement: super::binder::StylingStatement,
+    location: Location,
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
@@ -274,18 +337,27 @@ fn evaluate_styling_statement(
     if styling_statement.type_ == StylingType::Label {
         evaluator.set_variable(
             name,
-            Value::TextStyling(Arc::new(RefCell::new(TextStyling::default()))),
+            Value {
+                value: value::Value::TextStyling(Arc::new(RefCell::new(TextStyling::default()))),
+                location,
+            },
         );
     }
     style::evaluate_to_styling(styling_statement.body, evaluator, context);
     let mut styling = evaluator.styling.take().expect("styling");
     if let Some(value) = evaluator.try_get_variable(name) {
-        styling
-            .as_label_mut()
-            .set_text_styling(Arc::unwrap_or_clone(value.clone().into_text_styling()).into_inner());
+        styling.as_label_mut().set_text_styling(
+            Arc::unwrap_or_clone(value.value.clone().into_text_styling()).into_inner(),
+        );
     }
     evaluator.drop_scope();
     let reference = context.presentation.add_dynamic_styling(styling);
-    evaluator.set_variable(styling_statement.name, Value::StyleReference(reference));
+    evaluator.set_variable(
+        styling_statement.name,
+        Value {
+            value: value::Value::StyleReference(reference),
+            location,
+        },
+    );
     Ok(())
 }
