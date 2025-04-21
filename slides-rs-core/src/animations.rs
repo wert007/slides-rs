@@ -44,7 +44,7 @@ impl Animations {
                 crate::animations::AnimationValue::ClassRemoval(class) => Some(class.clone()),
                 crate::animations::AnimationValue::FieldChange { .. } => None,
             })
-            .intersperse(" ".into())
+            .map(|s| format!(" {s}"))
             .collect()
     }
 
