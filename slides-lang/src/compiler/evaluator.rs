@@ -85,7 +85,7 @@ impl Exception {
     }
 }
 
-struct Evaluator {
+pub struct Evaluator {
     scopes: Vec<Scope>,
     slide: Option<Slide>,
     styling: Option<DynamicElementStyling>,
