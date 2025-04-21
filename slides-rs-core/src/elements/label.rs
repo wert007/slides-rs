@@ -1,7 +1,8 @@
 use std::fmt::Display;
 
 use crate::{
-    ElementStyling, LabelStyling, Result, StylingReference, ToCss, animations::Animation,
+    ElementStyling, LabelStyling, Result, StylingReference, ToCss,
+    animations::Animations,
     output::PresentationEmitter,
 };
 
@@ -45,7 +46,7 @@ pub struct Label {
     text: FormattedText,
     styling: ElementStyling<LabelStyling>,
     stylings: Vec<StylingReference>,
-    pub animations: Vec<Animation>,
+    pub animations: Animations,
 }
 
 impl WebRenderable for Label {
@@ -57,22 +58,26 @@ impl WebRenderable for Label {
     }
 
     fn output_to_html<W: std::io::Write>(
-        self,
+        mut self,
         emitter: &mut PresentationEmitter<W>,
         ctx: WebRenderableContext,
     ) -> Result<()> {
         let id = format!("{}-{}", self.namespace, self.name());
+        let classes_animations = self.animations.get_initial_classes();
+        let classes = self
+            .stylings
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>()
+            .join(" ");
+        self.animations
+            .emit_to_javascript(emitter.raw_js(), ctx.clone(), &id)?;
+        self.animations.apply_to_styling(&mut self.styling);
         self.styling
             .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
-        // TODO: Maybe in future all text is gonna be inside of svg to allow
-        // seemless scaling.
         writeln!(
             emitter.raw_html(),
-            "<div id=\"{id}\" class=\"label{}\">",
-            self.stylings
-                .into_iter()
-                .map(|s| format!(" {s}"))
-                .collect::<String>()
+            "<div id=\"{id}\" class=\"label {classes} {classes_animations}\">",
         )?;
         self.text.render_to_html(emitter.raw_html())?;
         writeln!(emitter.raw_html(), "</div>")?;
@@ -118,7 +123,7 @@ impl Label {
             text: text.into(),
             styling: LabelStyling::new(),
             stylings: Vec::new(),
-            animations: Vec::new(),
+            animations: Animations::new(),
         }
     }
 

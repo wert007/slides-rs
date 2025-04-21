@@ -1,3 +1,5 @@
+#![feature(iter_intersperse)]
+
 use std::{
     collections::{HashMap, HashSet},
     io::Write,
@@ -206,7 +208,6 @@ impl Slide {
                     layout: ToCssLayout {
                         outer_padding: self.styling.base().padding,
                         grid_data: None,
-                        animation_init_values: Vec::new(),
                     },
                     slide_name: id.clone(),
                 },

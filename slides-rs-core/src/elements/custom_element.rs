@@ -1,7 +1,8 @@
 use std::io::Write;
 
 use crate::{
-    ElementStyling, Result, StylingReference, ToCss, animations::Animation,
+    ElementStyling, Result, StylingReference, ToCss,
+    animations::Animations,
     output::PresentationEmitter,
 };
 
@@ -17,7 +18,7 @@ pub struct CustomElement {
     stylings: Vec<StylingReference>,
     type_name: String,
     children: Vec<Element>,
-    pub animations: Vec<Animation>,
+    pub animations: Animations,
 }
 impl CustomElement {
     pub fn new(type_name: impl Into<String>, children: Vec<Element>) -> Self {
@@ -30,7 +31,7 @@ impl CustomElement {
             children,
             styling: ElementStyling::new_base(),
             stylings: Vec::new(),
-            animations: Vec::new(),
+            animations: Animations::new(),
         }
     }
     pub fn type_name(&self) -> &str {
@@ -66,21 +67,27 @@ impl CustomElement {
 
 impl WebRenderable for CustomElement {
     fn output_to_html<W: Write>(
-        self,
+        mut self,
         emitter: &mut PresentationEmitter<W>,
         ctx: WebRenderableContext,
     ) -> Result<()> {
         let id = format!("{}-{}", self.namespace, self.name());
+        let classes_animations = self.animations.get_initial_classes();
+        let classes = self
+            .stylings
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>()
+            .join(" ");
+        self.animations
+            .emit_to_javascript(emitter.raw_js(), ctx.clone(), &id)?;
+        self.animations.apply_to_styling(&mut self.styling);
         self.styling
             .to_css_rule(ctx.layout.clone(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(
             emitter.raw_html(),
-            "<div id=\"{id}\" class=\"custom-element {} {}\">",
+            "<div id=\"{id}\" class=\"custom-element {} {classes} {classes_animations}\">",
             self.type_name,
-            self.stylings
-                .into_iter()
-                .map(|s| format!(" {s}"))
-                .collect::<String>(),
         )?;
         for element in self.children {
             element.output_to_html(emitter, ctx.clone())?;

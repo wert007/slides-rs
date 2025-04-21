@@ -1,7 +1,8 @@
 use std::{fmt::Display, path::PathBuf};
 
 use crate::{
-    ElementStyling, ImageStyling, Result, StylingReference, ToCss, animations::Animation,
+    ElementStyling, ImageStyling, Result, StylingReference, ToCss,
+    animations::Animations,
     output::PresentationEmitter,
 };
 
@@ -16,7 +17,7 @@ pub struct Image {
     source: ImageSource,
     styling: ElementStyling<ImageStyling>,
     stylings: Vec<StylingReference>,
-    pub animations: Vec<Animation>,
+    pub animations: Animations,
 }
 
 #[derive(Debug, Clone)]
@@ -55,7 +56,7 @@ impl Image {
             source,
             styling: ImageStyling::new(),
             stylings: Vec::new(),
-            animations: Vec::new(),
+            animations: Animations::new(),
         }
     }
     pub fn with_element_styling(mut self, styling: ElementStyling<ImageStyling>) -> Self {
@@ -87,17 +88,27 @@ impl Image {
 
 impl WebRenderable for Image {
     fn output_to_html<W: std::io::Write>(
-        self,
+        mut self,
         emitter: &mut PresentationEmitter<W>,
         ctx: WebRenderableContext,
     ) -> Result<()> {
         let id = format!("{}-{}", self.namespace, self.name());
+        let classes_animations = self.animations.get_initial_classes();
+        let classes = self
+            .stylings
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>()
+            .join(" ");
+        self.animations
+            .emit_to_javascript(emitter.raw_js(), ctx.clone(), &id)?;
+        self.animations.apply_to_styling(&mut self.styling);
         self.styling
             .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         self.source.add_files(emitter)?;
         writeln!(
             emitter.raw_html(),
-            "<img id=\"{id}\" class=\"image\" src=\"{}\"/>",
+            "<img id=\"{id}\" class=\"image {classes} {classes_animations}\" src=\"{}\"/>",
             self.source
         )?;
         Ok(())

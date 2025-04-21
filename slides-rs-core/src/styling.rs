@@ -388,18 +388,17 @@ impl<S: ToCss + 'static> ElementStyling<S> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ToCssLayout {
     pub outer_padding: Thickness,
     pub grid_data: Option<GridEntry>,
-    pub animation_init_values: Vec<(String, String)>,
 }
 impl ToCssLayout {
     pub(crate) fn unknown() -> ToCssLayout {
         Self {
             outer_padding: Thickness::default(),
             grid_data: None,
-            animation_init_values: Vec::new(),
+            // animation_init_values: Vec::new(),
         }
     }
 
@@ -430,13 +429,6 @@ impl<S: ToCss> ToCss for ElementStyling<S> {
         }
         self.base.to_css_rule(layout.clone(), selector, w)?;
         self.specific.to_css_rule(layout.clone(), selector, w)?;
-        if !layout.animation_init_values.is_empty() {
-            writeln!(w, "{selector} {{")?;
-            for (field, value) in layout.animation_init_values {
-                writeln!(w, "    {field}: {value};")?;
-            }
-            writeln!(w, "}}\n")?;
-        }
         Ok(())
     }
     fn to_css_style(&self, _layout: ToCssLayout) -> String {

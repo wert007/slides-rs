@@ -4,7 +4,8 @@ use struct_field_names_as_array::FieldNamesAsSlice;
 
 use crate::{
     BaseElementStyling, ElementStyling, GridCellSize, GridStyling, Result, StylingReference, ToCss,
-    animations::Animation, output::PresentationEmitter,
+    animations::Animations,
+    output::PresentationEmitter,
 };
 
 use super::{Element, ElementId, WebRenderable, WebRenderableContext};
@@ -33,7 +34,7 @@ pub struct Grid {
     element_grid_data: Vec<Arc<RefCell<GridEntry>>>,
     styling: ElementStyling<GridStyling>,
     stylings: Vec<StylingReference>,
-    pub animations: Vec<Animation>,
+    pub animations: Animations,
 }
 
 impl Grid {
@@ -47,7 +48,7 @@ impl Grid {
             element_grid_data: Vec::new(),
             styling: GridStyling::new(columns, rows),
             stylings: Vec::new(),
-            animations: Vec::new(),
+            animations: Animations::new(),
         }
     }
 
@@ -75,14 +76,27 @@ impl Grid {
 
 impl WebRenderable for Grid {
     fn output_to_html<W: std::io::Write>(
-        self,
+        mut self,
         emitter: &mut PresentationEmitter<W>,
         mut ctx: WebRenderableContext,
     ) -> Result<()> {
         let id = format!("{}-{}", self.namespace, self.name());
+        let classes_animations = self.animations.get_initial_classes();
+        let classes = self
+            .stylings
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>()
+            .join(" ");
+        self.animations
+            .emit_to_javascript(emitter.raw_js(), ctx.clone(), &id)?;
+        self.animations.apply_to_styling(&mut self.styling);
         self.styling
             .to_css_rule(ctx.layout.clone(), &format!("#{id}"), emitter.raw_css())?;
-        writeln!(emitter.raw_html(), "<div id=\"{id}\" class=\"grid\">")?;
+        writeln!(
+            emitter.raw_html(),
+            "<div id=\"{id}\" class=\"grid {classes} {classes_animations}\">"
+        )?;
         for (mut element, data) in self.children.into_iter().zip(self.element_grid_data) {
             let grid_data = Arc::unwrap_or_clone(data).into_inner();
             element.set_namespace(id.clone());

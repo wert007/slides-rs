@@ -1,7 +1,7 @@
 use crate::{
     BaseElementStyling, ElementStyling, FlexStyling, PresentationEmitter, Result, StylingReference,
     ToCss,
-    animations::{Animation, Animations},
+    animations::Animations,
 };
 
 use super::{Element, ElementId, WebRenderable, WebRenderableContext};
@@ -15,7 +15,7 @@ pub struct Flex {
     children: Vec<Element>,
     styling: ElementStyling<FlexStyling>,
     stylings: Vec<StylingReference>,
-    pub animations: Vec<Animation>,
+    pub animations: Animations,
 }
 
 impl Flex {
@@ -30,7 +30,7 @@ impl Flex {
             children,
             styling: FlexStyling::new(),
             stylings: Vec::new(),
-            animations: Vec::new(),
+            animations: Animations::new(),
         }
     }
 
@@ -53,78 +53,26 @@ impl Flex {
 
 impl WebRenderable for Flex {
     fn output_to_html<W: std::io::Write>(
-        self,
+        mut self,
         emitter: &mut PresentationEmitter<W>,
-        mut ctx: WebRenderableContext,
+        ctx: WebRenderableContext,
     ) -> Result<()> {
         let id = format!("{}-{}", self.namespace, self.name());
-        let animation_init_values: Vec<_> = self
-            .animations
-            .iter()
-            .filter_map(|a| match &a.value {
-                crate::animations::AnimationValue::ClassAddition(_) => None,
-                crate::animations::AnimationValue::ClassRemoval(_) => None,
-                crate::animations::AnimationValue::FieldChange {
-                    field_name,
-                    previous_value,
-                    ..
-                } => Some((field_name.clone(), previous_value.clone())),
-            })
-            .collect();
-        assert!(animation_init_values.is_empty());
+        let classes_animations = self.animations.get_initial_classes();
+        self.animations
+            .emit_to_javascript(emitter.raw_js(), ctx.clone(), &id)?;
+        self.animations.apply_to_styling(&mut self.styling);
         let classes = self
             .stylings
             .into_iter()
             .map(|s| s.to_string())
-            .chain(self.animations.iter().filter_map(|a| match &a.value {
-                crate::animations::AnimationValue::ClassAddition(_) => None,
-                crate::animations::AnimationValue::ClassRemoval(class) => Some(class.clone()),
-                crate::animations::AnimationValue::FieldChange { .. } => None,
-            }))
             .collect::<Vec<_>>()
             .join(" ");
-        for animation in self.animations {
-            match animation.trigger {
-                crate::animations::Trigger::StepReached(number) => {
-                    writeln!(
-                        emitter.raw_js(),
-                        "stepReached.push({{\n slideId: '{}',\n step: {number},\n trigger: () => {{",
-                        ctx.slide_name
-                    )?;
-                    match &animation.value {
-                        crate::animations::AnimationValue::ClassAddition(_) => todo!(),
-                        crate::animations::AnimationValue::ClassRemoval(class_name) => {
-                            writeln!(
-                                emitter.raw_js(),
-                                "    document.getElementById('{id}').classList.remove('{class_name}');"
-                            )?;
-                        }
-                        crate::animations::AnimationValue::FieldChange { .. } => todo!(),
-                    }
-
-                    writeln!(emitter.raw_js(), "}},\n reverse: () => {{")?;
-
-                    match &animation.value {
-                        crate::animations::AnimationValue::ClassAddition(_) => todo!(),
-                        crate::animations::AnimationValue::ClassRemoval(class_name) => {
-                            writeln!(
-                                emitter.raw_js(),
-                                "    document.getElementById('{id}').classList.add('{class_name}');"
-                            )?;
-                        }
-                        crate::animations::AnimationValue::FieldChange { .. } => todo!(),
-                    }
-
-                    writeln!(emitter.raw_js(), "}}\n}});")?;
-                }
-            }
-        }
-        ctx.layout.animation_init_values = animation_init_values;
         self.styling
             .to_css_rule(ctx.layout.clone(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(
             emitter.raw_html(),
-            "<div id=\"{id}\" class=\"flex {classes}\">"
+            "<div id=\"{id}\" class=\"flex {classes}{classes_animations}\">"
         )?;
         for mut element in self.children {
             element.set_namespace(id.clone());

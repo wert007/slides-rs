@@ -243,11 +243,11 @@ impl ElementRefMut {
 
     pub fn set_animations(&mut self, value: Vec<Animation>) {
         match self {
-            ElementRefMut::Image(it) => it.borrow_mut().animations = value,
-            ElementRefMut::Label(it) => it.borrow_mut().animations = value,
-            ElementRefMut::CustomElement(it) => it.borrow_mut().animations = value,
-            ElementRefMut::Grid(it) => it.borrow_mut().animations = value,
-            ElementRefMut::Flex(it) => it.borrow_mut().animations = value,
+            ElementRefMut::Image(it) => it.borrow_mut().animations.add_animations(&value),
+            ElementRefMut::Label(it) => it.borrow_mut().animations.add_animations(&value),
+            ElementRefMut::CustomElement(it) => it.borrow_mut().animations.add_animations(&value),
+            ElementRefMut::Grid(it) => it.borrow_mut().animations.add_animations(&value),
+            ElementRefMut::Flex(it) => it.borrow_mut().animations.add_animations(&value),
         }
     }
 }
