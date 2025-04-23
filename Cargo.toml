@@ -1,3 +1,3 @@
 [workspace]
-members = ["slides-lang", "slides-rs-core"]
+members = [ "arrows-module", "slides-arrow","slides-lang", "slides-rs-core"]
 resolver = "3"

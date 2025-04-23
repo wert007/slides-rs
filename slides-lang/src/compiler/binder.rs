@@ -17,9 +17,13 @@ use super::{
         value::{Parameter, Value},
     },
     lexer::{Token, TokenKind},
+    module::Module,
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
-use crate::{Context, Location, StringInterner, VariableId, compiler::lexer::Trivia};
+use crate::{
+    Context, Location, StringInterner, VariableId,
+    compiler::{lexer::Trivia, module},
+};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -81,7 +85,8 @@ fn debug_bound_ast(ast: &BoundAst, context: &Context) {
 fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
     print!("{indent}");
     match &statement.kind {
-        BoundNodeKind::Error(()) => println!("#Error"),
+        BoundNodeKind::Empty(()) => println!("#Empty"),
+        BoundNodeKind::Error(BoundError) => println!("#Error"),
         BoundNodeKind::StylingStatement(styling_statement) => {
             println!(
                 "Style {} for {:?}",
@@ -223,7 +228,7 @@ pub struct Variable {
     pub type_: TypeId,
 }
 
-struct Scope {
+pub struct Scope {
     variables: HashMap<VariableId, Variable>,
 }
 
@@ -320,10 +325,11 @@ fn debug_scope(name: &str, scope: &Scope, context: &Context) {
     println!();
 }
 
-struct Binder {
+pub struct Binder {
     scopes: Vec<Scope>,
     types: HashMap<SymbolUsize, TypeId>,
     current_expected_type: Vec<TypeId>,
+    modules: Vec<Module>,
 }
 
 impl Binder {
@@ -342,6 +348,7 @@ impl Binder {
                 })
                 .collect(),
             current_expected_type: Vec::new(),
+            modules: Vec::new(),
         }
     }
 
@@ -425,6 +432,10 @@ impl Binder {
 
     fn currently_expected_type(&self) -> Option<TypeId> {
         self.current_expected_type.last().copied()
+    }
+
+    fn add_module(&mut self, module: module::Module) {
+        self.modules.push(module);
     }
 }
 
@@ -544,11 +555,15 @@ pub struct Binary {
     pub rhs: Box<BoundNode>,
 }
 
-summum! {
+#[derive(Debug, Clone)]
 
+pub struct BoundError;
+
+summum! {
 #[derive(Debug, Clone)]
 pub enum BoundNodeKind {
-    Error(()),
+    Empty(()),
+    Error(BoundError),
     StylingStatement(StylingStatement),
     AssignmentStatement(AssignmentStatement),
     ElementStatement(ElementStatement),
@@ -581,7 +596,7 @@ impl BoundNode {
         BoundNode {
             base: Some(SyntaxNodeKind::Error(consumed)),
             location,
-            kind: BoundNodeKind::Error(()),
+            kind: BoundNodeKind::Error(BoundError),
             type_: TypeId::ERROR,
             constant_value: None,
         }
@@ -591,7 +606,7 @@ impl BoundNode {
         BoundNode {
             base: None,
             location,
-            kind: BoundNodeKind::Error(()),
+            kind: BoundNodeKind::Error(BoundError),
             type_: TypeId::ERROR,
             constant_value: None,
         }
@@ -837,6 +852,16 @@ impl BoundNode {
             constant_value: None,
         }
     }
+
+    fn empty() -> BoundNode {
+        BoundNode {
+            base: None,
+            location: Location::zero(),
+            kind: BoundNodeKind::Empty(()),
+            type_: TypeId::VOID,
+            constant_value: None,
+        }
+    }
 }
 
 fn constant_conversion(value: Value, target: TypeId, _kind: ConversionKind) -> Option<Value> {
@@ -993,28 +1018,50 @@ fn bind_import_statement(
     context: &mut Context,
 ) -> BoundNode {
     let path = bind_node(*import_statement.path, binder, context);
-    if path.type_ != TypeId::PATH {
-        // TODO: Argument must be path!
-        return BoundNode::error(location);
-    }
+    let type_ = context.type_interner.resolve(path.type_);
     let Ok(path) = path.kind.try_into_conversion() else {
+        todo!("report argument is not a literal");
         // TODO: Argument must be literal!
-        return BoundNode::error(location);
+        // return BoundNode::error(location);
     };
     let Ok(literal) = path.base.kind.try_into_literal() else {
+        todo!("report argument is not a literal");
         // TODO: Argument must be literal!
-        return BoundNode::error(location);
+        // return BoundNode::error(location);
     };
     let Ok(string) = literal.try_into_string() else {
+        todo!("report argument is not a literal");
         // TODO: Argument must be string! Should never get to here probably!
-        return BoundNode::error(location);
+        // return BoundNode::error(location);
     };
-    let path = PathBuf::from(string);
-    if !path.exists() {
-        // TODO: Path must be existing at compile time!
-        return BoundNode::error(location);
+    match type_ {
+        Type::Path => {
+            let path = PathBuf::from(string);
+            if !path.exists() {
+                // TODO: Path must be existing at compile time!
+                return BoundNode::error(location);
+            }
+            BoundNode::import(path, location)
+        }
+        Type::Module => {
+            let variable = context.string_interner.create_or_get_variable(&string);
+            let path = context
+                .module_directory
+                .join(string)
+                .with_extension("sld.mod.zip");
+            if !path.exists() {
+                todo!("Report module not found!");
+            }
+            let module = module::load_module(path, binder, context).unwrap();
+            binder.add_module(module);
+            let type_ = context.type_interner.get_or_intern(Type::Module);
+            binder
+                .expect_register_variable_id(variable, type_, location, context)
+                .expect("Module name is not unique apparently");
+            BoundNode::empty()
+        }
+        _ => todo!("report invalid Type!"),
     }
-    BoundNode::import(path, location)
 }
 
 fn bind_element_statement(
@@ -1410,6 +1457,7 @@ fn bind_typed_string(
         "c" => Type::Color,
         "l" => Type::Label,
         "p" => Type::Path,
+        "module" => Type::Module,
         unknown => {
             context
                 .diagnostics
@@ -1550,6 +1598,9 @@ fn bind_conversion(
         },
         ConversionKind::TypedString => match context.type_interner.resolve(target) {
             Type::Label | Type::Color | Type::Path => {}
+            Type::Module => {
+                // TODO: Check this module exists and string is valid module string!
+            }
             unknown => unreachable!("Unknown TypedString {unknown:?}"),
         },
         ConversionKind::ToString => match context.type_interner.resolve(base.type_) {

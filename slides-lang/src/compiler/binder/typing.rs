@@ -5,8 +5,8 @@ use super::{ConversionKind, Variable, globals};
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FunctionType {
     pub min_argument_count: usize,
-    pub(super) argument_types: Vec<TypeId>,
-    pub(super) return_type: TypeId,
+    pub(crate) argument_types: Vec<TypeId>,
+    pub(crate) return_type: TypeId,
 }
 impl FunctionType {
     pub fn return_type(&self) -> TypeId {
@@ -118,6 +118,7 @@ pub enum Type {
     TextStyling,
     Animation,
     Position,
+    Module,
 }
 
 impl Type {

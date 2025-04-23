@@ -1,0 +1,44 @@
+package component:arrows;
+interface types {
+    enum %type {
+        void,
+        %string,
+        int,
+        float,
+    }
+
+    record function {
+        name: string,
+        args: list<%type>,
+        result-type: %type,
+    }
+}
+
+interface values {
+    variant value {
+        void,
+        string-type(string),
+        int(s64),
+        float(f64),
+    }
+}
+
+interface modules {
+    use types.{%type, function};
+    use values.{value};
+
+    variant error {
+        function-not-found,
+    }
+    resource module {
+        create: static func() -> module;
+        available-functions: func() -> list<function>;
+        call-function: func(name: string, args: list<value>) -> result<value, error>;
+    }
+
+    hello: func() -> string;
+}
+
+world host {
+    export modules;
+}

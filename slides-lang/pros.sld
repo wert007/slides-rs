@@ -1,3 +1,5 @@
+import module"arrows";
+
 styling default(Label):
     font = gfont("Roboto");
     text_color = c"black";
@@ -339,5 +341,5 @@ slide deadlocks_problem:
     };
     let start = positionInside(base, 0.0, 0.5);
     let end = positionInside(base, 0.5, 0.0);
-    let a = arrow(start, end, {});
+    let a = arrows.arrow(start, end, {});
 

@@ -6,7 +6,7 @@ use slides_rs_core::{
     TextStyling,
 };
 
-use super::binder::{BoundAst, BoundNode, BoundNodeKind, StylingType, typing::TypeId};
+use super::binder::{BoundAst, BoundError, BoundNode, BoundNodeKind, StylingType, typing::TypeId};
 use crate::{Context, Location, VariableId};
 
 pub mod functions;
@@ -194,7 +194,8 @@ fn evaluate_statement(
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     match statement.kind {
-        BoundNodeKind::Error(()) => unreachable!("Errors should create errors!"),
+        BoundNodeKind::Empty(()) => Ok(()),
+        BoundNodeKind::Error(BoundError) => unreachable!("Errors should create errors!"),
         BoundNodeKind::StylingStatement(styling_statement) => {
             evaluate_styling_statement(styling_statement, statement.location, evaluator, context)
         }

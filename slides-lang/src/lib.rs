@@ -164,6 +164,7 @@ pub struct Context {
     string_interner: StringInterner,
     type_interner: TypeInterner,
     debug: DebugLang,
+    module_directory: PathBuf,
 }
 
 impl Context {
@@ -175,6 +176,7 @@ impl Context {
             string_interner: StringInterner::new(),
             type_interner: TypeInterner::new(),
             debug: DebugLang::default(),
+            module_directory: "./slides-modules/".into(),
         }
     }
 
