@@ -455,18 +455,21 @@ fn execute_function(
             execute_named_function(name, arguments, base.location, evaluator, context)
         }
         BoundNodeKind::MemberAccess(member_access) => {
+            // TODO: This is a unintuitive location for this...
+            let location = member_access.base.location;
             let base = evaluate_expression(*member_access.base, evaluator, context);
             let name = context
                 .string_interner
                 .resolve(member_access.member)
                 .to_owned();
-            execute_member_function(base, name, arguments, evaluator, context)
+            execute_member_function(location, base, name, arguments, evaluator, context)
         }
         _ => todo!("Add function handling!"),
     }
 }
 
 fn execute_member_function(
+    location: Location,
     base: Value,
     name: String,
     mut arguments: Vec<Value>,
@@ -513,6 +516,12 @@ fn execute_member_function(
             }
             _ => todo!(),
         },
+        value::Value::Module(module) => {
+            let value = module
+                .try_call_function_by_name(name)
+                .expect("Throw exception here");
+            Value { value, location }
+        }
         _ => todo!(),
     }
 }

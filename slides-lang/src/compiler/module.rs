@@ -10,7 +10,7 @@ use wasmtime::{
     component::{Component, Linker, bindgen},
 };
 
-use crate::{Context, Location, compiler::binder::typing::FunctionType};
+use crate::{Context, Location, VariableId, compiler::binder::typing::FunctionType};
 
 use super::binder::{Binder, Variable, typing};
 
@@ -20,9 +20,26 @@ use super::binder::{Binder, Variable, typing};
 //     wai_bindgen_rust::import!("../arrows-module/module.wai");
 // }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Module {
-    functions: Vec<Variable>,
+    pub name: VariableId,
+    functions: Vec<(String, FunctionType)>,
+}
+
+impl Module {
+    pub fn try_get_function_by_name(&self, name: &str) -> Option<&FunctionType> {
+        self.functions
+            .iter()
+            .find(|(n, _)| n == name)
+            .map(|(_, t)| t)
+    }
+
+    pub(crate) fn try_call_function_by_name(
+        &self,
+        name: String,
+    ) -> Option<super::evaluator::value::Value> {
+        todo!()
+    }
 }
 
 bindgen!({
@@ -38,6 +55,7 @@ impl arrows::types::Host for State {}
 impl arrows::values::Host for State {}
 
 pub fn load_module(
+    name: VariableId,
     path: impl Into<PathBuf>,
     binder: &mut Binder,
     context: &mut Context,
@@ -77,6 +95,7 @@ pub fn load_module(
         .unwrap();
 
     Ok(Module {
+        name,
         functions: functions
             .into_iter()
             .map(|f| {
@@ -89,16 +108,7 @@ pub fn load_module(
                         .collect(),
                     return_type: context.type_interner.get_or_intern(f.result_type.into()),
                 };
-                let type_ = context
-                    .type_interner
-                    .get_or_intern(typing::Type::Function(type_));
-                let id = context.string_interner.create_or_get_variable(&f.name);
-                let variable = Variable {
-                    id,
-                    definition: Location::zero(),
-                    type_,
-                };
-                variable
+                (f.name, type_)
             })
             .collect(),
     })

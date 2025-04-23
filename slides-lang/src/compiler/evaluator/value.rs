@@ -5,9 +5,12 @@ use summum_types::summum;
 
 use crate::{
     VariableId,
-    compiler::binder::{
-        BoundNode,
-        typing::{Type, TypeId},
+    compiler::{
+        binder::{
+            BoundNode,
+            typing::{Type, TypeId},
+        },
+        module::Module,
     },
 };
 
@@ -58,6 +61,7 @@ summum! {
         TextStyling(Arc<RefCell<slides_rs_core::TextStyling>>),
         Element(slides_rs_core::Element),
         Position(slides_rs_core::Position),
+        Module(Module),
     }
 }
 
@@ -93,6 +97,7 @@ impl Value {
             Value::Element(_) => Type::Element,
             Value::Animation(_) => Type::Animation,
             Value::Position(_) => Type::Position,
+            Value::Module(_) => Type::Module(crate::ModuleIndex::ANY),
         }
     }
 

@@ -127,6 +127,7 @@ impl Evaluator {
             .expect("Variable exists")
     }
 
+    #[track_caller]
     fn get_variable(&self, name: VariableId) -> &Value {
         self.scopes
             .iter()
@@ -176,6 +177,16 @@ pub fn create_presentation_from_ast(
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     let mut evaluator = Evaluator::new();
+
+    for module in &context.modules.modules {
+        evaluator.set_variable(
+            module.name,
+            Value {
+                value: value::Value::Module(module.clone()),
+                location: Location::zero(),
+            },
+        );
+    }
 
     for statement in ast.statements {
         evaluate_statement(statement, &mut evaluator, context)?;

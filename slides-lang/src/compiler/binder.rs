@@ -21,7 +21,7 @@ use super::{
     parser::{self, SyntaxNode, SyntaxNodeKind, debug_ast},
 };
 use crate::{
-    Context, Location, StringInterner, VariableId,
+    Context, Location, ModuleIndex, StringInterner, VariableId,
     compiler::{lexer::Trivia, module},
 };
 use thiserror::Error;
@@ -1043,18 +1043,19 @@ fn bind_import_statement(
             }
             BoundNode::import(path, location)
         }
-        Type::Module => {
+        Type::Module(ModuleIndex::ANY) => {
             let variable = context.string_interner.create_or_get_variable(&string);
             let path = context
-                .module_directory
-                .join(string)
+                .modules
+                .directory
+                .join(&string)
                 .with_extension("sld.mod.zip");
             if !path.exists() {
                 todo!("Report module not found!");
             }
-            let module = module::load_module(path, binder, context).unwrap();
-            binder.add_module(module);
-            let type_ = context.type_interner.get_or_intern(Type::Module);
+            let module = module::load_module(variable, path, binder, context).unwrap();
+            let module = context.modules.add_module(module);
+            let type_ = context.type_interner.get_or_intern(Type::Module(module));
             binder
                 .expect_register_variable_id(variable, type_, location, context)
                 .expect("Module name is not unique apparently");
@@ -1333,7 +1334,9 @@ fn access_member(
             visited.push(base_type.clone());
         }
         let member = context.string_interner.resolve(member);
-        if let Some(type_) = base_type.field_type(member, &mut context.type_interner) {
+        if let Some(type_) =
+            base_type.field_type(member, &mut context.type_interner, &context.modules)
+        {
             let type_ = context.type_interner.get_or_intern(type_);
             let mut fallback = BoundNode::error(base.location);
             std::mem::swap(base, &mut fallback);
@@ -1457,7 +1460,7 @@ fn bind_typed_string(
         "c" => Type::Color,
         "l" => Type::Label,
         "p" => Type::Path,
-        "module" => Type::Module,
+        "module" => Type::Module(ModuleIndex::ANY),
         unknown => {
             context
                 .diagnostics
@@ -1598,7 +1601,7 @@ fn bind_conversion(
         },
         ConversionKind::TypedString => match context.type_interner.resolve(target) {
             Type::Label | Type::Color | Type::Path => {}
-            Type::Module => {
+            Type::Module(ModuleIndex::ANY) => {
                 // TODO: Check this module exists and string is valid module string!
             }
             unknown => unreachable!("Unknown TypedString {unknown:?}"),

@@ -1,5 +1,7 @@
 use strum::IntoEnumIterator;
 
+use crate::{ModuleIndex, Modules};
+
 use super::{ConversionKind, Variable, globals};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -118,7 +120,7 @@ pub enum Type {
     TextStyling,
     Animation,
     Position,
-    Module,
+    Module(ModuleIndex),
 }
 
 impl Type {
@@ -141,7 +143,12 @@ impl Type {
         }
     }
 
-    pub fn field_type(&self, member: &str, type_interner: &mut TypeInterner) -> Option<Type> {
+    pub fn field_type(
+        &self,
+        member: &str,
+        type_interner: &mut TypeInterner,
+        modules: &Modules,
+    ) -> Option<Type> {
         if self == &Type::Error {
             return Some(Type::Error);
         }
@@ -151,6 +158,12 @@ impl Type {
             } else {
                 None
             };
+        }
+        if let Type::Module(index) = self {
+            let module = &modules[*index];
+            return module
+                .try_get_function_by_name(member)
+                .map(|f| Type::Function(f.clone()));
         }
         for m in globals::MEMBERS {
             if self.as_ref() != m.name {
