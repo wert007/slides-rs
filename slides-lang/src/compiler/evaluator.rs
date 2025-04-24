@@ -180,7 +180,7 @@ pub fn create_presentation_from_ast(
 
     for module in &context.modules.modules {
         evaluator.set_variable(
-            module.name,
+            module.borrow().name,
             Value {
                 value: value::Value::Module(module.clone()),
                 location: Location::zero(),

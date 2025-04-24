@@ -61,7 +61,7 @@ summum! {
         TextStyling(Arc<RefCell<slides_rs_core::TextStyling>>),
         Element(slides_rs_core::Element),
         Position(slides_rs_core::Position),
-        Module(Module),
+        Module(Arc<RefCell<Module>>),
     }
 }
 

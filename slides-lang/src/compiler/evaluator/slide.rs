@@ -518,7 +518,8 @@ fn execute_member_function(
         },
         value::Value::Module(module) => {
             let value = module
-                .try_call_function_by_name(name)
+                .borrow_mut()
+                .try_call_function_by_name(&name, arguments.into_iter().map(|v| v.value).collect())
                 .expect("Throw exception here");
             Value { value, location }
         }

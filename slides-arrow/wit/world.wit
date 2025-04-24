@@ -15,17 +15,35 @@ interface types {
 }
 
 interface values {
+    record value-index {
+        index: u32,
+    }
+    resource value-allocator {
+        create: static func() -> value-allocator;
+        allocate: func(value: value) -> value-index;
+        get: func(value: value-index) -> value;
+    }
+
+    record position {
+        x: string,
+        y: string,
+    }
+
     variant value {
         void,
         string-type(string),
         int(s64),
         float(f64),
+        style-unit(string),
+        position(position),
+        dict(list<tuple<string, value-index>>),
+        array(list<value-index>),
     }
 }
 
 interface modules {
     use types.{%type, function};
-    use values.{value};
+    use values.{value, value-allocator, value-index};
 
     variant error {
         function-not-found,
@@ -33,10 +51,8 @@ interface modules {
     resource module {
         create: static func() -> module;
         available-functions: func() -> list<function>;
-        call-function: func(name: string, args: list<value>) -> result<value, error>;
+        call-function: func(name: string, allocator: value-allocator, args: list<value-index>) -> result<value-index, error>;
     }
-
-    hello: func() -> string;
 }
 
 world host {

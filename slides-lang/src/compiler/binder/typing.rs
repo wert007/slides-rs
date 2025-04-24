@@ -162,8 +162,9 @@ impl Type {
         if let Type::Module(index) = self {
             let module = &modules[*index];
             return module
+                .borrow()
                 .try_get_function_by_name(member)
-                .map(|f| Type::Function(f.clone()));
+                .map(|f| Type::Function(f.type_.clone()));
         }
         for m in globals::MEMBERS {
             if self.as_ref() != m.name {

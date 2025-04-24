@@ -1,4 +1,4 @@
-use std::{ops::Index, path::PathBuf};
+use std::{cell::RefCell, ops::Index, path::PathBuf, sync::Arc};
 
 use compiler::{DebugLang, binder::typing::TypeInterner, diagnostics::Diagnostics, module::Module};
 use slides_rs_core::Presentation;
@@ -166,7 +166,7 @@ impl ModuleIndex {
 
 pub struct Modules {
     directory: PathBuf,
-    modules: Vec<Module>,
+    modules: Vec<Arc<RefCell<Module>>>,
 }
 
 impl Modules {
@@ -178,13 +178,13 @@ impl Modules {
     }
 
     pub fn add_module(&mut self, module: Module) -> ModuleIndex {
-        self.modules.push(module);
+        self.modules.push(Arc::new(RefCell::new(module)));
         ModuleIndex(self.modules.len())
     }
 }
 
 impl Index<ModuleIndex> for Modules {
-    type Output = Module;
+    type Output = Arc<RefCell<Module>>;
 
     fn index(&self, index: ModuleIndex) -> &Self::Output {
         if index.0 == 0 {
