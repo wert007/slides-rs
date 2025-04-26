@@ -25,18 +25,19 @@ impl Arrows {
     fn arrow(
         &self,
         slides: slides::Slides,
+        allocator: &mut modules::ValueAllocator,
         from: u32,
         to: u32,
         parent: u32,
         options: HashMap<String, ValueIndex>,
-    ) {
+    ) -> Result<(), modules::Error> {
         use std::fmt::Write;
         let is_library_downloaded = self
             .is_library_downloaded
             .fetch_update(
                 std::sync::atomic::Ordering::SeqCst,
                 std::sync::atomic::Ordering::SeqCst,
-                |x| Some(x),
+                |_| Some(true),
             )
             .unwrap();
         if !is_library_downloaded {
@@ -49,7 +50,32 @@ impl Arrows {
             );
         }
         let mut text = String::new();
-        assert!(options.is_empty());
+        let mut options_text = String::new();
+        fn value_to_string(value: &Value) -> Result<String, modules::Error> {
+            Ok(match value {
+                Value::Int(num) => num.to_string(),
+                Value::StringType(string) => format!("\"{string}\""),
+                _ => {
+                    return Err(modules::Error::InternalError(format!(
+                        "Value is not supported in options: {value:#?}"
+                    )));
+                }
+            })
+        }
+        for (key, value) in options {
+            let value = allocator.get(value);
+            match key.as_str() {
+                "color" | "path" => {
+                    writeln!(options_text, "{key}: {},", value_to_string(&value)?)
+                        .expect("infallible");
+                }
+                _ => {
+                    return Err(modules::Error::InternalError(format!(
+                        "Invalid option: {key}"
+                    )));
+                }
+            }
+        }
         writeln!(
             text,
             "
@@ -58,6 +84,7 @@ impl Arrows {
         getElementById({to}),
         {{
             parent: getElementById({parent}),
+            {options_text}
         }},
     );"
         )
@@ -67,6 +94,7 @@ impl Arrows {
             "arrows arrow function",
             slides::Placement::JavascriptInit,
         );
+        Ok(())
     }
 }
 
@@ -89,7 +117,7 @@ impl GuestModule for Arrows {
         &self,
         slides: slides::Slides,
         name: String,
-        allocator: modules::ValueAllocator,
+        mut allocator: modules::ValueAllocator,
         args: Vec<modules::ValueIndex>,
     ) -> Result<modules::ValueIndex, modules::Error> {
         Ok(match name.as_str() {
@@ -103,7 +131,7 @@ impl GuestModule for Arrows {
                     return Err(modules::Error::InternalError("parent must be set".into()));
                 };
                 let options = allocator.get(args[2]).try_into_dict()?;
-                self.arrow(slides, from, to, parent, options);
+                self.arrow(slides, &mut allocator, from, to, parent, options)?;
                 allocator.allocate(&Value::Void)
                 // allocator.
             }

@@ -11,35 +11,6 @@
                     init_navigation();
 
             
-<!-- From ./pros-assets/leader-line-arrow.init.js -->
-const namespace = 'deadlocks_problem-base';
-const opts = {
-    parent: document.getElementById(`${namespace}`),
-    color: "black",
-    path: "grid",
-};
-new LeaderLine(
-    document.getElementById(`${namespace}-amanda`),
-    document.getElementById(`${namespace}-lift`),
-    opts
-);
-new LeaderLine(
-    document.getElementById(`${namespace}-amanda`),
-    document.getElementById(`${namespace}-light`),
-    opts
-);
-new LeaderLine(
-    document.getElementById(`${namespace}-bobbl`),
-    document.getElementById(`${namespace}-lift`),
-    opts
-);
-new LeaderLine(
-    document.getElementById(`${namespace}-bobbl`),
-    document.getElementById(`${namespace}-light`),
-    opts
-);
-
-
 <!-- From arrows arrow function -->
 
     new LeaderLine(
@@ -47,6 +18,51 @@ new LeaderLine(
         getElementById(260),
         {
             parent: getElementById(263),
+            path: "grid",
+color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    new LeaderLine(
+        getElementById(256),
+        getElementById(262),
+        {
+            parent: getElementById(263),
+            path: "grid",
+color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    new LeaderLine(
+        getElementById(258),
+        getElementById(260),
+        {
+            parent: getElementById(263),
+            path: "grid",
+color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    new LeaderLine(
+        getElementById(258),
+        getElementById(262),
+        {
+            parent: getElementById(263),
+            path: "grid",
+color: "rgb(89, 89, 89, 1)",
+
         },
     );
 
@@ -57,9 +73,8 @@ new LeaderLine(
         </script>
             
 <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
-<!-- From ./pros-assets/leader-line.head.html -->
-<script src="./pros-assets/leader-line.min.js"></script>
-
+<!-- From arrows module -->
+<script src="pros-assets/leader-line.min.js"></script>
 
 
 </head>

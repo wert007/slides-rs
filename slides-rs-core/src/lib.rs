@@ -43,6 +43,7 @@ pub struct Presentation {
     stylings: Vec<DynamicElementStyling>,
     extern_texts: HashMap<FilePlacement, String>,
     used_files: Vec<PathBuf>,
+    referenced_files: Vec<PathBuf>,
 }
 
 impl Presentation {
@@ -52,6 +53,7 @@ impl Presentation {
             stylings: Vec::new(),
             extern_texts: HashMap::new(),
             used_files: Vec::new(),
+            referenced_files: Vec::new(),
         }
     }
 
@@ -131,6 +133,9 @@ impl Presentation {
                 emitter.raw_css(),
             )?;
         }
+        for file in self.referenced_files {
+            emitter.add_file(file)?;
+        }
         emitter.copy_referenced_files()?;
         writeln!(emitter.raw_html(), "</body></html>")?;
         Ok(())
@@ -140,6 +145,11 @@ impl Presentation {
         let name = styling.name().to_owned();
         self.stylings.push(styling);
         unsafe { StylingReference::from_raw(name) }
+    }
+
+    pub fn add_referenced_file(&mut self, path: impl Into<PathBuf>) {
+        let path = path.into();
+        self.referenced_files.push(path);
     }
 
     pub fn add_extern_text(

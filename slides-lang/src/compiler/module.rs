@@ -63,6 +63,7 @@ impl Module {
         let module = self.bindings.component_arrows_modules().module();
         let allocator_resource = self.store.data_mut().create_allocator();
         let allocator = self.store.data_mut().get_allocator_mut(&allocator_resource);
+        dbg!(&arguments);
         let arguments = arguments
             .into_iter()
             .map(|v| allocator.allocate_native_value(v))

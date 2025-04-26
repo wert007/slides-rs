@@ -64,6 +64,9 @@ impl HostValueAllocator {
             value::Value::Float(it) => self.allocate(values::Value::Float(it)),
             value::Value::Integer(it) => self.allocate(values::Value::Int(it)),
             value::Value::String(it) => self.allocate(values::Value::StringType(it)),
+            value::Value::Color(color) => {
+                self.allocate(values::Value::StringType(color.to_string()))
+            }
             value::Value::Dict(hash_map) => {
                 let entries = hash_map
                     .into_iter()
@@ -90,7 +93,7 @@ impl HostValueAllocator {
                 };
                 self.allocate(values::Value::Element(element))
             }
-            _ => todo!("Cannot allocatoe native value!"),
+            value => todo!("Cannot allocate native value! {value:#?}"),
         }
     }
 }
@@ -181,13 +184,15 @@ impl slides::HostSlides for State {
         url: wasmtime::component::__internal::String,
         path: wasmtime::component::__internal::String,
     ) -> () {
-        println!("Downloading file from {url} to {path}");
+        let path = PathBuf::from(path);
+        if path.exists() {
+            return;
+        }
         let response = reqwest::blocking::get(url.clone())
             .expect("Add error handling")
             .error_for_status()
             .expect("Add error handling");
         let bytes = response.bytes().expect("Add error handling");
-        let path = PathBuf::from(path);
         std::fs::write(path, bytes).expect("Add error handling");
     }
 
@@ -196,8 +201,7 @@ impl slides::HostSlides for State {
         _self_: wasmtime::component::Resource<modules::Slides>,
         path: wasmtime::component::__internal::String,
     ) -> () {
-        println!("Adding file {path}");
-        // todo!()
+        self.presentation.write().unwrap().add_referenced_file(path);
     }
 
     fn place_text_in_output(
@@ -207,6 +211,7 @@ impl slides::HostSlides for State {
         source: wasmtime::component::__internal::String,
         placement: arrows::slides::Placement,
     ) -> () {
+        println!("Placing text in output: {text}");
         self.presentation
             .write()
             .unwrap()
