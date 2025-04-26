@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use slides_rs_core::{Position, WebRenderable};
 use wasmtime::component::Resource;
 use wasmtime_wasi::{IoView, WasiView};
@@ -174,7 +176,13 @@ impl slides::HostSlides for State {
         path: wasmtime::component::__internal::String,
     ) -> () {
         println!("Downloading file from {url} to {path}");
-        // todo!()
+        let response = reqwest::blocking::get(url.clone())
+            .expect("Add error handling")
+            .error_for_status()
+            .expect("Add error handling");
+        let bytes = response.bytes().expect("Add error handling");
+        let path = PathBuf::from(path);
+        std::fs::write(path, bytes).expect("Add error handling");
     }
 
     fn add_file_reference(
