@@ -160,7 +160,7 @@ fn assign_member(
                 Type::Element
                 | Type::Label
                 | Type::Image
-                | Type::CustomElement(_)
+                | Type::CustomElement(_, _)
                 | Type::GridEntry => {
                     assign_to_slide_type(base_type, base, member, value, evaluator, context);
                 }
@@ -278,7 +278,7 @@ fn evaluate_post_initialization(
         match base_type {
             Type::Element
             | Type::Label
-            | Type::CustomElement(_)
+            | Type::CustomElement(..)
             | Type::Image
             | Type::Grid
             | Type::Flex => assign_to_slide_type(
@@ -400,7 +400,7 @@ fn assign_to_slide_type(
 fn evaluate_member_access(
     member_access: binder::MemberAccess,
     location: Location,
-    _evaluator: &mut Evaluator,
+    evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
     if let Some((enum_type, _)) = context
@@ -420,6 +420,22 @@ fn evaluate_member_access(
             &Type::TextAlign => value::Value::TextAlign(variant.parse().expect("Valid variant")),
             _ => unreachable!("Type {enum_type:?} is not an enum!"),
         };
+        Value { value, location }
+    } else if let Some((name, members)) = context
+        .type_interner
+        .resolve(member_access.base.type_)
+        .try_as_custom_element_ref()
+    {
+        let base = evaluate_expression(*member_access.base, evaluator, context)
+            .value
+            .into_custom_element();
+        let member = context.string_interner.resolve(member_access.member);
+        let value = base
+            .borrow()
+            .element_by_name(member)
+            .expect("member to be element")
+            .clone()
+            .into();
         Value { value, location }
     } else {
         todo!()
@@ -602,6 +618,7 @@ fn evaluate_user_function(
         .type_interner
         .resolve(user_function.return_type)
         .try_as_custom_element_ref()
+        .map(|(type_name, _)| type_name)
         .cloned()
         .unwrap_or_default();
     let mut custom_element = CustomElement::new(type_name, Vec::new());
@@ -715,6 +732,10 @@ fn evaluate_conversion(
             value::Value::Integer(x) => value::Value::String(x.to_string()),
             value::Value::String(x) => value::Value::String(x),
             value::Value::Path(x) => value::Value::String(x.to_string_lossy().into_owned()),
+            _ => unreachable!("Impossible conversion"),
+        },
+        Type::DynamicDict => match base.value {
+            value::Value::Dict(dict) => value::Value::Dict(dict),
             _ => unreachable!("Impossible conversion"),
         },
         unknown => todo!("{unknown:?}"),

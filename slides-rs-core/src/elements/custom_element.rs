@@ -62,6 +62,10 @@ impl CustomElement {
             self.name.clone()
         }
     }
+
+    pub fn element_by_name(&self, name: &str) -> Option<&Element> {
+        self.children.iter().find(|e| e.name() == name)
+    }
 }
 
 impl WebRenderable for CustomElement {
@@ -105,6 +109,10 @@ impl WebRenderable for CustomElement {
 
     fn id(&self) -> ElementId {
         self.id
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
     }
 
     fn set_name(&mut self, id: String) {

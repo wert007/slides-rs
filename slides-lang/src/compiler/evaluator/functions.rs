@@ -169,6 +169,18 @@ impl WebRenderable for OwnedElement {
             OwnedElement::Flex(inner) => WebRenderable::id(inner),
         }
     }
+
+    #[inline]
+    fn name(&self) -> String {
+        match self {
+            OwnedElement::Image(inner) => WebRenderable::name(inner),
+            OwnedElement::Label(inner) => WebRenderable::name(inner),
+            OwnedElement::CustomElement(inner) => WebRenderable::name(inner),
+            OwnedElement::Grid(inner) => WebRenderable::name(inner),
+            OwnedElement::Flex(inner) => WebRenderable::name(inner),
+        }
+    }
+
     #[inline]
     fn set_name(&mut self, name: String) {
         match self {

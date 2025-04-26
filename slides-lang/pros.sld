@@ -328,6 +328,12 @@ element deadlock_icons():
         halign: HAlign.Center,
         valign: VAlign.Top,
     };
+    members = {
+        amanda: amanda,
+        bobbl: bobbl,
+        light: light,
+        lift: lift,
+    };
 
 slide deadlocks_problem:
     page_number();
@@ -341,7 +347,5 @@ slide deadlocks_problem:
             bottom: 0.10sh,
         }
     };
-    let start = positionInside(base, 0.0, 0.5);
-    let end = positionInside(base, 0.5, 0.0);
-    let a = arrows.arrow(start, end, {});
-
+    // let position = positionInside(a, 0.0, 0.5);
+    let amanda = base.amanda;

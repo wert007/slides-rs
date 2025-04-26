@@ -4,8 +4,7 @@ use struct_field_names_as_array::FieldNamesAsSlice;
 
 use crate::{
     BaseElementStyling, ElementStyling, GridCellSize, GridStyling, Result, StylingReference, ToCss,
-    animations::Animations,
-    output::PresentationEmitter,
+    animations::Animations, output::PresentationEmitter,
 };
 
 use super::{Element, ElementId, WebRenderable, WebRenderableContext};
@@ -120,6 +119,10 @@ impl WebRenderable for Grid {
 
     fn id(&self) -> ElementId {
         self.id
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
     }
 
     fn set_name(&mut self, id: String) {

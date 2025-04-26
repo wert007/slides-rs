@@ -60,6 +60,7 @@ pub trait WebRenderable {
     fn set_parent(&mut self, parent: ElementId);
     fn parent(&self) -> Option<ElementId>;
     fn id(&self) -> ElementId;
+    fn name(&self) -> String;
     fn set_name(&mut self, name: String);
     fn set_namespace(&mut self, namespace: String);
     fn element_styling(&self) -> &BaseElementStyling;
@@ -90,6 +91,11 @@ impl<T: WebRenderable + Clone> WebRenderable for Arc<RefCell<T>> {
 
     fn id(&self) -> ElementId {
         self.borrow().id()
+    }
+
+    fn name(&self) -> String {
+        // todo!("How would we do that?")
+        self.borrow().name()
     }
 
     fn set_name(&mut self, name: String) {
