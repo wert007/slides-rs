@@ -10,7 +10,7 @@ let currentStep = 0;
 let currentStepCount = 0;
 let stepReached = [];
 
-function init() {
+function init_navigation() {
     slides = document.getElementsByClassName("slide");
     var slide_id = window.location.hash.slice(1);
     activeSlide = 0;
@@ -77,73 +77,3 @@ function move_to_slide(target) {
     currentStep = 0;
 }
 
-stepReached.push({
- slideId: 'continous_checking',
- step: 1,
- trigger: () => {
-    document.getElementById('continous_checking-content-flex-59').classList.remove('invisible');
-},
- reverse: () => {
-    document.getElementById('continous_checking-content-flex-59').classList.add('invisible');
-}
-});
-stepReached.push({
- slideId: 'continous_checking',
- step: 2,
- trigger: () => {
-    document.getElementById('continous_checking-content-flex-72').classList.remove('invisible');
-},
- reverse: () => {
-    document.getElementById('continous_checking-content-flex-72').classList.add('invisible');
-}
-});
-stepReached.push({
- slideId: 'continous_checking',
- step: 3,
- trigger: () => {
-    document.getElementById('continous_checking-content-flex-83').classList.remove('invisible');
-},
- reverse: () => {
-    document.getElementById('continous_checking-content-flex-83').classList.add('invisible');
-}
-});
-stepReached.push({
- slideId: 'occasional_checking_1',
- step: 1,
- trigger: () => {
-    document.getElementById('occasional_checking_1-content-flex-100').classList.remove('invisible');
-},
- reverse: () => {
-    document.getElementById('occasional_checking_1-content-flex-100').classList.add('invisible');
-}
-});
-stepReached.push({
- slideId: 'occasional_checking_1',
- step: 2,
- trigger: () => {
-    document.getElementById('occasional_checking_1-content-flex-113').classList.remove('invisible');
-},
- reverse: () => {
-    document.getElementById('occasional_checking_1-content-flex-113').classList.add('invisible');
-}
-});
-stepReached.push({
- slideId: 'occasional_checking_1',
- step: 3,
- trigger: () => {
-    document.getElementById('occasional_checking_1-content-flex-126').classList.remove('invisible');
-},
- reverse: () => {
-    document.getElementById('occasional_checking_1-content-flex-126').classList.add('invisible');
-}
-});
-stepReached.push({
- slideId: 'occasional_checking_2',
- step: 1,
- trigger: () => {
-    document.getElementById('occasional_checking_2-content-flex-165').classList.remove('invisible');
-},
- reverse: () => {
-    document.getElementById('occasional_checking_2-content-flex-165').classList.add('invisible');
-}
-});

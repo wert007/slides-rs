@@ -29,6 +29,11 @@ interface values {
         y: string,
     }
 
+    record element {
+        name: string,
+        name-space: string,
+    }
+
     variant value {
         void,
         string-type(string),
@@ -38,20 +43,37 @@ interface values {
         position(position),
         dict(list<tuple<string, value-index>>),
         array(list<value-index>),
+        element(element),
+    }
+}
+
+interface slides {
+    enum placement {
+        html-head,
+        javascript-init,
+    }
+
+    resource slides {
+        download-file: func(url: string, path: string);
+        add-file-reference: func(path: string);
+        place-text-in-output: func(text: string, source: string, placement: placement);
     }
 }
 
 interface modules {
     use types.{%type, function};
     use values.{value, value-allocator, value-index};
+    use slides.{slides};
 
     variant error {
         function-not-found,
+        invalid-type,
+        argument-count-mismatch,
     }
     resource module {
-        create: static func() -> module;
+        create: static func(slides: slides) -> module;
         available-functions: func() -> list<function>;
-        call-function: func(name: string, allocator: value-allocator, args: list<value-index>) -> result<value-index, error>;
+        call-function: func(slides: slides, name: string, allocator: value-allocator, args: list<value-index>) -> result<value-index, error>;
     }
 }
 

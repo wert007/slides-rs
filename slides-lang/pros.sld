@@ -1,4 +1,6 @@
 import module"arrows";
+import p"./pros-assets/leader-line.head.html";
+import p"./pros-assets/leader-line-arrow.init.js";
 
 styling default(Label):
     font = gfont("Roboto");

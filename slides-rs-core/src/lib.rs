@@ -72,7 +72,24 @@ impl Presentation {
 
             <!-- For Google font! -->
             <link rel="preconnect" href="https://fonts.googleapis.com">
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>"#
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <script>
+                function init() {{
+                    init_navigation();
+
+            "#
+        )?;
+
+        if let Some(text) = self.extern_texts.get(&FilePlacement::JavascriptInit) {
+            writeln!(emitter.raw_html(), "{text}")?;
+        }
+
+        writeln!(
+            emitter.raw_html(),
+            r#"
+        }}
+        </script>
+            "#
         )?;
 
         let mut google_font_references = HashSet::new();
@@ -150,6 +167,7 @@ impl Presentation {
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum FilePlacement {
     HtmlHead,
+    JavascriptInit,
 }
 
 #[derive(Debug)]

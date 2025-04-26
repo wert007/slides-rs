@@ -236,11 +236,13 @@ fn evaluate_import_statement(
         Unknown,
         HtmlUnknown,
         HtmlHead,
+        JavascriptUnknown,
+        JavascriptInit,
     }
 
     impl State {
         pub fn is_finished(&self) -> bool {
-            matches!(self, Self::HtmlHead)
+            matches!(self, Self::HtmlHead | Self::JavascriptInit)
         }
     }
     let mut state = State::Unknown;
@@ -248,6 +250,8 @@ fn evaluate_import_statement(
         match extension {
             "html" => state = State::HtmlUnknown,
             "head" => state = State::HtmlHead,
+            "js" => state = State::JavascriptUnknown,
+            "init" => state = State::JavascriptInit,
             missing => unreachable!("Missing {missing}"),
         }
         if state.is_finished() {
@@ -260,7 +264,12 @@ fn evaluate_import_statement(
                 .presentation
                 .add_extern_file(FilePlacement::HtmlHead, import_statement)?;
         }
-        State::Unknown | State::HtmlUnknown => unreachable!(),
+        State::JavascriptInit => {
+            context
+                .presentation
+                .add_extern_file(FilePlacement::JavascriptInit, import_statement)?;
+        }
+        State::Unknown | State::HtmlUnknown | State::JavascriptUnknown => unreachable!(),
     }
     Ok(())
 }

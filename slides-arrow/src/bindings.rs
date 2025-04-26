@@ -139,6 +139,22 @@ pub mod component {
                 }
             }
             #[derive(Clone)]
+            pub struct Element {
+                pub name: _rt::String,
+                pub name_space: _rt::String,
+            }
+            impl ::core::fmt::Debug for Element {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("Element")
+                        .field("name", &self.name)
+                        .field("name-space", &self.name_space)
+                        .finish()
+                }
+            }
+            #[derive(Clone)]
             pub enum Value {
                 Void,
                 StringType(_rt::String),
@@ -148,6 +164,7 @@ pub mod component {
                 Position(Position),
                 Dict(_rt::Vec<(_rt::String, ValueIndex)>),
                 Array(_rt::Vec<ValueIndex>),
+                Element(Element),
             }
             impl ::core::fmt::Debug for Value {
                 fn fmt(
@@ -172,6 +189,9 @@ pub mod component {
                         Value::Dict(e) => f.debug_tuple("Value::Dict").field(e).finish(),
                         Value::Array(e) => {
                             f.debug_tuple("Value::Array").field(e).finish()
+                        }
+                        Value::Element(e) => {
+                            f.debug_tuple("Value::Element").field(e).finish()
                         }
                     }
                 }
@@ -201,11 +221,11 @@ pub mod component {
                     unsafe {
                         let mut cleanup_list = _rt::Vec::new();
                         let (
-                            result10_0,
-                            result10_1,
-                            result10_2,
-                            result10_3,
-                            result10_4,
+                            result13_0,
+                            result13_1,
+                            result13_2,
+                            result13_3,
+                            result13_4,
                         ) = match value {
                             Value::Void => {
                                 (
@@ -351,12 +371,32 @@ pub mod component {
                                     0usize,
                                 )
                             }
+                            Value::Element(e) => {
+                                let Element { name: name10, name_space: name_space10 } = e;
+                                let vec11 = name10;
+                                let ptr11 = vec11.as_ptr().cast::<u8>();
+                                let len11 = vec11.len();
+                                let vec12 = name_space10;
+                                let ptr12 = vec12.as_ptr().cast::<u8>();
+                                let len12 = vec12.len();
+                                (
+                                    8i32,
+                                    {
+                                        let mut t = ::core::mem::MaybeUninit::<u64>::uninit();
+                                        t.as_mut_ptr().cast::<*mut u8>().write(ptr11.cast_mut());
+                                        t
+                                    },
+                                    len11,
+                                    ptr12.cast_mut(),
+                                    len12,
+                                )
+                            }
                         };
                         #[cfg(target_arch = "wasm32")]
                         #[link(wasm_import_module = "component:arrows/values")]
                         unsafe extern "C" {
                             #[link_name = "[method]value-allocator.allocate"]
-                            fn wit_import11(
+                            fn wit_import14(
                                 _: i32,
                                 _: i32,
                                 _: ::core::mem::MaybeUninit<u64>,
@@ -366,7 +406,7 @@ pub mod component {
                             ) -> i32;
                         }
                         #[cfg(not(target_arch = "wasm32"))]
-                        unsafe extern "C" fn wit_import11(
+                        unsafe extern "C" fn wit_import14(
                             _: i32,
                             _: i32,
                             _: ::core::mem::MaybeUninit<u64>,
@@ -377,13 +417,13 @@ pub mod component {
                             unreachable!()
                         }
                         let ret = unsafe {
-                            wit_import11(
+                            wit_import14(
                                 (self).handle() as i32,
-                                result10_0,
-                                result10_1,
-                                result10_2,
-                                result10_3,
-                                result10_4,
+                                result13_0,
+                                result13_1,
+                                result13_2,
+                                result13_3,
+                                result13_4,
                             )
                         };
                         for (ptr, layout) in cleanup_list {
@@ -429,10 +469,10 @@ pub mod component {
                             )
                         };
                         let l3 = i32::from(*ptr1.add(0).cast::<u8>());
-                        let v28 = match l3 {
+                        let v34 = match l3 {
                             0 => Value::Void,
                             1 => {
-                                let e28 = {
+                                let e34 = {
                                     let l4 = *ptr1.add(8).cast::<*mut u8>();
                                     let l5 = *ptr1
                                         .add(8 + 1 * ::core::mem::size_of::<*const u8>())
@@ -445,24 +485,24 @@ pub mod component {
                                     );
                                     _rt::string_lift(bytes6)
                                 };
-                                Value::StringType(e28)
+                                Value::StringType(e34)
                             }
                             2 => {
-                                let e28 = {
+                                let e34 = {
                                     let l7 = *ptr1.add(8).cast::<i64>();
                                     l7
                                 };
-                                Value::Int(e28)
+                                Value::Int(e34)
                             }
                             3 => {
-                                let e28 = {
+                                let e34 = {
                                     let l8 = *ptr1.add(8).cast::<f64>();
                                     l8
                                 };
-                                Value::Float(e28)
+                                Value::Float(e34)
                             }
                             4 => {
-                                let e28 = {
+                                let e34 = {
                                     let l9 = *ptr1.add(8).cast::<*mut u8>();
                                     let l10 = *ptr1
                                         .add(8 + 1 * ::core::mem::size_of::<*const u8>())
@@ -475,10 +515,10 @@ pub mod component {
                                     );
                                     _rt::string_lift(bytes11)
                                 };
-                                Value::StyleUnit(e28)
+                                Value::StyleUnit(e34)
                             }
                             5 => {
-                                let e28 = {
+                                let e34 = {
                                     let l12 = *ptr1.add(8).cast::<*mut u8>();
                                     let l13 = *ptr1
                                         .add(8 + 1 * ::core::mem::size_of::<*const u8>())
@@ -506,10 +546,10 @@ pub mod component {
                                         y: _rt::string_lift(bytes17),
                                     }
                                 };
-                                Value::Position(e28)
+                                Value::Position(e34)
                             }
                             6 => {
-                                let e28 = {
+                                let e34 = {
                                     let l18 = *ptr1.add(8).cast::<*mut u8>();
                                     let l19 = *ptr1
                                         .add(8 + 1 * ::core::mem::size_of::<*const u8>())
@@ -548,11 +588,10 @@ pub mod component {
                                     );
                                     result24
                                 };
-                                Value::Dict(e28)
+                                Value::Dict(e34)
                             }
-                            n => {
-                                debug_assert_eq!(n, 7, "invalid enum discriminant");
-                                let e28 = {
+                            7 => {
+                                let e34 = {
                                     let l25 = *ptr1.add(8).cast::<*mut u8>();
                                     let l26 = *ptr1
                                         .add(8 + 1 * ::core::mem::size_of::<*const u8>())
@@ -560,11 +599,240 @@ pub mod component {
                                     let len27 = l26;
                                     _rt::Vec::from_raw_parts(l25.cast(), len27, len27)
                                 };
-                                Value::Array(e28)
+                                Value::Array(e34)
+                            }
+                            n => {
+                                debug_assert_eq!(n, 8, "invalid enum discriminant");
+                                let e34 = {
+                                    let l28 = *ptr1.add(8).cast::<*mut u8>();
+                                    let l29 = *ptr1
+                                        .add(8 + 1 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let len30 = l29;
+                                    let bytes30 = _rt::Vec::from_raw_parts(
+                                        l28.cast(),
+                                        len30,
+                                        len30,
+                                    );
+                                    let l31 = *ptr1
+                                        .add(8 + 2 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l32 = *ptr1
+                                        .add(8 + 3 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let len33 = l32;
+                                    let bytes33 = _rt::Vec::from_raw_parts(
+                                        l31.cast(),
+                                        len33,
+                                        len33,
+                                    );
+                                    Element {
+                                        name: _rt::string_lift(bytes30),
+                                        name_space: _rt::string_lift(bytes33),
+                                    }
+                                };
+                                Value::Element(e34)
                             }
                         };
-                        let result29 = v28;
-                        result29
+                        let result35 = v34;
+                        result35
+                    }
+                }
+            }
+        }
+        #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
+        pub mod slides {
+            #[used]
+            #[doc(hidden)]
+            static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
+            use super::super::super::_rt;
+            #[repr(u8)]
+            #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
+            pub enum Placement {
+                HtmlHead,
+                JavascriptInit,
+            }
+            impl ::core::fmt::Debug for Placement {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    match self {
+                        Placement::HtmlHead => {
+                            f.debug_tuple("Placement::HtmlHead").finish()
+                        }
+                        Placement::JavascriptInit => {
+                            f.debug_tuple("Placement::JavascriptInit").finish()
+                        }
+                    }
+                }
+            }
+            impl Placement {
+                #[doc(hidden)]
+                pub unsafe fn _lift(val: u8) -> Placement {
+                    if !cfg!(debug_assertions) {
+                        return ::core::mem::transmute(val);
+                    }
+                    match val {
+                        0 => Placement::HtmlHead,
+                        1 => Placement::JavascriptInit,
+                        _ => panic!("invalid enum discriminant"),
+                    }
+                }
+            }
+            #[derive(Debug)]
+            #[repr(transparent)]
+            pub struct Slides {
+                handle: _rt::Resource<Slides>,
+            }
+            impl Slides {
+                #[doc(hidden)]
+                pub unsafe fn from_handle(handle: u32) -> Self {
+                    Self {
+                        handle: unsafe { _rt::Resource::from_handle(handle) },
+                    }
+                }
+                #[doc(hidden)]
+                pub fn take_handle(&self) -> u32 {
+                    _rt::Resource::take_handle(&self.handle)
+                }
+                #[doc(hidden)]
+                pub fn handle(&self) -> u32 {
+                    _rt::Resource::handle(&self.handle)
+                }
+            }
+            unsafe impl _rt::WasmResource for Slides {
+                #[inline]
+                unsafe fn drop(_handle: u32) {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unreachable!();
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        #[link(wasm_import_module = "component:arrows/slides")]
+                        unsafe extern "C" {
+                            #[link_name = "[resource-drop]slides"]
+                            fn drop(_: u32);
+                        }
+                        unsafe { drop(_handle) };
+                    }
+                }
+            }
+            impl Slides {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn download_file(&self, url: &str, path: &str) -> () {
+                    unsafe {
+                        let vec0 = url;
+                        let ptr0 = vec0.as_ptr().cast::<u8>();
+                        let len0 = vec0.len();
+                        let vec1 = path;
+                        let ptr1 = vec1.as_ptr().cast::<u8>();
+                        let len1 = vec1.len();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:arrows/slides")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]slides.download-file"]
+                            fn wit_import2(
+                                _: i32,
+                                _: *mut u8,
+                                _: usize,
+                                _: *mut u8,
+                                _: usize,
+                            );
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import2(
+                            _: i32,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                        ) {
+                            unreachable!()
+                        }
+                        unsafe {
+                            wit_import2(
+                                (self).handle() as i32,
+                                ptr0.cast_mut(),
+                                len0,
+                                ptr1.cast_mut(),
+                                len1,
+                            )
+                        };
+                    }
+                }
+            }
+            impl Slides {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn add_file_reference(&self, path: &str) -> () {
+                    unsafe {
+                        let vec0 = path;
+                        let ptr0 = vec0.as_ptr().cast::<u8>();
+                        let len0 = vec0.len();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:arrows/slides")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]slides.add-file-reference"]
+                            fn wit_import1(_: i32, _: *mut u8, _: usize);
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import1(_: i32, _: *mut u8, _: usize) {
+                            unreachable!()
+                        }
+                        unsafe {
+                            wit_import1((self).handle() as i32, ptr0.cast_mut(), len0)
+                        };
+                    }
+                }
+            }
+            impl Slides {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn place_text_in_output(
+                    &self,
+                    text: &str,
+                    source: &str,
+                    placement: Placement,
+                ) -> () {
+                    unsafe {
+                        let vec0 = text;
+                        let ptr0 = vec0.as_ptr().cast::<u8>();
+                        let len0 = vec0.len();
+                        let vec1 = source;
+                        let ptr1 = vec1.as_ptr().cast::<u8>();
+                        let len1 = vec1.len();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:arrows/slides")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]slides.place-text-in-output"]
+                            fn wit_import2(
+                                _: i32,
+                                _: *mut u8,
+                                _: usize,
+                                _: *mut u8,
+                                _: usize,
+                                _: i32,
+                            );
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import2(
+                            _: i32,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: i32,
+                        ) {
+                            unreachable!()
+                        }
+                        unsafe {
+                            wit_import2(
+                                (self).handle() as i32,
+                                ptr0.cast_mut(),
+                                len0,
+                                ptr1.cast_mut(),
+                                len1,
+                                placement.clone() as i32,
+                            )
+                        };
                     }
                 }
             }
@@ -585,9 +853,12 @@ pub mod exports {
                 pub type Function = super::super::super::super::component::arrows::types::Function;
                 pub type ValueAllocator = super::super::super::super::component::arrows::values::ValueAllocator;
                 pub type ValueIndex = super::super::super::super::component::arrows::values::ValueIndex;
+                pub type Slides = super::super::super::super::component::arrows::slides::Slides;
                 #[derive(Clone, Copy)]
                 pub enum Error {
                     FunctionNotFound,
+                    InvalidType,
+                    ArgumentCountMismatch,
                 }
                 impl ::core::fmt::Debug for Error {
                     fn fmt(
@@ -597,6 +868,12 @@ pub mod exports {
                         match self {
                             Error::FunctionNotFound => {
                                 f.debug_tuple("Error::FunctionNotFound").finish()
+                            }
+                            Error::InvalidType => {
+                                f.debug_tuple("Error::InvalidType").finish()
+                            }
+                            Error::ArgumentCountMismatch => {
+                                f.debug_tuple("Error::ArgumentCountMismatch").finish()
                             }
                         }
                     }
@@ -735,9 +1012,15 @@ pub mod exports {
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
-                pub unsafe fn _export_static_module_create_cabi<T: GuestModule>() -> i32 {
+                pub unsafe fn _export_static_module_create_cabi<T: GuestModule>(
+                    arg0: i32,
+                ) -> i32 {
                     #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
-                    let result0 = T::create();
+                    let result0 = T::create(unsafe {
+                        super::super::super::super::component::arrows::slides::Slides::from_handle(
+                            arg0 as u32,
+                        )
+                    });
                     (result0).take_handle() as i32
                 }
                 #[doc(hidden)]
@@ -859,25 +1142,31 @@ pub mod exports {
                 #[allow(non_snake_case)]
                 pub unsafe fn _export_method_module_call_function_cabi<T: GuestModule>(
                     arg0: *mut u8,
-                    arg1: *mut u8,
-                    arg2: usize,
-                    arg3: i32,
-                    arg4: *mut u8,
-                    arg5: usize,
+                    arg1: i32,
+                    arg2: *mut u8,
+                    arg3: usize,
+                    arg4: i32,
+                    arg5: *mut u8,
+                    arg6: usize,
                 ) -> *mut u8 {
                     #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
-                    let len0 = arg2;
-                    let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-                    let len1 = arg5;
+                    let len0 = arg3;
+                    let bytes0 = _rt::Vec::from_raw_parts(arg2.cast(), len0, len0);
+                    let len1 = arg6;
                     let result2 = T::call_function(
                         unsafe { ModuleBorrow::lift(arg0 as u32 as usize) }.get(),
+                        unsafe {
+                            super::super::super::super::component::arrows::slides::Slides::from_handle(
+                                arg1 as u32,
+                            )
+                        },
                         _rt::string_lift(bytes0),
                         unsafe {
                             super::super::super::super::component::arrows::values::ValueAllocator::from_handle(
-                                arg3 as u32,
+                                arg4 as u32,
                             )
                         },
-                        _rt::Vec::from_raw_parts(arg4.cast(), len1, len1),
+                        _rt::Vec::from_raw_parts(arg5.cast(), len1, len1),
                     );
                     let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
                     match result2 {
@@ -893,6 +1182,12 @@ pub mod exports {
                             match e {
                                 Error::FunctionNotFound => {
                                     *ptr3.add(4).cast::<u8>() = (0i32) as u8;
+                                }
+                                Error::InvalidType => {
+                                    *ptr3.add(4).cast::<u8>() = (1i32) as u8;
+                                }
+                                Error::ArgumentCountMismatch => {
+                                    *ptr3.add(4).cast::<u8>() = (2i32) as u8;
                                 }
                             }
                         }
@@ -947,10 +1242,11 @@ pub mod exports {
                             unsafe { rep(handle) }
                         }
                     }
-                    fn create() -> Module;
+                    fn create(slides: Slides) -> Module;
                     fn available_functions(&self) -> _rt::Vec<Function>;
                     fn call_function(
                         &self,
+                        slides: Slides,
                         name: _rt::String,
                         allocator: ValueAllocator,
                         args: _rt::Vec<ValueIndex>,
@@ -961,9 +1257,9 @@ pub mod exports {
                     ($ty:ident with_types_in $($path_to_types:tt)*) => {
                         const _ : () = { #[unsafe (export_name =
                         "component:arrows/modules#[static]module.create")] unsafe extern
-                        "C" fn export_static_module_create() -> i32 { unsafe {
+                        "C" fn export_static_module_create(arg0 : i32,) -> i32 { unsafe {
                         $($path_to_types)*:: _export_static_module_create_cabi::<<$ty as
-                        $($path_to_types)*:: Guest >::Module > () } } #[unsafe
+                        $($path_to_types)*:: Guest >::Module > (arg0) } } #[unsafe
                         (export_name =
                         "component:arrows/modules#[method]module.available-functions")]
                         unsafe extern "C" fn
@@ -981,11 +1277,12 @@ pub mod exports {
                         (export_name =
                         "component:arrows/modules#[method]module.call-function")] unsafe
                         extern "C" fn export_method_module_call_function(arg0 : * mut u8,
-                        arg1 : * mut u8, arg2 : usize, arg3 : i32, arg4 : * mut u8, arg5
-                        : usize,) -> * mut u8 { unsafe { $($path_to_types)*::
+                        arg1 : i32, arg2 : * mut u8, arg3 : usize, arg4 : i32, arg5 : *
+                        mut u8, arg6 : usize,) -> * mut u8 { unsafe {
+                        $($path_to_types)*::
                         _export_method_module_call_function_cabi::<<$ty as
                         $($path_to_types)*:: Guest >::Module > (arg0, arg1, arg2, arg3,
-                        arg4, arg5) } } const _ : () = { #[doc(hidden)] #[unsafe
+                        arg4, arg5, arg6) } } const _ : () = { #[doc(hidden)] #[unsafe
                         (export_name = "component:arrows/modules#[dtor]module")]
                         #[allow(non_snake_case)] unsafe extern "C" fn dtor(rep : * mut
                         u8) { unsafe { $($path_to_types)*:: Module::dtor::< <$ty as
@@ -1245,31 +1542,39 @@ pub(crate) use __export_host_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1036] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x91\x07\x01A\x02\x01\
-A\x0b\x01B\x05\x01m\x04\x04void\x06string\x03int\x05float\x04\0\x04type\x03\0\0\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1444] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xa9\x0a\x01A\x02\x01\
+A\x0e\x01B\x05\x01m\x04\x04void\x06string\x03int\x05float\x04\0\x04type\x03\0\0\x01\
 p\x01\x01r\x03\x04names\x04args\x02\x0bresult-type\x01\x04\0\x08function\x03\0\x03\
-\x03\0\x16component:arrows/types\x05\0\x01B\x12\x01r\x01\x05indexy\x04\0\x0bvalu\
+\x03\0\x16component:arrows/types\x05\0\x01B\x14\x01r\x01\x05indexy\x04\0\x0bvalu\
 e-index\x03\0\0\x04\0\x0fvalue-allocator\x03\x01\x01r\x02\x01xs\x01ys\x04\0\x08p\
-osition\x03\0\x03\x01o\x02s\x01\x01p\x05\x01p\x01\x01q\x08\x04void\0\0\x0bstring\
--type\x01s\0\x03int\x01x\0\x05float\x01u\0\x0astyle-unit\x01s\0\x08position\x01\x04\
-\0\x04dict\x01\x06\0\x05array\x01\x07\0\x04\0\x05value\x03\0\x08\x01i\x02\x01@\0\
-\0\x0a\x04\0\x1e[static]value-allocator.create\x01\x0b\x01h\x02\x01@\x02\x04self\
-\x0c\x05value\x09\0\x01\x04\0\x20[method]value-allocator.allocate\x01\x0d\x01@\x02\
-\x04self\x0c\x05value\x01\0\x09\x04\0\x1b[method]value-allocator.get\x01\x0e\x03\
-\0\x17component:arrows/values\x05\x01\x02\x03\0\0\x04type\x02\x03\0\0\x08functio\
-n\x02\x03\0\x01\x05value\x02\x03\0\x01\x0fvalue-allocator\x02\x03\0\x01\x0bvalue\
--index\x01B\x19\x02\x03\x02\x01\x02\x04\0\x04type\x03\0\0\x02\x03\x02\x01\x03\x04\
-\0\x08function\x03\0\x02\x02\x03\x02\x01\x04\x04\0\x05value\x03\0\x04\x02\x03\x02\
-\x01\x05\x04\0\x0fvalue-allocator\x03\0\x06\x02\x03\x02\x01\x06\x04\0\x0bvalue-i\
-ndex\x03\0\x08\x01q\x01\x12function-not-found\0\0\x04\0\x05error\x03\0\x0a\x04\0\
-\x06module\x03\x01\x01i\x0c\x01@\0\0\x0d\x04\0\x15[static]module.create\x01\x0e\x01\
-h\x0c\x01p\x03\x01@\x01\x04self\x0f\0\x10\x04\0\"[method]module.available-functi\
-ons\x01\x11\x01i\x07\x01p\x09\x01j\x01\x09\x01\x0b\x01@\x04\x04self\x0f\x04names\
-\x09allocator\x12\x04args\x13\0\x14\x04\0\x1c[method]module.call-function\x01\x15\
-\x04\0\x18component:arrows/modules\x05\x07\x04\0\x15component:arrows/host\x04\0\x0b\
-\x0a\x01\0\x04host\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-compon\
-ent\x070.227.1\x10wit-bindgen-rust\x060.41.0";
+osition\x03\0\x03\x01r\x02\x04names\x0aname-spaces\x04\0\x07element\x03\0\x05\x01\
+o\x02s\x01\x01p\x07\x01p\x01\x01q\x09\x04void\0\0\x0bstring-type\x01s\0\x03int\x01\
+x\0\x05float\x01u\0\x0astyle-unit\x01s\0\x08position\x01\x04\0\x04dict\x01\x08\0\
+\x05array\x01\x09\0\x07element\x01\x06\0\x04\0\x05value\x03\0\x0a\x01i\x02\x01@\0\
+\0\x0c\x04\0\x1e[static]value-allocator.create\x01\x0d\x01h\x02\x01@\x02\x04self\
+\x0e\x05value\x0b\0\x01\x04\0\x20[method]value-allocator.allocate\x01\x0f\x01@\x02\
+\x04self\x0e\x05value\x01\0\x0b\x04\0\x1b[method]value-allocator.get\x01\x10\x03\
+\0\x17component:arrows/values\x05\x01\x01B\x0a\x01m\x02\x09html-head\x0fjavascri\
+pt-init\x04\0\x09placement\x03\0\0\x04\0\x06slides\x03\x01\x01h\x02\x01@\x03\x04\
+self\x03\x03urls\x04paths\x01\0\x04\0\x1c[method]slides.download-file\x01\x04\x01\
+@\x02\x04self\x03\x04paths\x01\0\x04\0![method]slides.add-file-reference\x01\x05\
+\x01@\x04\x04self\x03\x04texts\x06sources\x09placement\x01\x01\0\x04\0#[method]s\
+lides.place-text-in-output\x01\x06\x03\0\x17component:arrows/slides\x05\x02\x02\x03\
+\0\0\x04type\x02\x03\0\0\x08function\x02\x03\0\x01\x05value\x02\x03\0\x01\x0fval\
+ue-allocator\x02\x03\0\x01\x0bvalue-index\x02\x03\0\x02\x06slides\x01B\x1c\x02\x03\
+\x02\x01\x03\x04\0\x04type\x03\0\0\x02\x03\x02\x01\x04\x04\0\x08function\x03\0\x02\
+\x02\x03\x02\x01\x05\x04\0\x05value\x03\0\x04\x02\x03\x02\x01\x06\x04\0\x0fvalue\
+-allocator\x03\0\x06\x02\x03\x02\x01\x07\x04\0\x0bvalue-index\x03\0\x08\x02\x03\x02\
+\x01\x08\x04\0\x06slides\x03\0\x0a\x01q\x03\x12function-not-found\0\0\x0cinvalid\
+-type\0\0\x17argument-count-mismatch\0\0\x04\0\x05error\x03\0\x0c\x04\0\x06modul\
+e\x03\x01\x01i\x0b\x01i\x0e\x01@\x01\x06slides\x0f\0\x10\x04\0\x15[static]module\
+.create\x01\x11\x01h\x0e\x01p\x03\x01@\x01\x04self\x12\0\x13\x04\0\"[method]modu\
+le.available-functions\x01\x14\x01i\x07\x01p\x09\x01j\x01\x09\x01\x0d\x01@\x05\x04\
+self\x12\x06slides\x0f\x04names\x09allocator\x15\x04args\x16\0\x17\x04\0\x1c[met\
+hod]module.call-function\x01\x18\x04\0\x18component:arrows/modules\x05\x09\x04\0\
+\x15component:arrows/host\x04\0\x0b\x0a\x01\0\x04host\x03\0\0\0G\x09producers\x01\
+\x0cprocessed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

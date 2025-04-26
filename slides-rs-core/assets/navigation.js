@@ -10,7 +10,7 @@ let currentStep = 0;
 let currentStepCount = 0;
 let stepReached = [];
 
-function init() {
+function init_navigation() {
     slides = document.getElementsByClassName("slide");
     var slide_id = window.location.hash.slice(1);
     activeSlide = 0;

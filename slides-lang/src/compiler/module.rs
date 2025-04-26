@@ -1,27 +1,21 @@
-use std::{
-    collections::HashMap,
-    io::{Read, Write},
-    path::PathBuf,
-};
+use std::{collections::HashMap, io::Read, path::PathBuf};
 
-use component::arrows::{
-    self,
-    values::{self},
-};
+use component::arrows::{self};
 use exports::component::arrows::modules;
-use slides_rs_core::Position;
 use wasmtime::{
-    Config, Store,
+    Store,
     component::{Component, Linker, Resource, ResourceAny, bindgen},
 };
 
-use crate::{Context, Location, VariableId, compiler::binder::typing::FunctionType};
+use crate::{Context, VariableId, compiler::binder::typing::FunctionType};
 
 use super::{
-    binder::{Binder, Variable, typing},
+    binder::{Binder, typing},
     evaluator::value,
 };
 
+mod state;
+use state::State;
 // mod wai {
 //     use crate::compiler::binder::Binder as TypeChecker;
 //     use crate::compiler::evaluator::Evaluator;
@@ -72,10 +66,12 @@ impl Module {
             .into_iter()
             .map(|v| allocator.allocate_native_value(v))
             .collect::<Vec<_>>();
+        let slides = self.store.data_mut().init_slides();
         let index = module
             .call_call_function(
                 &mut self.store,
                 self.this,
+                slides,
                 name,
                 Resource::new_own(allocator_resource.rep()),
                 &arguments,
@@ -95,148 +91,10 @@ bindgen!({
     // }
 });
 
-#[derive(Debug, Clone)]
-struct HostValueAllocator {
-    index: usize,
-    values: Vec<modules::Value>,
-}
-
-impl HostValueAllocator {
-    pub fn new(index: usize) -> Self {
-        Self {
-            index,
-            values: Vec::new(),
-        }
-    }
-
-    fn allocate(&mut self, value: arrows::values::Value) -> arrows::values::ValueIndex {
-        let index = self.values.len();
-        self.values.push(value);
-        arrows::values::ValueIndex { index: index as _ }
-    }
-
-    fn get(&self, value: arrows::values::ValueIndex) -> arrows::values::Value {
-        self.values[value.index as usize].clone()
-    }
-
-    fn convert_to_native_value(&self, value: arrows::values::Value) -> value::Value {
-        match value {
-            arrows::values::Value::Void => value::Value::Void(()),
-            arrows::values::Value::StringType(s) => value::Value::String(s),
-            arrows::values::Value::Int(i) => value::Value::Integer(i),
-            arrows::values::Value::Float(f) => value::Value::Float(f),
-            arrows::values::Value::StyleUnit(style_unit) => {
-                value::Value::StyleUnit(style_unit.parse().expect("Should not fail"))
-            }
-            arrows::values::Value::Position(position) => value::Value::Position(Position {
-                x: position.x.parse().expect("Should not fail"),
-                y: position.y.parse().expect("Should not fail"),
-            }),
-            arrows::values::Value::Dict(dict) => todo!(),
-            arrows::values::Value::Array(items) => todo!(),
-        }
-    }
-
-    fn allocate_native_value(&mut self, value: value::Value) -> values::ValueIndex {
-        match value {
-            value::Value::Void(_) => self.allocate(values::Value::Void),
-            value::Value::Float(it) => self.allocate(values::Value::Float(it)),
-            value::Value::Integer(it) => self.allocate(values::Value::Int(it)),
-            value::Value::String(it) => self.allocate(values::Value::StringType(it)),
-            value::Value::Dict(hash_map) => {
-                let entries = hash_map
-                    .into_iter()
-                    .map(|(key, value)| {
-                        let value = self.allocate_native_value(value);
-                        (key, value)
-                    })
-                    .collect();
-                self.allocate(values::Value::Dict(entries))
-            }
-            value::Value::Array(values) => {
-                let values = values
-                    .into_iter()
-                    .map(|v| self.allocate_native_value(v))
-                    .collect();
-                self.allocate(values::Value::Array(values))
-            }
-            _ => todo!("Cannot allocatoe native value!"),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-struct State {
-    value_allocators: Vec<HostValueAllocator>,
-}
-
-impl State {
-    fn get_allocator_mut(
-        &mut self,
-        self_: &Resource<arrows::values::ValueAllocator>,
-    ) -> &mut HostValueAllocator {
-        let index = self_.rep() as usize;
-        &mut self.value_allocators[index]
-    }
-    fn get_allocator(
-        &self,
-        self_: &Resource<arrows::values::ValueAllocator>,
-    ) -> &HostValueAllocator {
-        let index = self_.rep() as usize;
-        &self.value_allocators[index]
-    }
-
-    fn new() -> Self {
-        Self {
-            value_allocators: Vec::new(),
-        }
-    }
-
-    fn create_allocator(&mut self) -> wasmtime::component::Resource<values::ValueAllocator> {
-        values::HostValueAllocator::create(self)
-    }
-}
-
-impl arrows::types::Host for State {}
-impl arrows::values::Host for State {}
-
-impl arrows::values::HostValueAllocator for State {
-    fn create(&mut self) -> wasmtime::component::Resource<arrows::values::ValueAllocator> {
-        let index = self.value_allocators.len();
-        self.value_allocators.push(HostValueAllocator::new(index));
-        Resource::new_own(index as _)
-    }
-
-    fn allocate(
-        &mut self,
-        self_: wasmtime::component::Resource<arrows::values::ValueAllocator>,
-        value: modules::Value,
-    ) -> arrows::values::ValueIndex {
-        let allocator = self.get_allocator_mut(&self_);
-        allocator.allocate(value)
-    }
-
-    fn get(
-        &mut self,
-        self_: wasmtime::component::Resource<arrows::values::ValueAllocator>,
-        value: arrows::values::ValueIndex,
-    ) -> modules::Value {
-        let allocator = self.get_allocator(&self_);
-        allocator.get(value)
-    }
-
-    fn drop(
-        &mut self,
-        rep: wasmtime::component::Resource<arrows::values::ValueAllocator>,
-    ) -> wasmtime::Result<()> {
-        Ok(())
-    }
-}
-
 pub fn load_module(
     name: VariableId,
     path: impl Into<PathBuf>,
-    binder: &mut Binder,
+    _binder: &mut Binder,
     context: &mut Context,
 ) -> std::io::Result<Module> {
     let path = path.into();
@@ -256,16 +114,18 @@ pub fn load_module(
 
     let mut linker = Linker::new(&engine);
     linker.allow_shadowing(true);
-    linker.define_unknown_imports_as_traps(&component).unwrap();
+    // linker.define_unknown_imports_as_traps(&component).unwrap();
     Host_::add_to_linker(&mut linker, |state: &mut State| state).unwrap();
+    wasmtime_wasi::add_to_linker_sync(&mut linker);
 
     let mut store = Store::new(&engine, State::new());
     let bindings = Host_::instantiate(&mut store, &component, &linker).unwrap();
+    let slides = store.data_mut().init_slides();
 
     let module = bindings
         .component_arrows_modules()
         .module()
-        .call_create(&mut store)
+        .call_create(&mut store, slides)
         .unwrap();
     let functions = bindings
         .component_arrows_modules()
