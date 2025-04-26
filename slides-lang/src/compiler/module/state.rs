@@ -77,8 +77,10 @@ impl HostValueAllocator {
             }
             value::Value::Element(element) => {
                 let element = values::Element {
+                    id: element.id().raw() as u32,
+                    parent: element.parent().map(|p| p.raw() as u32),
                     name: element.name(),
-                    name_space: element.namespace(),
+                    namespace: element.namespace(),
                 };
                 self.allocate(values::Value::Element(element))
             }

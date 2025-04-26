@@ -32,8 +32,10 @@ interface values {
     }
 
     record element {
+        id: u32,
+        parent: option<u32>,
         name: string,
-        name-space: string,
+        namespace: string,
     }
 
     variant value {
@@ -71,6 +73,7 @@ interface modules {
         function-not-found,
         invalid-type,
         argument-count-mismatch,
+        internal-error(string),
     }
     resource module {
         create: static func(slides: slides) -> module;

@@ -25,8 +25,9 @@ impl Arrows {
     fn arrow(
         &self,
         slides: slides::Slides,
-        from: String,
-        to: String,
+        from: u32,
+        to: u32,
+        parent: u32,
         options: HashMap<String, ValueIndex>,
     ) {
         use std::fmt::Write;
@@ -43,24 +44,15 @@ impl Arrows {
             slides.add_file_reference("pros-assets/leader-line.min.js");
         }
         let mut text = String::new();
-        let mut namespace = String::new();
-        let mut sector = "";
-        for current_sector in from.split('-') {
-            if !sector.is_empty() {
-                namespace.push_str("-");
-            }
-            namespace.push_str(sector);
-            sector = current_sector;
-        }
         assert!(options.is_empty());
         writeln!(
             text,
             "
     new LeaderLine(
-        document.getElementById('{from}'),
-        document.getElementById('{to}'),
+        getElementById({from}),
+        getElementById({to}),
         {{
-            parent: document.getElementById('{namespace}'),
+            parent: getElementById({parent}),
         }},
     );"
         )
@@ -100,10 +92,13 @@ impl GuestModule for Arrows {
                 if args.len() != 3 {
                     return Err(modules::Error::ArgumentCountMismatch);
                 }
-                let from = allocator.get(args[0]).try_into_element()?.name;
-                let to = allocator.get(args[1]).try_into_element()?.name;
+                let from = allocator.get(args[0]).try_into_element()?.id;
+                let to = allocator.get(args[1]).try_into_element()?.id;
+                let Some(parent) = allocator.get(args[1]).try_into_element()?.parent else {
+                    return Err(modules::Error::InternalError("parent must be set".into()));
+                };
                 let options = allocator.get(args[2]).try_into_dict()?;
-                self.arrow(slides, from, to, options);
+                self.arrow(slides, from, to, parent, options);
                 allocator.allocate(&Value::Void)
                 // allocator.
             }

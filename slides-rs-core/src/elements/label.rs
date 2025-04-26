@@ -76,7 +76,8 @@ impl WebRenderable for Label {
             .to_css_rule(ctx.layout, &format!("#{id}"), emitter.raw_css())?;
         writeln!(
             emitter.raw_html(),
-            "<div id=\"{id}\" class=\"label {classes} {classes_animations}\">",
+            "<div id=\"{id}\" class=\"label {classes} {classes_animations}\" data-element-id=\"{}\">",
+            self.id.raw()
         )?;
         self.text.render_to_html(emitter.raw_html())?;
         writeln!(emitter.raw_html(), "</div>")?;

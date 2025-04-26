@@ -24,6 +24,10 @@ function init_navigation() {
     currentStepCount = slides[activeSlide].dataset.stepCount;
 }
 
+function getElementById(id) {
+    return document.querySelector(`[data-element-id="${id}"]`);
+}
+
 /**
  *
  * @param {KeyboardEvent} event

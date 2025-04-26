@@ -33,6 +33,10 @@ impl ElementId {
         let raw = NEXT_ELEMENT_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         ElementId(raw)
     }
+
+    pub fn raw(&self) -> usize {
+        self.0
+    }
 }
 
 impl Display for ElementId {

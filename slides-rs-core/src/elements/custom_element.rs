@@ -50,7 +50,8 @@ impl CustomElement {
         self.stylings.push(reference);
     }
 
-    pub fn with_elements(mut self, children: Vec<Element>) -> CustomElement {
+    pub fn with_elements(mut self, mut children: Vec<Element>) -> CustomElement {
+        children.iter_mut().for_each(|c| c.set_parent(self.id));
         self.children = children;
         self
     }
@@ -89,8 +90,9 @@ impl WebRenderable for CustomElement {
             .to_css_rule(ctx.layout.clone(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(
             emitter.raw_html(),
-            "<div id=\"{id}\" class=\"custom-element {} {classes} {classes_animations}\">",
+            "<div id=\"{id}\" class=\"custom-element {} {classes} {classes_animations}\" data-element-id=\"{}\">",
             self.type_name,
+            self.id.raw()
         )?;
         for element in self.children {
             element.output_to_html(emitter, ctx.clone())?;

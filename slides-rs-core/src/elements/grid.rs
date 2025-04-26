@@ -94,7 +94,8 @@ impl WebRenderable for Grid {
             .to_css_rule(ctx.layout.clone(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(
             emitter.raw_html(),
-            "<div id=\"{id}\" class=\"grid {classes} {classes_animations}\">"
+            "<div id=\"{id}\" class=\"grid {classes} {classes_animations}\" data-element-id=\"{}\">",
+            self.id.raw()
         )?;
         for (mut element, data) in self.children.into_iter().zip(self.element_grid_data) {
             let grid_data = Arc::unwrap_or_clone(data).into_inner();
