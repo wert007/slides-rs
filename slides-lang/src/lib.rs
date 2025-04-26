@@ -1,4 +1,10 @@
-use std::{cell::RefCell, ops::Index, path::PathBuf, sync::Arc};
+#![feature(lock_value_accessors)]
+use std::{
+    cell::RefCell,
+    ops::Index,
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 
 use compiler::{DebugLang, binder::typing::TypeInterner, diagnostics::Diagnostics, module::Module};
 use slides_rs_core::Presentation;
@@ -166,7 +172,7 @@ impl ModuleIndex {
 
 pub struct Modules {
     directory: PathBuf,
-    modules: Vec<Arc<RefCell<Module>>>,
+    modules: Vec<Arc<RwLock<Module>>>,
 }
 
 impl Modules {
@@ -178,13 +184,13 @@ impl Modules {
     }
 
     pub fn add_module(&mut self, module: Module) -> ModuleIndex {
-        self.modules.push(Arc::new(RefCell::new(module)));
+        self.modules.push(Arc::new(RwLock::new(module)));
         ModuleIndex(self.modules.len())
     }
 }
 
 impl Index<ModuleIndex> for Modules {
-    type Output = Arc<RefCell<Module>>;
+    type Output = Arc<RwLock<Module>>;
 
     fn index(&self, index: ModuleIndex) -> &Self::Output {
         if index.0 == 0 {
@@ -195,7 +201,7 @@ impl Index<ModuleIndex> for Modules {
 }
 
 pub struct Context {
-    presentation: Presentation,
+    presentation: Arc<RwLock<Presentation>>,
     pub loaded_files: Files,
     diagnostics: Diagnostics,
     string_interner: StringInterner,
@@ -207,7 +213,7 @@ pub struct Context {
 impl Context {
     fn new() -> Self {
         Self {
-            presentation: Presentation::new(),
+            presentation: Arc::new(RwLock::new(Presentation::new())),
             loaded_files: Files::new(),
             diagnostics: Diagnostics::new(),
             string_interner: StringInterner::new(),

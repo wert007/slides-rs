@@ -1,4 +1,7 @@
-use std::{cell::RefCell, sync::Arc};
+use std::{
+    cell::RefCell,
+    sync::{Arc, RwLock},
+};
 
 use struct_field_names_as_array::FieldNamesAsSlice;
 
@@ -30,7 +33,7 @@ pub struct Grid {
     id: ElementId,
     parent: Option<ElementId>,
     children: Vec<Element>,
-    element_grid_data: Vec<Arc<RefCell<GridEntry>>>,
+    element_grid_data: Vec<Arc<RwLock<GridEntry>>>,
     styling: ElementStyling<GridStyling>,
     stylings: Vec<StylingReference>,
     pub animations: Animations,
@@ -56,8 +59,8 @@ impl Grid {
     }
 
     // This is a weird api choice, but it is necessary for the language to work.
-    pub fn add_element(&mut self, element: Element) -> Arc<RefCell<GridEntry>> {
-        let entry = Arc::new(RefCell::new(GridEntry::new()));
+    pub fn add_element(&mut self, element: Element) -> Arc<RwLock<GridEntry>> {
+        let entry = Arc::new(RwLock::new(GridEntry::new()));
         // element.set
         self.children.push(element);
         self.element_grid_data.push(entry.clone());
@@ -98,7 +101,7 @@ impl WebRenderable for Grid {
             self.id.raw()
         )?;
         for (mut element, data) in self.children.into_iter().zip(self.element_grid_data) {
-            let grid_data = Arc::unwrap_or_clone(data).into_inner();
+            let grid_data = data.get_cloned().unwrap();
             element.set_namespace(id.clone());
             // element.set_fallback_id(index.to_string());
 

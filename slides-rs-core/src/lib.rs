@@ -1,3 +1,5 @@
+#![feature(lock_value_accessors)]
+
 use std::{
     collections::{HashMap, HashSet},
     io::Write,
@@ -35,7 +37,7 @@ impl<T> Index<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Presentation {
     slides: Vec<Slide>,
     stylings: Vec<DynamicElementStyling>,
@@ -170,7 +172,7 @@ pub enum FilePlacement {
     JavascriptInit,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Slide {
     pub index: usize,
     id: Option<String>,

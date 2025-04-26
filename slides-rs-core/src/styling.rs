@@ -65,7 +65,7 @@ impl Display for StylingReference {
     }
 }
 
-#[derive(Debug, strum::Display)]
+#[derive(Clone, Debug, strum::Display)]
 #[enum_dispatch(ToCss)]
 pub enum Styling {
     Label(LabelStyling),
@@ -74,7 +74,7 @@ pub enum Styling {
     CustomElement(()),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DynamicElementStyling {
     name: String,
     base: BaseElementStyling,
@@ -509,7 +509,7 @@ impl ElementStyling<()> {
     }
 }
 
-#[derive(Debug, Default, FieldNamesAsSlice)]
+#[derive(Clone, Debug, Default, FieldNamesAsSlice)]
 pub struct SlideStyling {
     text_color: Option<Color>,
 }

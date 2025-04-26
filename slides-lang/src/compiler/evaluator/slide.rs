@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::fmt::format;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::{collections::HashMap, path::PathBuf};
 
 use slides_rs_core::{Background, Color, CustomElement, Element, Label, Thickness, WebRenderable};
@@ -362,35 +362,40 @@ fn assign_to_slide_type(
         }
         "object_fit" => {
             base.as_image()
-                .borrow_mut()
+                .write()
+                .unwrap()
                 .element_styling_mut()
                 .set_object_fit(value.value.into_object_fit());
         }
         "text_color" => {
             base.as_label()
-                .borrow_mut()
+                .write()
+                .unwrap()
                 .element_styling_mut()
                 .set_text_color(value.value.into_color());
         }
         "text_align" => {
             base.as_label()
-                .borrow_mut()
+                .write()
+                .unwrap()
                 .element_styling_mut()
                 .set_text_align(value.value.into_text_align());
         }
         "font_size" => {
             base.as_label()
-                .borrow_mut()
+                .write()
+                .unwrap()
                 .element_styling_mut()
                 .set_font_size(evaluator.ensure_unsigned_float(value));
         }
         "column_span" => {
-            base.as_grid_entry().borrow_mut().column_span = evaluator.ensure_unsigned(value);
+            base.as_grid_entry().write().unwrap().column_span = evaluator.ensure_unsigned(value);
         }
         "children" => {
             for element in value.value.into_array() {
                 base.as_grid()
-                    .borrow_mut()
+                    .write()
+                    .unwrap()
                     .add_element(element.convert_to_element());
             }
         }
@@ -432,7 +437,8 @@ fn evaluate_member_access(
             .into_custom_element();
         let member = context.string_interner.resolve(member_access.member);
         let value = base
-            .borrow()
+            .read()
+            .unwrap()
             .element_by_name(member)
             .expect("member to be element")
             .clone()
@@ -499,27 +505,27 @@ fn execute_member_function(
                 let location = arguments[0].location;
                 let element = match arguments.swap_remove(0).value {
                     value::Value::Label(it) => {
-                        it.borrow_mut().set_parent(base.borrow().id());
-                        Arc::unwrap_or_clone(it).into_inner().into()
+                        it.write().unwrap().set_parent(base.read().unwrap().id());
+                        Element::Label(it)
                     }
                     value::Value::Grid(it) => {
-                        it.borrow_mut().set_parent(base.borrow().id());
-                        Arc::unwrap_or_clone(it).into_inner().into()
+                        it.write().unwrap().set_parent(base.read().unwrap().id());
+                        Element::Grid(it)
                     }
                     value::Value::Flex(it) => {
-                        it.borrow_mut().set_parent(base.borrow().id());
-                        Arc::unwrap_or_clone(it).into_inner().into()
+                        it.write().unwrap().set_parent(base.read().unwrap().id());
+                        Element::Flex(it)
                     }
                     value::Value::Image(it) => {
-                        it.borrow_mut().set_parent(base.borrow().id());
-                        Arc::unwrap_or_clone(it).into_inner().into()
+                        it.write().unwrap().set_parent(base.read().unwrap().id());
+                        Element::Image(it)
                     }
                     value::Value::CustomElement(it) => {
-                        it.borrow_mut().set_parent(base.borrow().id());
-                        Arc::unwrap_or_clone(it).into_inner().into()
+                        it.write().unwrap().set_parent(base.read().unwrap().id());
+                        Element::CustomElement(it)
                     }
                     value::Value::Element(mut it) => {
-                        it.set_parent(base.borrow().id());
+                        it.set_parent(base.read().unwrap().id());
                         it
                     }
                     _ => {
@@ -527,7 +533,7 @@ fn execute_member_function(
                     }
                 };
                 Value {
-                    value: value::Value::GridEntry(base.borrow_mut().add_element(element)),
+                    value: value::Value::GridEntry(base.write().unwrap().add_element(element)),
                     location,
                 }
             }
@@ -535,7 +541,8 @@ fn execute_member_function(
         },
         value::Value::Module(module) => {
             let value = match module
-                .borrow_mut()
+                .write()
+                .unwrap()
                 .try_call_function_by_name(&name, arguments.into_iter().map(|v| v.value).collect())
             {
                 Ok(value) => value,
@@ -667,7 +674,7 @@ fn evaluate_user_function(
         value::Value::Void(())
     } else {
         let custom_element = custom_element.with_elements(elements);
-        value::Value::CustomElement(Arc::new(RefCell::new(custom_element)))
+        value::Value::CustomElement(Arc::new(RwLock::new(custom_element)))
     };
     evaluator.slide = Some(slide);
     Value {
@@ -698,7 +705,7 @@ fn evaluate_conversion(
         },
         Type::Label => match base.value {
             value::Value::String(text) => {
-                value::Value::Label(Arc::new(RefCell::new(Label::new(text))))
+                value::Value::Label(Arc::new(RwLock::new(Label::new(text))))
             }
             _ => unreachable!("Impossible conversion!"),
         },
@@ -709,16 +716,16 @@ fn evaluate_conversion(
             | value::Value::Grid(_)
             | value::Value::Flex(_)
             | value::Value::Element(_)) => value,
-            // value::Value::Label(label) => value::Value::Element(Arc::new(RefCell::new(Element::Label(
+            // value::Value::Label(label) => value::Value::Element(Arc::new(RwLock::new(Element::Label(
             //     Arc::unwrap_or_clone(label).into_inner(),
             // )))),
-            // value::Value::Image(image) => value::Value::Element(Arc::new(RefCell::new(Element::Image(
+            // value::Value::Image(image) => value::Value::Element(Arc::new(RwLock::new(Element::Image(
             //     Arc::unwrap_or_clone(image).into_inner(),
             // )))),
-            // value::Value::CustomElement(custom_element) => value::Value::Element(Arc::new(RefCell::new(
+            // value::Value::CustomElement(custom_element) => value::Value::Element(Arc::new(RwLock::new(
             //     Element::CustomElement(Arc::unwrap_or_clone(custom_element).into_inner()),
             // ))),
-            // value::Value::Grid(grid) => value::Value::Element(Arc::new(RefCell::new(Element::Grid(
+            // value::Value::Grid(grid) => value::Value::Element(Arc::new(RwLock::new(Element::Grid(
             //     Arc::unwrap_or_clone(grid).into_inner(),
             // )))),
             impossible => unreachable!("Impossible conversion! {impossible:#?}"),

@@ -1,6 +1,10 @@
-use std::path::PathBuf;
+use std::{
+    cell::RefCell,
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 
-use slides_rs_core::{Position, WebRenderable};
+use slides_rs_core::{Position, Presentation, WebRenderable};
 use wasmtime::component::Resource;
 use wasmtime_wasi::{IoView, WasiView};
 
@@ -95,6 +99,7 @@ pub struct State {
     value_allocators: Vec<HostValueAllocator>,
     wasi_ctx: wasmtime_wasi::WasiCtx,
     wasi_table: wasmtime_wasi::ResourceTable,
+    presentation: Arc<RwLock<Presentation>>,
 }
 
 impl State {
@@ -113,11 +118,12 @@ impl State {
         &self.value_allocators[index]
     }
 
-    pub fn new() -> Self {
+    pub fn new(presentation: Arc<RwLock<Presentation>>) -> Self {
         Self {
             value_allocators: Vec::new(),
             wasi_ctx: wasmtime_wasi::WasiCtxBuilder::new().build(),
             wasi_table: wasmtime_wasi::ResourceTable::default(),
+            presentation,
         }
     }
 

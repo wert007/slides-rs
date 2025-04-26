@@ -248,14 +248,12 @@ impl WebRenderable for OwnedElement {
 impl From<Element> for OwnedElement {
     fn from(value: Element) -> Self {
         match value {
-            Element::Image(it) => Self::Image(Arc::unwrap_or_clone(it).into_inner()),
-            Element::Label(it) => OwnedElement::Label(Arc::unwrap_or_clone(it).into_inner()),
-            Element::CustomElement(it) => {
-                OwnedElement::CustomElement(Arc::unwrap_or_clone(it).into_inner())
-            }
-            Element::Grid(it) => OwnedElement::Grid(Arc::unwrap_or_clone(it).into_inner()),
-            Element::Flex(it) => OwnedElement::Flex(Arc::unwrap_or_clone(it).into_inner()),
-            Element::Element(it) => Arc::unwrap_or_clone(it).into_inner().into(),
+            Element::Image(it) => Self::Image(it.get_cloned().unwrap()),
+            Element::Label(it) => OwnedElement::Label(it.get_cloned().unwrap()),
+            Element::CustomElement(it) => OwnedElement::CustomElement(it.get_cloned().unwrap()),
+            Element::Grid(it) => OwnedElement::Grid(it.get_cloned().unwrap()),
+            Element::Flex(it) => OwnedElement::Flex(it.get_cloned().unwrap()),
+            Element::Element(it) => it.get_cloned().unwrap().into(),
         }
     }
 }

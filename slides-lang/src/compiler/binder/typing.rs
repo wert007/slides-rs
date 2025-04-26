@@ -169,7 +169,8 @@ impl Type {
         if let Type::Module(index) = self {
             let module = &modules[*index];
             return module
-                .borrow()
+                .read()
+                .unwrap()
                 .try_get_function_by_name(member)
                 .map(|f| Type::Function(f.type_.clone()));
         }

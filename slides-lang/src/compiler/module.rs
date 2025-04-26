@@ -117,7 +117,7 @@ pub fn load_module(
     Host_::add_to_linker(&mut linker, |state: &mut State| state).unwrap();
     wasmtime_wasi::add_to_linker_sync(&mut linker).unwrap();
 
-    let mut store = Store::new(&engine, State::new());
+    let mut store = Store::new(&engine, State::new(context.presentation.clone()));
     let bindings = Host_::instantiate(&mut store, &component, &linker).unwrap();
     let slides = store.data_mut().init_slides();
 

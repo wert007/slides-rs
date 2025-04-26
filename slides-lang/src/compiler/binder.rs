@@ -64,7 +64,7 @@ pub(crate) fn create_presentation_from_file(
     } else {
         evaluator::create_presentation_from_ast(ast, &mut context)?;
     }
-    Ok(context.presentation)
+    Ok(context.presentation.get_cloned().unwrap())
 }
 
 fn bind_node_from_source(

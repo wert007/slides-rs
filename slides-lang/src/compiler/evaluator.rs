@@ -1,4 +1,8 @@
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use index_map::IndexMap;
 use slides_rs_core::{
@@ -180,7 +184,7 @@ pub fn create_presentation_from_ast(
 
     for module in &context.modules.modules {
         evaluator.set_variable(
-            module.borrow().name,
+            module.read().unwrap().name,
             Value {
                 value: value::Value::Module(module.clone()),
                 location: Location::zero(),
@@ -262,11 +266,15 @@ fn evaluate_import_statement(
         State::HtmlHead => {
             context
                 .presentation
+                .write()
+                .unwrap()
                 .add_extern_file(FilePlacement::HtmlHead, import_statement)?;
         }
         State::JavascriptInit => {
             context
                 .presentation
+                .write()
+                .unwrap()
                 .add_extern_file(FilePlacement::JavascriptInit, import_statement)?;
         }
         State::Unknown | State::HtmlUnknown | State::JavascriptUnknown => unreachable!(),
@@ -323,7 +331,7 @@ fn evaluate_slide_statement(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
-    let slide_count = context.presentation.slide_count();
+    let slide_count = context.presentation.read().unwrap().slide_count();
     let slide = Slide::new(slide_count).with_name(
         context
             .string_interner
@@ -333,6 +341,8 @@ fn evaluate_slide_statement(
     slide::evaluate_to_slide(slide_statement.body, evaluator, context)?;
     context
         .presentation
+        .write()
+        .unwrap()
         .add_slide(evaluator.slide.take().expect("there to be slide"));
     Ok(())
 }
@@ -359,7 +369,7 @@ fn evaluate_styling_statement(
         evaluator.set_variable(
             name,
             Value {
-                value: value::Value::TextStyling(Arc::new(RefCell::new(TextStyling::default()))),
+                value: value::Value::TextStyling(Arc::new(RwLock::new(TextStyling::default()))),
                 location,
             },
         );
@@ -367,12 +377,16 @@ fn evaluate_styling_statement(
     style::evaluate_to_styling(styling_statement.body, evaluator, context);
     let mut styling = evaluator.styling.take().expect("styling");
     if let Some(value) = evaluator.try_get_variable(name) {
-        styling.as_label_mut().set_text_styling(
-            Arc::unwrap_or_clone(value.value.clone().into_text_styling()).into_inner(),
-        );
+        styling
+            .as_label_mut()
+            .set_text_styling(value.value.clone().as_text_styling().get_cloned().unwrap());
     }
     evaluator.drop_scope();
-    let reference = context.presentation.add_dynamic_styling(styling);
+    let reference = context
+        .presentation
+        .write()
+        .unwrap()
+        .add_dynamic_styling(styling);
     evaluator.set_variable(
         styling_statement.name,
         Value {
