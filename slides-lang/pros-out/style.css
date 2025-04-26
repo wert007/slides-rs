@@ -1478,14 +1478,21 @@ ol {
     text-align: center;
 }
 
-#deadlocks_problem-base {
-    top: calc(0.1 * var(--slide-height));
-    bottom: calc(0.1 * var(--slide-height));
-    height: calc(+ 100%+ (-0.2 * var(--slide-height)));
+#deadlocks_problem-title {
     left: calc(0.1 * var(--slide-width));
     right: calc(0.1 * var(--slide-width));
     width: calc(+ 100%+ (-0.2 * var(--slide-width)));
     z-index: 0;
+}
+
+#deadlocks_problem-base {
+    top: calc(0.4 * var(--slide-height));
+    bottom: calc(0.1 * var(--slide-height));
+    height: calc(+ 100%+ (-0.5 * var(--slide-height)));
+    left: calc(0.1 * var(--slide-width));
+    right: calc(0.1 * var(--slide-width));
+    width: calc(+ 100%+ (-0.2 * var(--slide-width)));
+    z-index: 1;
 }
 
 #deadlocks_problem-base-amanda {
@@ -1494,7 +1501,7 @@ ol {
     left: 0px;
     right: unset;
     height: 20%;
-    width: 20%;
+    width: 10%;
     transform: translate(0%, -50%);
 }
 
@@ -1509,7 +1516,7 @@ ol {
     right: 0px;
     left: unset;
     height: 20%;
-    width: 20%;
+    width: 10%;
     transform: translate(0%, -50%);
 }
 
@@ -1524,7 +1531,7 @@ ol {
     left: 50%;
     right: unset;
     height: 20%;
-    width: 20%;
+    width: 10%;
     transform: translate(-50%, 0%);
 }
 
@@ -1539,7 +1546,7 @@ ol {
     left: 50%;
     right: unset;
     height: 20%;
-    width: 20%;
+    width: 10%;
     transform: translate(-50%, 0%);
 }
 

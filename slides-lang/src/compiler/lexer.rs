@@ -215,6 +215,8 @@ fn is_token(char: char) -> bool {
             | '+'
             | '/'
             | '*'
+            | '|'
+            | '&'
     )
 }
 

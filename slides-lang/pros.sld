@@ -305,25 +305,25 @@ slide deadlocks:
 element deadlock_icons():
     let size = 20%;
     let amanda = icon('amanda') {
-        width: size,
+        width: size * 0.5,
         height: size,
         halign: HAlign.Left,
         valign: VAlign.Center,
     };
     let bobbl = icon('bobbl') {
-        width: size,
+        width: size * 0.5,
         height: size,
         halign: HAlign.Right,
         valign: VAlign.Center,
     };
     let light = icon('light') {
-        width: size,
+        width: size * 0.5,
         height: size,
         halign: HAlign.Center,
         valign: VAlign.Bottom,
     };
     let lift = icon('lift') {
-        width: size,
+        width: size * 0.5,
         height: size,
         halign: HAlign.Center,
         valign: VAlign.Top,
@@ -337,13 +337,19 @@ element deadlock_icons():
 
 slide deadlocks_problem:
     page_number();
+    let title = l"# Deadlocks: Grundproblem" { halign: HAlign.Stretch, margin: {
+            left: 0.10sw,
+            right: 0.10sw,
+            top: 0.10sh,
+            bottom: 0.10sh,
+        }};
     let base = deadlock_icons() {
         halign: HAlign.Stretch,
         valign: VAlign.Stretch,
         margin: {
             left: 0.10sw,
             right: 0.10sw,
-            top: 0.10sh,
+            top: 0.40sh,
             bottom: 0.10sh,
         }
     };
@@ -353,7 +359,7 @@ slide deadlocks_problem:
         color: c"#595959",
         path: "grid",
     };
-    arrows.arrow(base.amanda, base.light, options);
-    arrows.arrow(base.amanda, base.lift, options);
-    arrows.arrow(base.bobbl, base.light, options);
-    arrows.arrow(base.bobbl, base.lift, options);
+    arrows.arrow(base.amanda, base.light, options | { startSocket: "bottom" });
+    arrows.arrow(base.amanda, base.lift, options | { startSocket: "top" });
+    arrows.arrow(base.bobbl, base.light, options | { startSocket: "bottom" });
+    arrows.arrow(base.bobbl, base.lift, options | { startSocket: "top" });

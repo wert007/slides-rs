@@ -65,7 +65,7 @@ impl Arrows {
         for (key, value) in options {
             let value = allocator.get(value);
             match key.as_str() {
-                "color" | "path" => {
+                "color" | "path" | "startSocket" | "endSocket" => {
                     writeln!(options_text, "{key}: {},", value_to_string(&value)?)
                         .expect("infallible");
                 }

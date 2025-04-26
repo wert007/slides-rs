@@ -526,6 +526,8 @@ pub enum BoundBinaryOperator {
     Subtraction,
     Multiplication,
     Division,
+    And,
+    Or,
     Unknown(SymbolUsize),
 }
 
@@ -541,8 +543,27 @@ impl BoundBinaryOperator {
         match self {
             BoundBinaryOperator::Addition => (lhs.into_integer() + rhs.into_integer()).into(),
             BoundBinaryOperator::Subtraction => (lhs.into_integer() - rhs.into_integer()).into(),
-            BoundBinaryOperator::Multiplication => todo!(),
+            BoundBinaryOperator::Multiplication => match (lhs, rhs) {
+                (Value::Integer(lhs), Value::Integer(rhs)) => (lhs * rhs).into(),
+                (Value::Float(lhs), Value::Float(rhs)) => (lhs * rhs).into(),
+                (Value::Integer(lhs), Value::Float(rhs)) => ((lhs as f64) * rhs).into(),
+                (Value::Float(lhs), Value::Integer(rhs)) => (lhs * (rhs as f64)).into(),
+                (Value::StyleUnit(lhs), Value::Integer(rhs)) => (lhs * rhs as f64).into(),
+                (Value::StyleUnit(lhs), Value::Float(rhs)) => (lhs * rhs).into(),
+                (Value::Integer(lhs), Value::StyleUnit(rhs)) => (rhs * lhs as f64).into(),
+                (Value::Float(lhs), Value::StyleUnit(rhs)) => (rhs * lhs).into(),
+                _ => unreachable!(),
+            },
             BoundBinaryOperator::Division => todo!(),
+            BoundBinaryOperator::And => todo!(),
+            BoundBinaryOperator::Or => match (lhs, rhs) {
+                (Value::Dict(lhs), Value::Dict(rhs)) => {
+                    let mut dict = lhs.clone();
+                    dict.extend(rhs.clone());
+                    Value::Dict(dict)
+                }
+                _ => todo!(),
+            },
             BoundBinaryOperator::Unknown(_symbol_usize) => unreachable!(),
         }
     }
@@ -970,6 +991,8 @@ fn bind_binary_operator(
         "-" => BoundBinaryOperator::Subtraction,
         "*" => BoundBinaryOperator::Multiplication,
         "/" => BoundBinaryOperator::Division,
+        "&" => BoundBinaryOperator::And,
+        "|" => BoundBinaryOperator::Or,
         unknown => BoundBinaryOperator::Unknown(context.string_interner.create_or_get(unknown)),
     }
 }

@@ -918,6 +918,10 @@ fn parse_variable_declaration(parser: &mut Parser, context: &mut Context) -> Syn
 }
 
 fn parse_expression(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    parse_mul_div(parser, context)
+}
+
+fn parse_mul_div(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     let mut lhs = parse_add_minus(parser, context);
     while parser.current_token().kind == TokenKind::SingleChar('*')
         || parser.current_token().kind == TokenKind::SingleChar('/')
@@ -930,9 +934,21 @@ fn parse_expression(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
 }
 
 fn parse_add_minus(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let mut lhs = parse_post_initialization(parser, context);
+    let mut lhs = parse_and_or(parser, context);
     while parser.current_token().kind == TokenKind::SingleChar('+')
         || parser.current_token().kind == TokenKind::SingleChar('-')
+    {
+        let operator = parser.next_token();
+        let rhs = parse_and_or(parser, context);
+        lhs = SyntaxNode::binary(lhs, operator, rhs);
+    }
+    lhs
+}
+
+fn parse_and_or(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let mut lhs = parse_post_initialization(parser, context);
+    while parser.current_token().kind == TokenKind::SingleChar('&')
+        || parser.current_token().kind == TokenKind::SingleChar('|')
     {
         let operator = parser.next_token();
         let rhs = parse_post_initialization(parser, context);

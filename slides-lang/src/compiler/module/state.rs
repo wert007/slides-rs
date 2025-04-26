@@ -211,7 +211,6 @@ impl slides::HostSlides for State {
         source: wasmtime::component::__internal::String,
         placement: arrows::slides::Placement,
     ) -> () {
-        println!("Placing text in output: {text}");
         self.presentation
             .write()
             .unwrap()
