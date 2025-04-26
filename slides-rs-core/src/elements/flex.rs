@@ -71,7 +71,8 @@ impl WebRenderable for Flex {
             .to_css_rule(ctx.layout.clone(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(
             emitter.raw_html(),
-            "<div id=\"{id}\" class=\"flex {classes}{classes_animations}\">"
+            "<div id=\"{id}\" class=\"flex {classes}{classes_animations}\" data-element-id=\"{}\">",
+            self.id.raw()
         )?;
         for mut element in self.children {
             element.set_namespace(id.clone());
@@ -102,6 +103,10 @@ impl WebRenderable for Flex {
 
     fn set_name(&mut self, name: String) {
         self.name = name;
+    }
+
+    fn namespace(&self) -> String {
+        self.namespace.clone()
     }
 
     fn set_namespace(&mut self, namespace: String) {

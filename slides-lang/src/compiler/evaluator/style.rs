@@ -43,7 +43,8 @@ fn assign_to(lhs: BoundNode, value: Value, evaluator: &mut Evaluator, context: &
             match member {
                 "text_color" => base
                     .as_text_styling()
-                    .borrow_mut()
+                    .write()
+                    .unwrap()
                     .set_text_color(value.into_color()),
                 missing => unreachable!("Missing member {missing}"),
             }

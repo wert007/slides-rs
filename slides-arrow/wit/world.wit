@@ -1,0 +1,87 @@
+package component:arrows;
+interface types {
+    enum %type {
+        void,
+        %string,
+        int,
+        float,
+        element,
+        dict,
+    }
+
+    record function {
+        name: string,
+        args: list<%type>,
+        result-type: %type,
+    }
+}
+
+interface values {
+    record value-index {
+        index: u32,
+    }
+    resource value-allocator {
+        create: static func() -> value-allocator;
+        allocate: func(value: value) -> value-index;
+        get: func(value: value-index) -> value;
+    }
+
+    record position {
+        x: string,
+        y: string,
+    }
+
+    record element {
+        id: u32,
+        parent: option<u32>,
+        name: string,
+        namespace: string,
+    }
+
+    variant value {
+        void,
+        string-type(string),
+        int(s64),
+        float(f64),
+        style-unit(string),
+        position(position),
+        dict(list<tuple<string, value-index>>),
+        array(list<value-index>),
+        element(element),
+    }
+}
+
+interface slides {
+    enum placement {
+        html-head,
+        javascript-init,
+    }
+
+    resource slides {
+        download-file: func(url: string, path: string);
+        add-file-reference: func(path: string);
+        place-text-in-output: func(text: string, source: string, placement: placement);
+    }
+}
+
+interface modules {
+    use types.{%type, function};
+    use values.{value, value-allocator, value-index};
+    use slides.{slides};
+
+    variant error {
+        function-not-found,
+        invalid-type,
+        argument-count-mismatch,
+        internal-error(string),
+    }
+    resource module {
+        create: static func(slides: slides) -> module;
+        available-functions: func() -> list<function>;
+        call-function: func(slides: slides, name: string, allocator: value-allocator, args: list<value-index>) -> result<value-index, error>;
+    }
+}
+
+world host {
+    export modules;
+}

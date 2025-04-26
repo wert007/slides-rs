@@ -7,6 +7,7 @@ pub mod binder;
 pub mod diagnostics;
 pub mod evaluator;
 pub mod lexer;
+pub mod module;
 pub mod parser;
 
 #[derive(Debug, Clone, Copy, Default)]

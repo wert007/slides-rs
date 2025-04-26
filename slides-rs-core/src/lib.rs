@@ -1,3 +1,5 @@
+#![feature(lock_value_accessors)]
+
 use std::{
     collections::{HashMap, HashSet},
     io::Write,
@@ -35,12 +37,13 @@ impl<T> Index<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Presentation {
     slides: Vec<Slide>,
     stylings: Vec<DynamicElementStyling>,
     extern_texts: HashMap<FilePlacement, String>,
     used_files: Vec<PathBuf>,
+    referenced_files: Vec<PathBuf>,
 }
 
 impl Presentation {
@@ -50,6 +53,7 @@ impl Presentation {
             stylings: Vec::new(),
             extern_texts: HashMap::new(),
             used_files: Vec::new(),
+            referenced_files: Vec::new(),
         }
     }
 
@@ -72,7 +76,24 @@ impl Presentation {
 
             <!-- For Google font! -->
             <link rel="preconnect" href="https://fonts.googleapis.com">
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>"#
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <script>
+                function init() {{
+                    init_navigation();
+
+            "#
+        )?;
+
+        if let Some(text) = self.extern_texts.get(&FilePlacement::JavascriptInit) {
+            writeln!(emitter.raw_html(), "{text}")?;
+        }
+
+        writeln!(
+            emitter.raw_html(),
+            r#"
+        }}
+        </script>
+            "#
         )?;
 
         let mut google_font_references = HashSet::new();
@@ -112,6 +133,9 @@ impl Presentation {
                 emitter.raw_css(),
             )?;
         }
+        for file in self.referenced_files {
+            emitter.add_file(file)?;
+        }
         emitter.copy_referenced_files()?;
         writeln!(emitter.raw_html(), "</body></html>")?;
         Ok(())
@@ -123,18 +147,28 @@ impl Presentation {
         unsafe { StylingReference::from_raw(name) }
     }
 
-    pub fn add_extern_file(
+    pub fn add_referenced_file(&mut self, path: impl Into<PathBuf>) {
+        let path = path.into();
+        self.referenced_files.push(path);
+    }
+
+    pub fn add_extern_text(
         &mut self,
         placement: FilePlacement,
-        path: impl Into<PathBuf>,
+        text: ExternText,
     ) -> std::io::Result<()> {
         use std::fmt::Write;
-        let path = path.into();
-        self.used_files.push(path.clone());
-        let file = std::fs::read_to_string(&path)?;
+        let (source, text) = match text {
+            ExternText::File(path) => {
+                self.used_files.push(path.clone());
+                let file = std::fs::read_to_string(&path)?;
+                (path.to_string_lossy().to_string(), file)
+            }
+            ExternText::Text(source, text) => (source, text),
+        };
         let extern_text = self.extern_texts.entry(placement).or_default();
-        writeln!(extern_text, "<!-- From {} -->", path.display()).expect("infallible");
-        writeln!(extern_text, "{file}\n").expect("infallible");
+        writeln!(extern_text, "<!-- From {source} -->").expect("infallible");
+        writeln!(extern_text, "{text}\n").expect("infallible");
         Ok(())
     }
 
@@ -150,9 +184,15 @@ impl Presentation {
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum FilePlacement {
     HtmlHead,
+    JavascriptInit,
 }
 
-#[derive(Debug)]
+pub enum ExternText {
+    File(PathBuf),
+    Text(String, String),
+}
+
+#[derive(Debug, Clone)]
 pub struct Slide {
     pub index: usize,
     id: Option<String>,

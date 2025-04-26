@@ -191,6 +191,18 @@ impl WebRenderable for OwnedElement {
             OwnedElement::Flex(inner) => WebRenderable::set_name(inner, name),
         }
     }
+
+    #[inline]
+    fn namespace(&self) -> String {
+        match self {
+            OwnedElement::Image(inner) => WebRenderable::namespace(inner),
+            OwnedElement::Label(inner) => WebRenderable::namespace(inner),
+            OwnedElement::CustomElement(inner) => WebRenderable::namespace(inner),
+            OwnedElement::Grid(inner) => WebRenderable::namespace(inner),
+            OwnedElement::Flex(inner) => WebRenderable::namespace(inner),
+        }
+    }
+
     #[inline]
     fn set_namespace(&mut self, namespace: String) {
         match self {
@@ -236,14 +248,12 @@ impl WebRenderable for OwnedElement {
 impl From<Element> for OwnedElement {
     fn from(value: Element) -> Self {
         match value {
-            Element::Image(it) => Self::Image(Arc::unwrap_or_clone(it).into_inner()),
-            Element::Label(it) => OwnedElement::Label(Arc::unwrap_or_clone(it).into_inner()),
-            Element::CustomElement(it) => {
-                OwnedElement::CustomElement(Arc::unwrap_or_clone(it).into_inner())
-            }
-            Element::Grid(it) => OwnedElement::Grid(Arc::unwrap_or_clone(it).into_inner()),
-            Element::Flex(it) => OwnedElement::Flex(Arc::unwrap_or_clone(it).into_inner()),
-            Element::Element(it) => Arc::unwrap_or_clone(it).into_inner().into(),
+            Element::Image(it) => Self::Image(it.get_cloned().unwrap()),
+            Element::Label(it) => OwnedElement::Label(it.get_cloned().unwrap()),
+            Element::CustomElement(it) => OwnedElement::CustomElement(it.get_cloned().unwrap()),
+            Element::Grid(it) => OwnedElement::Grid(it.get_cloned().unwrap()),
+            Element::Flex(it) => OwnedElement::Flex(it.get_cloned().unwrap()),
+            Element::Element(it) => it.get_cloned().unwrap().into(),
         }
     }
 }
@@ -307,7 +317,6 @@ pub fn sizeOf(_evaluator: &mut Evaluator, element: Element) -> Position {
         .styling_mut()
         .base()
         .padding;
-    dbg!(slide_padding);
     let element = OwnedElement::from(element);
 
     let x = match element.element_styling().halign {
@@ -342,5 +351,5 @@ pub fn positionInside(_evaluator: &mut Evaluator, element: Element, x: f64, y: f
     let left_top = leftTop(evaluator, element.clone());
     let x = left_top.x + size.x * x;
     let y = left_top.y + size.y * y;
-    dbg!(Position { x, y })
+    Position { x, y }
 }

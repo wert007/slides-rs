@@ -2,13 +2,15 @@ use std::collections::HashMap;
 
 use strum::IntoEnumIterator;
 
+use crate::{ModuleIndex, Modules};
+
 use super::{ConversionKind, Variable, globals};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FunctionType {
     pub min_argument_count: usize,
-    pub(super) argument_types: Vec<TypeId>,
-    pub(super) return_type: TypeId,
+    pub(crate) argument_types: Vec<TypeId>,
+    pub(crate) return_type: TypeId,
 }
 impl FunctionType {
     pub fn return_type(&self) -> TypeId {
@@ -120,6 +122,7 @@ pub enum Type {
     TextStyling,
     Animation,
     Position,
+    Module(ModuleIndex),
 }
 
 impl Type {
@@ -142,7 +145,12 @@ impl Type {
         }
     }
 
-    pub fn field_type(&self, member: &str, type_interner: &mut TypeInterner) -> Option<Type> {
+    pub fn field_type(
+        &self,
+        member: &str,
+        type_interner: &mut TypeInterner,
+        modules: &Modules,
+    ) -> Option<Type> {
         if self == &Type::Error {
             return Some(Type::Error);
         }
@@ -157,6 +165,14 @@ impl Type {
             if let Some(type_) = members.get(member) {
                 return Some(type_interner.resolve(*type_).clone());
             }
+        }
+        if let Type::Module(index) = self {
+            let module = &modules[*index];
+            return module
+                .read()
+                .unwrap()
+                .try_get_function_by_name(member)
+                .map(|f| Type::Function(f.type_.clone()));
         }
         for m in globals::MEMBERS {
             if self.as_ref() != m.name {

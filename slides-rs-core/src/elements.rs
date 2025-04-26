@@ -2,7 +2,7 @@ use std::{
     cell::RefCell,
     collections::HashSet,
     fmt::Display,
-    sync::{Arc, atomic::AtomicUsize},
+    sync::{Arc, RwLock, atomic::AtomicUsize},
 };
 
 use enum_dispatch::enum_dispatch;
@@ -33,6 +33,10 @@ impl ElementId {
         let raw = NEXT_ELEMENT_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         ElementId(raw)
     }
+
+    pub fn raw(&self) -> usize {
+        self.0
+    }
 }
 
 impl Display for ElementId {
@@ -62,6 +66,7 @@ pub trait WebRenderable {
     fn id(&self) -> ElementId;
     fn name(&self) -> String;
     fn set_name(&mut self, name: String);
+    fn namespace(&self) -> String;
     fn set_namespace(&mut self, namespace: String);
     fn element_styling(&self) -> &BaseElementStyling;
     fn element_styling_mut(&mut self) -> &mut BaseElementStyling;
@@ -94,12 +99,15 @@ impl<T: WebRenderable + Clone> WebRenderable for Arc<RefCell<T>> {
     }
 
     fn name(&self) -> String {
-        // todo!("How would we do that?")
         self.borrow().name()
     }
 
     fn set_name(&mut self, name: String) {
         self.borrow_mut().set_name(name);
+    }
+
+    fn namespace(&self) -> String {
+        self.borrow().namespace()
     }
 
     fn set_namespace(&mut self, namespace: String) {
@@ -125,89 +133,145 @@ impl<T: WebRenderable + Clone> WebRenderable for Arc<RefCell<T>> {
     }
 }
 
+impl<T: WebRenderable + Clone> WebRenderable for Arc<RwLock<T>> {
+    fn output_to_html<W: std::io::Write>(
+        self,
+        emitter: &mut PresentationEmitter<W>,
+        ctx: WebRenderableContext,
+    ) -> Result<()> {
+        self.get_cloned().unwrap().output_to_html(emitter, ctx)
+    }
+
+    fn set_parent(&mut self, parent: ElementId) {
+        self.write().unwrap().set_parent(parent);
+    }
+
+    fn parent(&self) -> Option<ElementId> {
+        self.read().unwrap().parent()
+    }
+
+    fn id(&self) -> ElementId {
+        self.read().unwrap().id()
+    }
+
+    fn name(&self) -> String {
+        self.read().unwrap().name()
+    }
+
+    fn set_name(&mut self, name: String) {
+        self.write().unwrap().set_name(name);
+    }
+
+    fn namespace(&self) -> String {
+        self.read().unwrap().namespace()
+    }
+
+    fn set_namespace(&mut self, namespace: String) {
+        self.write().unwrap().set_namespace(namespace);
+    }
+
+    fn element_styling(&self) -> &BaseElementStyling {
+        todo!("How would we do that?")
+        // self.read().unwrap().element_styling()
+    }
+
+    fn element_styling_mut(&mut self) -> &mut BaseElementStyling {
+        todo!("How would we do that?")
+        // self.write().unwrap().element_styling_mut()
+    }
+
+    fn collect_google_font_references(&self, fonts: &mut HashSet<String>) -> Result<()> {
+        self.read().unwrap().collect_google_font_references(fonts)
+    }
+
+    fn set_z_index(&mut self, z_index: usize) {
+        self.write().unwrap().set_z_index(z_index);
+    }
+}
+
 #[enum_dispatch(WebRenderable)]
 #[derive(Debug, Clone)]
 pub enum Element {
-    Image(Arc<RefCell<Image>>),
-    Label(Arc<RefCell<Label>>),
-    CustomElement(Arc<RefCell<CustomElement>>),
-    Grid(Arc<RefCell<Grid>>),
-    Flex(Arc<RefCell<Flex>>),
-    Element(Arc<RefCell<Element>>),
+    Image(Arc<RwLock<Image>>),
+    Label(Arc<RwLock<Label>>),
+    CustomElement(Arc<RwLock<CustomElement>>),
+    Grid(Arc<RwLock<Grid>>),
+    Flex(Arc<RwLock<Flex>>),
+    Element(Arc<RwLock<Element>>),
 }
 
 impl From<Label> for Element {
     fn from(value: Label) -> Self {
-        Self::Label(Arc::new(RefCell::new(value)))
+        Self::Label(Arc::new(RwLock::new(value)))
     }
 }
 
 impl From<Image> for Element {
     fn from(value: Image) -> Self {
-        Self::Image(Arc::new(RefCell::new(value)))
+        Self::Image(Arc::new(RwLock::new(value)))
     }
 }
 
 impl From<CustomElement> for Element {
     fn from(value: CustomElement) -> Self {
-        Self::CustomElement(Arc::new(RefCell::new(value)))
+        Self::CustomElement(Arc::new(RwLock::new(value)))
     }
 }
 
 impl From<Grid> for Element {
     fn from(value: Grid) -> Self {
-        Self::Grid(Arc::new(RefCell::new(value)))
+        Self::Grid(Arc::new(RwLock::new(value)))
     }
 }
 
 impl From<Flex> for Element {
     fn from(value: Flex) -> Self {
-        Self::Flex(Arc::new(RefCell::new(value)))
+        Self::Flex(Arc::new(RwLock::new(value)))
     }
 }
 
 // #[enum_dispatch(WebRenderable)]
 #[derive(Debug)]
 pub enum ElementRefMut {
-    Image(Arc<RefCell<Image>>),
-    Label(Arc<RefCell<Label>>),
-    CustomElement(Arc<RefCell<CustomElement>>),
-    Grid(Arc<RefCell<Grid>>),
-    Flex(Arc<RefCell<Flex>>),
+    Image(Arc<RwLock<Image>>),
+    Label(Arc<RwLock<Label>>),
+    CustomElement(Arc<RwLock<CustomElement>>),
+    Grid(Arc<RwLock<Grid>>),
+    Flex(Arc<RwLock<Flex>>),
 }
 
 impl ElementRefMut {
     pub fn has_parent(&self) -> bool {
         match self {
-            ElementRefMut::Image(it) => it.borrow().parent().is_some(),
-            ElementRefMut::Label(it) => it.borrow().parent().is_some(),
-            ElementRefMut::CustomElement(it) => it.borrow().parent().is_some(),
-            ElementRefMut::Grid(it) => it.borrow().parent().is_some(),
-            ElementRefMut::Flex(it) => it.borrow().parent().is_some(),
+            ElementRefMut::Image(it) => it.read().unwrap().parent().is_some(),
+            ElementRefMut::Label(it) => it.read().unwrap().parent().is_some(),
+            ElementRefMut::CustomElement(it) => it.read().unwrap().parent().is_some(),
+            ElementRefMut::Grid(it) => it.read().unwrap().parent().is_some(),
+            ElementRefMut::Flex(it) => it.read().unwrap().parent().is_some(),
         }
     }
 
     pub fn apply_to_base_element_styling(&mut self, mut cb: impl FnMut(&mut BaseElementStyling)) {
         match self {
-            ElementRefMut::Image(it) => cb(it.borrow_mut().element_styling_mut().base_mut()),
-            ElementRefMut::Label(it) => cb(it.borrow_mut().element_styling_mut().base_mut()),
+            ElementRefMut::Image(it) => cb(it.write().unwrap().element_styling_mut().base_mut()),
+            ElementRefMut::Label(it) => cb(it.write().unwrap().element_styling_mut().base_mut()),
             ElementRefMut::CustomElement(it) => {
-                cb(it.borrow_mut().element_styling_mut().base_mut())
+                cb(it.write().unwrap().element_styling_mut().base_mut())
             }
-            ElementRefMut::Grid(it) => cb(it.borrow_mut().element_styling_mut()),
-            ElementRefMut::Flex(it) => cb(it.borrow_mut().element_styling_mut()),
+            ElementRefMut::Grid(it) => cb(it.write().unwrap().element_styling_mut()),
+            ElementRefMut::Flex(it) => cb(it.write().unwrap().element_styling_mut()),
         }
     }
 
     pub fn add_styling_reference(&mut self, reference: StylingReference) {
         match self {
-            ElementRefMut::Image(image) => image.borrow_mut().add_styling(reference),
-            ElementRefMut::Label(label) => label.borrow_mut().add_styling(reference),
+            ElementRefMut::Image(image) => image.write().unwrap().add_styling(reference),
+            ElementRefMut::Label(label) => label.write().unwrap().add_styling(reference),
             ElementRefMut::CustomElement(custom_element) => {
-                custom_element.borrow_mut().add_styling(reference)
+                custom_element.write().unwrap().add_styling(reference)
             }
-            ElementRefMut::Grid(it) => it.borrow_mut().add_styling(reference),
-            ElementRefMut::Flex(it) => it.borrow_mut().add_styling(reference),
+            ElementRefMut::Grid(it) => it.write().unwrap().add_styling(reference),
+            ElementRefMut::Flex(it) => it.write().unwrap().add_styling(reference),
         }
     }
 
@@ -249,11 +313,13 @@ impl ElementRefMut {
 
     pub fn set_animations(&mut self, value: Vec<Animation>) {
         match self {
-            ElementRefMut::Image(it) => it.borrow_mut().animations.add_animations(&value),
-            ElementRefMut::Label(it) => it.borrow_mut().animations.add_animations(&value),
-            ElementRefMut::CustomElement(it) => it.borrow_mut().animations.add_animations(&value),
-            ElementRefMut::Grid(it) => it.borrow_mut().animations.add_animations(&value),
-            ElementRefMut::Flex(it) => it.borrow_mut().animations.add_animations(&value),
+            ElementRefMut::Image(it) => it.write().unwrap().animations.add_animations(&value),
+            ElementRefMut::Label(it) => it.write().unwrap().animations.add_animations(&value),
+            ElementRefMut::CustomElement(it) => {
+                it.write().unwrap().animations.add_animations(&value)
+            }
+            ElementRefMut::Grid(it) => it.write().unwrap().animations.add_animations(&value),
+            ElementRefMut::Flex(it) => it.write().unwrap().animations.add_animations(&value),
         }
     }
 }

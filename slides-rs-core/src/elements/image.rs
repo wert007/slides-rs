@@ -107,8 +107,9 @@ impl WebRenderable for Image {
         self.source.add_files(emitter)?;
         writeln!(
             emitter.raw_html(),
-            "<img id=\"{id}\" class=\"image {classes} {classes_animations}\" src=\"{}\"/>",
-            self.source
+            "<img id=\"{id}\" class=\"image {classes} {classes_animations}\" src=\"{}\" data-element-id=\"{}\"/>",
+            self.source,
+            self.id.raw()
         )?;
         Ok(())
     }
@@ -131,6 +132,10 @@ impl WebRenderable for Image {
 
     fn set_name(&mut self, id: String) {
         self.name = id;
+    }
+
+    fn namespace(&self) -> String {
+        self.namespace.clone()
     }
 
     fn set_namespace(&mut self, id: String) {

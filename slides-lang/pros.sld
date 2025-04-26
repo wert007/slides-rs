@@ -1,3 +1,7 @@
+import module"arrows";
+// import p"./pros-assets/leader-line.head.html";
+// import p"./pros-assets/leader-line-arrow.init.js";
+
 styling default(Label):
     font = gfont("Roboto");
     text_color = c"black";
@@ -344,4 +348,12 @@ slide deadlocks_problem:
         }
     };
     // let position = positionInside(a, 0.0, 0.5);
-    let amanda = base.amanda;
+    // let amanda = base.amanda;
+    let options = {
+        color: c"#595959",
+        path: "grid",
+    };
+    arrows.arrow(base.amanda, base.light, options);
+    arrows.arrow(base.amanda, base.lift, options);
+    arrows.arrow(base.bobbl, base.light, options);
+    arrows.arrow(base.bobbl, base.lift, options);

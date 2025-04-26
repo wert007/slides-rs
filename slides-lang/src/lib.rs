@@ -1,6 +1,12 @@
-use std::{ops::Index, path::PathBuf};
+#![feature(lock_value_accessors)]
+use std::{
+    cell::RefCell,
+    ops::Index,
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 
-use compiler::{DebugLang, binder::typing::TypeInterner, diagnostics::Diagnostics};
+use compiler::{DebugLang, binder::typing::TypeInterner, diagnostics::Diagnostics, module::Module};
 use slides_rs_core::Presentation;
 use string_interner::{Symbol, backend::BucketBackend, symbol::SymbolUsize};
 
@@ -157,24 +163,63 @@ impl StringInterner {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct ModuleIndex(usize);
+
+impl ModuleIndex {
+    pub const ANY: Self = ModuleIndex(0);
+}
+
+pub struct Modules {
+    directory: PathBuf,
+    modules: Vec<Arc<RwLock<Module>>>,
+}
+
+impl Modules {
+    pub fn new() -> Self {
+        Self {
+            directory: "./slides-modules/".into(),
+            modules: Vec::new(),
+        }
+    }
+
+    pub fn add_module(&mut self, module: Module) -> ModuleIndex {
+        self.modules.push(Arc::new(RwLock::new(module)));
+        ModuleIndex(self.modules.len())
+    }
+}
+
+impl Index<ModuleIndex> for Modules {
+    type Output = Arc<RwLock<Module>>;
+
+    fn index(&self, index: ModuleIndex) -> &Self::Output {
+        if index.0 == 0 {
+            panic!("ModuleIndex::ANY is not a valid index");
+        }
+        &self.modules[index.0 - 1]
+    }
+}
+
 pub struct Context {
-    presentation: Presentation,
+    presentation: Arc<RwLock<Presentation>>,
     pub loaded_files: Files,
     diagnostics: Diagnostics,
     string_interner: StringInterner,
     type_interner: TypeInterner,
     debug: DebugLang,
+    modules: Modules,
 }
 
 impl Context {
     fn new() -> Self {
         Self {
-            presentation: Presentation::new(),
+            presentation: Arc::new(RwLock::new(Presentation::new())),
             loaded_files: Files::new(),
             diagnostics: Diagnostics::new(),
             string_interner: StringInterner::new(),
             type_interner: TypeInterner::new(),
             debug: DebugLang::default(),
+            modules: Modules::new(),
         }
     }
 

@@ -1,4 +1,8 @@
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use index_map::IndexMap;
 use slides_rs_core::{
@@ -6,7 +10,7 @@ use slides_rs_core::{
     TextStyling,
 };
 
-use super::binder::{BoundAst, BoundNode, BoundNodeKind, StylingType, typing::TypeId};
+use super::binder::{BoundAst, BoundError, BoundNode, BoundNodeKind, StylingType, typing::TypeId};
 use crate::{Context, Location, VariableId};
 
 pub mod functions;
@@ -127,6 +131,7 @@ impl Evaluator {
             .expect("Variable exists")
     }
 
+    #[track_caller]
     fn get_variable(&self, name: VariableId) -> &Value {
         self.scopes
             .iter()
@@ -177,6 +182,16 @@ pub fn create_presentation_from_ast(
 ) -> slides_rs_core::Result<()> {
     let mut evaluator = Evaluator::new();
 
+    for module in &context.modules.modules {
+        evaluator.set_variable(
+            module.read().unwrap().name,
+            Value {
+                value: value::Value::Module(module.clone()),
+                location: Location::zero(),
+            },
+        );
+    }
+
     for statement in ast.statements {
         evaluate_statement(statement, &mut evaluator, context)?;
         if let Some(exception) = evaluator.exception.take() {
@@ -194,7 +209,8 @@ fn evaluate_statement(
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     match statement.kind {
-        BoundNodeKind::Error(()) => unreachable!("Errors should create errors!"),
+        BoundNodeKind::Empty(()) => Ok(()),
+        BoundNodeKind::Error(BoundError) => unreachable!("Errors should create errors!"),
         BoundNodeKind::StylingStatement(styling_statement) => {
             evaluate_styling_statement(styling_statement, statement.location, evaluator, context)
         }
@@ -224,11 +240,13 @@ fn evaluate_import_statement(
         Unknown,
         HtmlUnknown,
         HtmlHead,
+        JavascriptUnknown,
+        JavascriptInit,
     }
 
     impl State {
         pub fn is_finished(&self) -> bool {
-            matches!(self, Self::HtmlHead)
+            matches!(self, Self::HtmlHead | Self::JavascriptInit)
         }
     }
     let mut state = State::Unknown;
@@ -236,20 +254,23 @@ fn evaluate_import_statement(
         match extension {
             "html" => state = State::HtmlUnknown,
             "head" => state = State::HtmlHead,
+            "js" => state = State::JavascriptUnknown,
+            "init" => state = State::JavascriptInit,
             missing => unreachable!("Missing {missing}"),
         }
         if state.is_finished() {
             break;
         }
     }
-    match state {
-        State::HtmlHead => {
-            context
-                .presentation
-                .add_extern_file(FilePlacement::HtmlHead, import_statement)?;
-        }
-        State::Unknown | State::HtmlUnknown => unreachable!(),
-    }
+    let placement = match state {
+        State::HtmlHead => FilePlacement::HtmlHead,
+        State::JavascriptInit => FilePlacement::JavascriptInit,
+        State::Unknown | State::HtmlUnknown | State::JavascriptUnknown => unreachable!(),
+    };
+    context.presentation.write().unwrap().add_extern_text(
+        placement,
+        slides_rs_core::ExternText::File(import_statement),
+    )?;
     Ok(())
 }
 
@@ -302,7 +323,7 @@ fn evaluate_slide_statement(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> slides_rs_core::Result<()> {
-    let slide_count = context.presentation.slide_count();
+    let slide_count = context.presentation.read().unwrap().slide_count();
     let slide = Slide::new(slide_count).with_name(
         context
             .string_interner
@@ -312,6 +333,8 @@ fn evaluate_slide_statement(
     slide::evaluate_to_slide(slide_statement.body, evaluator, context)?;
     context
         .presentation
+        .write()
+        .unwrap()
         .add_slide(evaluator.slide.take().expect("there to be slide"));
     Ok(())
 }
@@ -338,7 +361,7 @@ fn evaluate_styling_statement(
         evaluator.set_variable(
             name,
             Value {
-                value: value::Value::TextStyling(Arc::new(RefCell::new(TextStyling::default()))),
+                value: value::Value::TextStyling(Arc::new(RwLock::new(TextStyling::default()))),
                 location,
             },
         );
@@ -346,12 +369,16 @@ fn evaluate_styling_statement(
     style::evaluate_to_styling(styling_statement.body, evaluator, context);
     let mut styling = evaluator.styling.take().expect("styling");
     if let Some(value) = evaluator.try_get_variable(name) {
-        styling.as_label_mut().set_text_styling(
-            Arc::unwrap_or_clone(value.value.clone().into_text_styling()).into_inner(),
-        );
+        styling
+            .as_label_mut()
+            .set_text_styling(value.value.clone().as_text_styling().get_cloned().unwrap());
     }
     evaluator.drop_scope();
-    let reference = context.presentation.add_dynamic_styling(styling);
+    let reference = context
+        .presentation
+        .write()
+        .unwrap()
+        .add_dynamic_styling(styling);
     evaluator.set_variable(
         styling_statement.name,
         Value {

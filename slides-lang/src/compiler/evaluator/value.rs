@@ -1,13 +1,21 @@
-use std::{cell::RefCell, collections::HashMap, path::PathBuf, sync::Arc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 
 use slides_rs_core::Element;
 use summum_types::summum;
 
 use crate::{
     VariableId,
-    compiler::binder::{
-        BoundNode,
-        typing::{Type, TypeId},
+    compiler::{
+        binder::{
+            BoundNode,
+            typing::{Type, TypeId},
+        },
+        module::Module,
     },
 };
 
@@ -36,12 +44,12 @@ summum! {
         StyleReference(slides_rs_core::StylingReference),
         Background(slides_rs_core::Background),
         Color(slides_rs_core::Color),
-        Label(Arc<RefCell<slides_rs_core::Label>>),
-        Grid(Arc<RefCell<slides_rs_core::Grid>>),
-        Flex(Arc<RefCell<slides_rs_core::Flex>>),
-        GridEntry(Arc<RefCell<slides_rs_core::GridEntry>>),
+        Label(Arc<RwLock<slides_rs_core::Label>>),
+        Grid(Arc<RwLock<slides_rs_core::Grid>>),
+        Flex(Arc<RwLock<slides_rs_core::Flex>>),
+        GridEntry(Arc<RwLock<slides_rs_core::GridEntry>>),
         Path(PathBuf),
-        Image(Arc<RefCell<slides_rs_core::Image>>),
+        Image(Arc<RwLock<slides_rs_core::Image>>),
         ObjectFit(slides_rs_core::ObjectFit),
         VerticalAlignment(slides_rs_core::VerticalAlignment),
         HorizontalAlignment(slides_rs_core::HorizontalAlignment),
@@ -50,14 +58,15 @@ summum! {
         StyleUnit(slides_rs_core::StyleUnit),
         Dict(HashMap<String, Value>),
         UserFunction(UserFunctionValue),
-        CustomElement(Arc<RefCell<slides_rs_core::CustomElement>>),
+        CustomElement(Arc<RwLock<slides_rs_core::CustomElement>>),
         Thickness(slides_rs_core::Thickness),
         Array(Vec<Value>),
         Filter(slides_rs_core::Filter),
         Animation(slides_rs_core::animations::Animation),
-        TextStyling(Arc<RefCell<slides_rs_core::TextStyling>>),
+        TextStyling(Arc<RwLock<slides_rs_core::TextStyling>>),
         Element(slides_rs_core::Element),
         Position(slides_rs_core::Position),
+        Module(Arc<RwLock<Module>>),
     }
 }
 
@@ -92,6 +101,7 @@ impl Value {
             Value::Element(_) => Type::Element,
             Value::Animation(_) => Type::Animation,
             Value::Position(_) => Type::Position,
+            Value::Module(_) => Type::Module(crate::ModuleIndex::ANY),
         }
     }
 
@@ -228,30 +238,30 @@ fn parse_single_line_string(text: &str, _replace_escapisms: bool, includes_quote
 
 impl From<slides_rs_core::Label> for Value {
     fn from(value: slides_rs_core::Label) -> Self {
-        Self::Label(Arc::new(RefCell::new(value)))
+        Self::Label(Arc::new(RwLock::new(value)))
     }
 }
 
 impl From<slides_rs_core::Image> for Value {
     fn from(value: slides_rs_core::Image) -> Self {
-        Self::Image(Arc::new(RefCell::new(value)))
+        Self::Image(Arc::new(RwLock::new(value)))
     }
 }
 
 impl From<slides_rs_core::CustomElement> for Value {
     fn from(value: slides_rs_core::CustomElement) -> Self {
-        Self::CustomElement(Arc::new(RefCell::new(value)))
+        Self::CustomElement(Arc::new(RwLock::new(value)))
     }
 }
 
 impl From<slides_rs_core::Grid> for Value {
     fn from(value: slides_rs_core::Grid) -> Self {
-        Self::Grid(Arc::new(RefCell::new(value)))
+        Self::Grid(Arc::new(RwLock::new(value)))
     }
 }
 
 impl From<slides_rs_core::Flex> for Value {
     fn from(value: slides_rs_core::Flex) -> Self {
-        Self::Flex(Arc::new(RefCell::new(value)))
+        Self::Flex(Arc::new(RwLock::new(value)))
     }
 }
