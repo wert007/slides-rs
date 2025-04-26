@@ -1,8 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    ElementStyling, LabelStyling, Result, StylingReference, ToCss,
-    animations::Animations,
+    ElementStyling, LabelStyling, Result, StylingReference, ToCss, animations::Animations,
     output::PresentationEmitter,
 };
 
@@ -94,6 +93,10 @@ impl WebRenderable for Label {
 
     fn id(&self) -> ElementId {
         self.id
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
     }
 
     fn set_name(&mut self, id: String) {

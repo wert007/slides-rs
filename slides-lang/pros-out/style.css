@@ -1478,7 +1478,7 @@ ol {
     text-align: center;
 }
 
-#deadlocks_problem-a {
+#deadlocks_problem-base {
     top: calc(0.1 * var(--slide-height));
     bottom: calc(0.1 * var(--slide-height));
     height: calc(+ 100%+ (-0.2 * var(--slide-height)));
@@ -1488,7 +1488,7 @@ ol {
     z-index: 0;
 }
 
-#deadlocks_problem-a-amanda {
+#deadlocks_problem-base-amanda {
     top: 50%;
     bottom: unset;
     left: 0px;
@@ -1496,14 +1496,15 @@ ol {
     height: 20%;
     width: 20%;
     transform: translate(0%, -50%);
+    z-index: 1;
 }
 
-#deadlocks_problem-a-amanda-icon {
+#deadlocks_problem-base-amanda-icon {
     height: 100%;
     width: 100%;
 }
 
-#deadlocks_problem-a-bobbl {
+#deadlocks_problem-base-bobbl {
     top: 50%;
     bottom: unset;
     right: 0px;
@@ -1513,12 +1514,12 @@ ol {
     transform: translate(0%, -50%);
 }
 
-#deadlocks_problem-a-bobbl-icon {
+#deadlocks_problem-base-bobbl-icon {
     height: 100%;
     width: 100%;
 }
 
-#deadlocks_problem-a-light {
+#deadlocks_problem-base-light {
     bottom: 0px;
     top: unset;
     left: 50%;
@@ -1528,12 +1529,12 @@ ol {
     transform: translate(-50%, 0%);
 }
 
-#deadlocks_problem-a-light-icon {
+#deadlocks_problem-base-light-icon {
     height: 100%;
     width: 100%;
 }
 
-#deadlocks_problem-a-lift {
+#deadlocks_problem-base-lift {
     top: 0px;
     bottom: unset;
     left: 50%;
@@ -1543,7 +1544,23 @@ ol {
     transform: translate(-50%, 0%);
 }
 
-#deadlocks_problem-a-lift-icon {
+#deadlocks_problem-base-lift-icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlocks_problem-amanda {
+    top: 50%;
+    bottom: unset;
+    left: 0px;
+    right: unset;
+    height: 20%;
+    width: 20%;
+    transform: translate(0%, -50%);
+    z-index: 1;
+}
+
+#deadlocks_problem-amanda-icon {
     height: 100%;
     width: 100%;
 }
