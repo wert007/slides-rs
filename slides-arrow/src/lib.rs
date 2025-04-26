@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::atomic::AtomicBool};
 use bindings::{
     component::arrows::{
         slides,
+        types::Type,
         values::{Value, ValueIndex},
     },
     exports::component::arrows::modules::{self, Guest, GuestModule, Module},
@@ -38,8 +39,8 @@ impl Arrows {
             )
             .unwrap();
         if !is_library_downloaded {
-            slides.download_file("url", "leader-line.min.js");
-            slides.add_file_reference("leader-line.min.js");
+            slides.download_file("https://raw.githubusercontent.com/wert007/leader-line/refs/heads/master/leader-line.min.js", "pros-assets/leader-line.min.js");
+            slides.add_file_reference("pros-assets/leader-line.min.js");
         }
         let mut text = String::new();
         let mut namespace = String::new();
@@ -82,7 +83,7 @@ impl GuestModule for Arrows {
     fn available_functions(&self) -> Vec<modules::Function> {
         vec![modules::Function {
             name: "arrow".into(),
-            args: vec![],
+            args: vec![Type::Element, Type::Element, Type::Dict],
             result_type: bindings::component::arrows::types::Type::Void,
         }]
     }
@@ -96,6 +97,9 @@ impl GuestModule for Arrows {
     ) -> Result<modules::ValueIndex, modules::Error> {
         Ok(match name.as_str() {
             "arrow" => {
+                if args.len() != 3 {
+                    return Err(modules::Error::ArgumentCountMismatch);
+                }
                 let from = allocator.get(args[0]).try_into_element()?.name;
                 let to = allocator.get(args[1]).try_into_element()?.name;
                 let options = allocator.get(args[2]).try_into_dict()?;

@@ -348,4 +348,5 @@ slide deadlocks_problem:
         }
     };
     // let position = positionInside(a, 0.0, 0.5);
-    let amanda = base.amanda;
+    // let amanda = base.amanda;
+    arrows.arrow(base.amanda, base.light, {});

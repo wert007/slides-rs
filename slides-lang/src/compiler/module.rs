@@ -98,10 +98,9 @@ pub fn load_module(
     context: &mut Context,
 ) -> std::io::Result<Module> {
     let path = path.into();
-    dbg!(path.display());
     let file = std::fs::File::open(path)?;
     let mut archive = zip::ZipArchive::new(file)?;
-    dbg!(archive.file_names().collect::<Vec<_>>());
+    // dbg!(archive.file_names().collect::<Vec<_>>());
     let mut file = archive.by_name("slides_arrow.wasm")?;
     let mut buffer = Vec::with_capacity(file.size() as usize);
     file.read_to_end(&mut buffer)?;
@@ -116,7 +115,7 @@ pub fn load_module(
     linker.allow_shadowing(true);
     // linker.define_unknown_imports_as_traps(&component).unwrap();
     Host_::add_to_linker(&mut linker, |state: &mut State| state).unwrap();
-    wasmtime_wasi::add_to_linker_sync(&mut linker);
+    wasmtime_wasi::add_to_linker_sync(&mut linker).unwrap();
 
     let mut store = Store::new(&engine, State::new());
     let bindings = Host_::instantiate(&mut store, &component, &linker).unwrap();
@@ -170,6 +169,8 @@ impl From<modules::Type> for typing::Type {
             arrows::types::Type::String => Self::String,
             arrows::types::Type::Int => Self::Integer,
             arrows::types::Type::Float => Self::Float,
+            arrows::types::Type::Dict => Self::DynamicDict,
+            arrows::types::Type::Element => Self::Element,
         }
     }
 }

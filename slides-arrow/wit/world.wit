@@ -5,6 +5,8 @@ interface types {
         %string,
         int,
         float,
+        element,
+        dict,
     }
 
     record function {

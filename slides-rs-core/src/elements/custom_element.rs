@@ -122,6 +122,10 @@ impl WebRenderable for CustomElement {
             .for_each(|c| c.set_namespace(format!("{}-{}", self.namespace, self.name)));
     }
 
+    fn namespace(&self) -> String {
+        self.namespace.clone()
+    }
+
     fn set_namespace(&mut self, id: String) {
         self.namespace = id;
         self.children

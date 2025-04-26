@@ -104,6 +104,10 @@ impl WebRenderable for Flex {
         self.name = name;
     }
 
+    fn namespace(&self) -> String {
+        self.namespace.clone()
+    }
+
     fn set_namespace(&mut self, namespace: String) {
         self.namespace = namespace;
     }

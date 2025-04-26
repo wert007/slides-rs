@@ -191,6 +191,18 @@ impl WebRenderable for OwnedElement {
             OwnedElement::Flex(inner) => WebRenderable::set_name(inner, name),
         }
     }
+
+    #[inline]
+    fn namespace(&self) -> String {
+        match self {
+            OwnedElement::Image(inner) => WebRenderable::namespace(inner),
+            OwnedElement::Label(inner) => WebRenderable::namespace(inner),
+            OwnedElement::CustomElement(inner) => WebRenderable::namespace(inner),
+            OwnedElement::Grid(inner) => WebRenderable::namespace(inner),
+            OwnedElement::Flex(inner) => WebRenderable::namespace(inner),
+        }
+    }
+
     #[inline]
     fn set_namespace(&mut self, namespace: String) {
         match self {
@@ -307,7 +319,6 @@ pub fn sizeOf(_evaluator: &mut Evaluator, element: Element) -> Position {
         .styling_mut()
         .base()
         .padding;
-    dbg!(slide_padding);
     let element = OwnedElement::from(element);
 
     let x = match element.element_styling().halign {
@@ -342,5 +353,5 @@ pub fn positionInside(_evaluator: &mut Evaluator, element: Element, x: f64, y: f
     let left_top = leftTop(evaluator, element.clone());
     let x = left_top.x + size.x * x;
     let y = left_top.y + size.y * y;
-    dbg!(Position { x, y })
+    Position { x, y }
 }

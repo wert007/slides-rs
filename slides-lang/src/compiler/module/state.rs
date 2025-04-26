@@ -1,4 +1,4 @@
-use slides_rs_core::Position;
+use slides_rs_core::{Position, WebRenderable};
 use wasmtime::component::Resource;
 use wasmtime_wasi::{IoView, WasiView};
 
@@ -74,6 +74,13 @@ impl HostValueAllocator {
                     .map(|v| self.allocate_native_value(v))
                     .collect();
                 self.allocate(values::Value::Array(values))
+            }
+            value::Value::Element(element) => {
+                let element = values::Element {
+                    name: element.name(),
+                    name_space: element.namespace(),
+                };
+                self.allocate(values::Value::Element(element))
             }
             _ => todo!("Cannot allocatoe native value!"),
         }

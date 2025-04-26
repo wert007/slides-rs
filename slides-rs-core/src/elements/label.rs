@@ -103,6 +103,10 @@ impl WebRenderable for Label {
         self.name = id;
     }
 
+    fn namespace(&self) -> String {
+        self.namespace.clone()
+    }
+
     fn set_namespace(&mut self, id: String) {
         self.namespace = id;
     }

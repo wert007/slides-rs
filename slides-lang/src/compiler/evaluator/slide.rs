@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::fmt::format;
 use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
 
@@ -489,7 +490,7 @@ fn execute_member_function(
     base: Value,
     name: String,
     mut arguments: Vec<Value>,
-    _evaluator: &mut Evaluator,
+    evaluator: &mut Evaluator,
     _context: &mut Context,
 ) -> Value {
     match base.value {
@@ -533,10 +534,20 @@ fn execute_member_function(
             _ => todo!(),
         },
         value::Value::Module(module) => {
-            let value = module
+            let value = match module
                 .borrow_mut()
                 .try_call_function_by_name(&name, arguments.into_iter().map(|v| v.value).collect())
-                .expect("Throw exception here");
+            {
+                Ok(value) => value,
+                Err(error) => {
+                    evaluator.exception = Some(super::Exception {
+                        location,
+                        message: format!("Module function threw exception: {}", error),
+                    });
+                    value::Value::Void(())
+                }
+            };
+            // .expect("Throw exception here");
             Value { value, location }
         }
         _ => todo!(),
@@ -696,7 +707,8 @@ fn evaluate_conversion(
             | value::Value::Image(_)
             | value::Value::CustomElement(_)
             | value::Value::Grid(_)
-            | value::Value::Flex(_)) => value,
+            | value::Value::Flex(_)
+            | value::Value::Element(_)) => value,
             // value::Value::Label(label) => value::Value::Element(Arc::new(RefCell::new(Element::Label(
             //     Arc::unwrap_or_clone(label).into_inner(),
             // )))),
@@ -709,7 +721,7 @@ fn evaluate_conversion(
             // value::Value::Grid(grid) => value::Value::Element(Arc::new(RefCell::new(Element::Grid(
             //     Arc::unwrap_or_clone(grid).into_inner(),
             // )))),
-            _ => unreachable!("Impossible conversion!"),
+            impossible => unreachable!("Impossible conversion! {impossible:#?}"),
         },
         Type::Thickness => match base.value {
             value::Value::Dict(entries) => {
