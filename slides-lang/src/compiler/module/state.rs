@@ -205,10 +205,16 @@ impl slides::HostSlides for State {
         _self_: wasmtime::component::Resource<modules::Slides>,
         text: wasmtime::component::__internal::String,
         source: wasmtime::component::__internal::String,
-        _placement: arrows::slides::Placement,
+        placement: arrows::slides::Placement,
     ) -> () {
-        println!("Placing text in output: {text} from {source}");
-        // todo!()
+        self.presentation
+            .write()
+            .unwrap()
+            .add_extern_text(
+                placement.into(),
+                slides_rs_core::ExternText::Text(source, text),
+            )
+            .expect("No error can happen here");
     }
 
     fn drop(

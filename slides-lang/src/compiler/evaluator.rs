@@ -262,23 +262,15 @@ fn evaluate_import_statement(
             break;
         }
     }
-    match state {
-        State::HtmlHead => {
-            context
-                .presentation
-                .write()
-                .unwrap()
-                .add_extern_file(FilePlacement::HtmlHead, import_statement)?;
-        }
-        State::JavascriptInit => {
-            context
-                .presentation
-                .write()
-                .unwrap()
-                .add_extern_file(FilePlacement::JavascriptInit, import_statement)?;
-        }
+    let placement = match state {
+        State::HtmlHead => FilePlacement::HtmlHead,
+        State::JavascriptInit => FilePlacement::JavascriptInit,
         State::Unknown | State::HtmlUnknown | State::JavascriptUnknown => unreachable!(),
-    }
+    };
+    context.presentation.write().unwrap().add_extern_text(
+        placement,
+        slides_rs_core::ExternText::File(import_statement),
+    )?;
     Ok(())
 }
 

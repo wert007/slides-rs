@@ -142,18 +142,23 @@ impl Presentation {
         unsafe { StylingReference::from_raw(name) }
     }
 
-    pub fn add_extern_file(
+    pub fn add_extern_text(
         &mut self,
         placement: FilePlacement,
-        path: impl Into<PathBuf>,
+        text: ExternText,
     ) -> std::io::Result<()> {
         use std::fmt::Write;
-        let path = path.into();
-        self.used_files.push(path.clone());
-        let file = std::fs::read_to_string(&path)?;
+        let (source, text) = match text {
+            ExternText::File(path) => {
+                self.used_files.push(path.clone());
+                let file = std::fs::read_to_string(&path)?;
+                (path.to_string_lossy().to_string(), file)
+            }
+            ExternText::Text(source, text) => (source, text),
+        };
         let extern_text = self.extern_texts.entry(placement).or_default();
-        writeln!(extern_text, "<!-- From {} -->", path.display()).expect("infallible");
-        writeln!(extern_text, "{file}\n").expect("infallible");
+        writeln!(extern_text, "<!-- From {source} -->").expect("infallible");
+        writeln!(extern_text, "{text}\n").expect("infallible");
         Ok(())
     }
 
@@ -170,6 +175,11 @@ impl Presentation {
 pub enum FilePlacement {
     HtmlHead,
     JavascriptInit,
+}
+
+pub enum ExternText {
+    File(PathBuf),
+    Text(String, String),
 }
 
 #[derive(Debug, Clone)]

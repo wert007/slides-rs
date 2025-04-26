@@ -1,7 +1,8 @@
 use std::{collections::HashMap, io::Read, path::PathBuf};
 
-use component::arrows::{self};
+use component::arrows::{self, slides};
 use exports::component::arrows::modules;
+use slides_rs_core::FilePlacement;
 use wasmtime::{
     Store,
     component::{Component, Linker, Resource, ResourceAny, bindgen},
@@ -183,6 +184,15 @@ impl From<value::Value> for modules::Value {
             value::Value::Integer(i) => Self::Int(i),
             value::Value::Float(f) => Self::Float(f),
             _ => unreachable!("Unsupported conversion!"),
+        }
+    }
+}
+
+impl From<slides::Placement> for FilePlacement {
+    fn from(value: slides::Placement) -> Self {
+        match value {
+            slides::Placement::HtmlHead => Self::HtmlHead,
+            slides::Placement::JavascriptInit => Self::JavascriptInit,
         }
     }
 }

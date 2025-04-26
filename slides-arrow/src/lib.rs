@@ -42,6 +42,11 @@ impl Arrows {
         if !is_library_downloaded {
             slides.download_file("https://raw.githubusercontent.com/wert007/leader-line/refs/heads/master/leader-line.min.js", "pros-assets/leader-line.min.js");
             slides.add_file_reference("pros-assets/leader-line.min.js");
+            slides.place_text_in_output(
+                "<script src=\"pros-assets/leader-line.min.js\"></script>",
+                "arrows module",
+                slides::Placement::HtmlHead,
+            );
         }
         let mut text = String::new();
         assert!(options.is_empty());
