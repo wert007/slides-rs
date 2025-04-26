@@ -324,10 +324,16 @@ element deadlock_icons():
         halign: HAlign.Center,
         valign: VAlign.Top,
     };
+    members = {
+        amanda: amanda,
+        bobbl: bobbl,
+        light: light,
+        lift: lift,
+    };
 
 slide deadlocks_problem:
     page_number();
-    let a = deadlock_icons() {
+    let base = deadlock_icons() {
         halign: HAlign.Stretch,
         valign: VAlign.Stretch,
         margin: {
@@ -337,5 +343,5 @@ slide deadlocks_problem:
             bottom: 0.10sh,
         }
     };
-    let position = positionInside(a, 0.0, 0.5);
-
+    // let position = positionInside(a, 0.0, 0.5);
+    let amanda = base.amanda;

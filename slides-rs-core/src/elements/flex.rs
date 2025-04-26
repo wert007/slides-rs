@@ -1,7 +1,6 @@
 use crate::{
     BaseElementStyling, ElementStyling, FlexStyling, PresentationEmitter, Result, StylingReference,
-    ToCss,
-    animations::Animations,
+    ToCss, animations::Animations,
 };
 
 use super::{Element, ElementId, WebRenderable, WebRenderableContext};
@@ -95,6 +94,10 @@ impl WebRenderable for Flex {
 
     fn id(&self) -> ElementId {
         self.id
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
     }
 
     fn set_name(&mut self, name: String) {

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use strum::IntoEnumIterator;
 
 use super::{ConversionKind, Variable, globals};
@@ -112,7 +114,7 @@ pub enum Type {
     Image,
     Thickness,
     Enum(Box<Type>, Vec<String>),
-    CustomElement(String),
+    CustomElement(String, HashMap<String, TypeId>),
     Array(TypeId),
     Filter,
     TextStyling,
@@ -126,7 +128,7 @@ impl Type {
             ConversionKind::Implicit => match self {
                 Type::Integer => &[Type::Float],
                 Type::Color => &[Type::Background],
-                Type::Label | Type::Image | Type::CustomElement(_) => &[Type::Element],
+                Type::Label | Type::Image | Type::CustomElement(_, _) => &[Type::Element],
                 _ => &[],
             },
             ConversionKind::TypedString => match self {
@@ -150,6 +152,11 @@ impl Type {
             } else {
                 None
             };
+        }
+        if let Type::CustomElement(_, members) = self {
+            if let Some(type_) = members.get(member) {
+                return Some(type_interner.resolve(*type_).clone());
+            }
         }
         for m in globals::MEMBERS {
             if self.as_ref() != m.name {
@@ -203,7 +210,7 @@ impl Type {
                     t,
                     Type::Enum(..)
                         | Type::Function(_)
-                        | Type::CustomElement(_)
+                        | Type::CustomElement(_, _)
                         | Type::Array(_)
                         | Type::TypedDict(_)
                 )

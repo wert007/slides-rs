@@ -1027,14 +1027,6 @@ fn bind_element_statement(
         .name
         .text(&context.loaded_files)
         .to_case(convert_case::Case::Pascal);
-    let element_type = context
-        .type_interner
-        .get_or_intern(Type::CustomElement(type_name.clone()));
-
-    let type_name_symbol = context.string_interner.create_or_get(&type_name);
-    binder
-        .register_type_by_name(element_type, type_name_symbol)
-        .expect("Check this!");
 
     let scope = binder.create_scope();
     for (name, type_) in globals::find_members_by_name("Element") {
@@ -1044,6 +1036,11 @@ fn bind_element_statement(
             .try_register_variable(id, type_, element_statement.name.location)
             .expect("cannot fail");
     }
+    let members_id = context.string_interner.create_or_get_variable("members");
+    let type_ = context.type_interner.get_or_intern(Type::DynamicDict);
+    scope
+        .try_register_variable(members_id, type_, element_statement.name.location)
+        .expect("cannot fail");
     let parameters = bind_parameter_block(
         element_statement
             .parameters
@@ -1054,6 +1051,42 @@ fn bind_element_statement(
         binder,
         context,
     );
+    let mut body = Vec::with_capacity(element_statement.body.len());
+    let mut members = HashMap::new();
+
+    for statement in element_statement.body {
+        let statement = bind_node(statement, binder, context);
+        if let BoundNodeKind::AssignmentStatement(a) = &statement.kind {
+            if let BoundNodeKind::VariableReference(members_var) = &a.lhs.kind {
+                if members_var.id == members_id {
+                    if let BoundNodeKind::Conversion(conversion) = &a.value.kind {
+                        if let BoundNodeKind::Dict(dict) = &conversion.base.kind {
+                            for (name, entry) in dict.iter() {
+                                // TODO: Add check, that entry is a simple
+                                // variable reference, everything else would be
+                                // very fishy or straight up wrong.
+                                // TODO: Use string_interner for name?
+                                members.insert(name.clone(), entry.type_);
+                            }
+                            // No need to evaluate this at runtime again.
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        body.push(statement);
+    }
+
+    let element_type = context
+        .type_interner
+        .get_or_intern(Type::CustomElement(type_name.clone(), members));
+
+    let type_name_symbol = context.string_interner.create_or_get(&type_name);
+    binder
+        .register_type_by_name(element_type, type_name_symbol)
+        .expect("Check this!");
+
     let function_type = Type::Function(FunctionType {
         min_argument_count: parameters.iter().filter(|p| p.value.is_none()).count(),
         argument_types: parameters
@@ -1063,10 +1096,6 @@ fn bind_element_statement(
         return_type: element_type,
     });
     let function_type = context.type_interner.get_or_intern(function_type);
-    let mut body = Vec::with_capacity(element_statement.body.len());
-    for statement in element_statement.body {
-        body.push(bind_node(statement, binder, context));
-    }
     let scope = binder.drop_scope();
     debug_scope(
         &format!(
@@ -1530,9 +1559,10 @@ fn bind_conversion(
                     }
                 }
             }
+            [Type::TypedDict(_), Type::DynamicDict] => {}
             [Type::Color, Type::Background] => {}
             [
-                Type::Label | Type::Image | Type::CustomElement(_) | Type::Grid | Type::Flex,
+                Type::Label | Type::Image | Type::CustomElement(_, _) | Type::Grid | Type::Flex,
                 Type::Element,
             ] => {}
             [Type::Error, _] => {

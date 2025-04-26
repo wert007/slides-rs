@@ -1,8 +1,7 @@
 use std::{fmt::Display, path::PathBuf};
 
 use crate::{
-    ElementStyling, ImageStyling, Result, StylingReference, ToCss,
-    animations::Animations,
+    ElementStyling, ImageStyling, Result, StylingReference, ToCss, animations::Animations,
     output::PresentationEmitter,
 };
 
@@ -124,6 +123,10 @@ impl WebRenderable for Image {
 
     fn id(&self) -> ElementId {
         self.id
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
     }
 
     fn set_name(&mut self, id: String) {
