@@ -1,656 +1,627 @@
 <html>
+            <head>
+            <link href="style.css" rel="stylesheet"/>
+            <script src="navigation.js"></script>
 
-<head>
-  <link href="style.css" rel="stylesheet" />
-  <script src="navigation.js"></script>
+            <!-- For Google font! -->
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <script>
+                function init() {
+                    init_navigation();
 
-  <!-- For Google font! -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <script>
-    function init() {
-      init_navigation();
+            
+<!-- From ./pros-assets/leader-line-arrow.init.js -->
+const namespace = 'deadlocks_problem-base';
+const opts = {
+    parent: document.getElementById(`${namespace}`),
+    color: "black",
+    path: "grid",
+};
+new LeaderLine(
+    document.getElementById(`${namespace}-amanda`),
+    document.getElementById(`${namespace}-lift`),
+    opts
+);
+new LeaderLine(
+    document.getElementById(`${namespace}-amanda`),
+    document.getElementById(`${namespace}-light`),
+    opts
+);
+new LeaderLine(
+    document.getElementById(`${namespace}-bobbl`),
+    document.getElementById(`${namespace}-lift`),
+    opts
+);
+new LeaderLine(
+    document.getElementById(`${namespace}-bobbl`),
+    document.getElementById(`${namespace}-light`),
+    opts
+);
 
 
 
-    }
-  </script>
+
+        }
+        </script>
+            
+<link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
+<!-- From ./pros-assets/leader-line.head.html -->
+<script src="./pros-assets/leader-line.min.js"></script>
+
+
 
 </head>
-
-<body onload="init()" onkeydown="keydown(event)">
-  <section id="code" class="slide" data-step-count=0>
-    <div id="code-bg" class="custom-element ImageWithCaption  ">
-      <img id="code-bg-img" class="image  " src="./pros-assets/code.jpg" />
-      <div id="code-bg-lbl" class="label  ">
-        <p class="label-text">Image by Christopher Kuszajewski from Pixabay</p>
-      </div>
-    </div>
-  </section>
-  <section id="threads" class="slide" data-step-count=0>
-    <div id="threads-bg" class="custom-element ImageWithCaption  ">
-      <img id="threads-bg-img" class="image  " src="./pros-assets/threads.jpg" />
-      <div id="threads-bg-lbl" class="label  ">
-        <p class="label-text">Bild von Myriams-Fotos auf Pixabay</p>
-      </div>
-    </div>
-  </section>
-  <section id="frozen" class="slide" data-step-count=0>
-    <div id="frozen-bg" class="custom-element ImageWithCaption  ">
-      <img id="frozen-bg-img" class="image  " src="./pros-assets/frozen.jpg" />
-      <div id="frozen-bg-lbl" class="label  ">
-        <p class="label-text">Bild von adege auf Pixabay</p>
-      </div>
-    </div>
-  </section>
-  <section id="title" class="slide" data-step-count=0>
-    <div id="title-title" class="label  ">
-      <h1 class="label-header">
-        Einseitige Synchronisation und Deadlocks</h1>
-    </div>
-    <div id="title-subtitle" class="label  ">
-      <h2 class="label-header">
-        Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische
-        Informatik</h2>
-    </div>
-  </section>
-  <section id="toc" class="slide" data-step-count=0>
-    <div id="toc-page_number" class="label  ">
-      <p class="label-text">1</p>
-    </div>
-    <div id="toc-toc" class="label  ">
-      <h1 class="label-header">
-        Übersicht</h1>
-      <ol class="label-text">
-        <li>
-          <p class="label-text">Übersicht</p>
-        <li>
-          <p class="label-text">Beispiel</p>
-        <li>
-          <p class="label-text">Einseitige Synchronisation</p>
-        <li>
-          <p class="label-text">Deadlocks</p>
-      </ol>
-    </div>
-  </section>
-  <section id="example" class="slide" data-step-count=0>
-    <div id="example-page_number" class="label  ">
-      <p class="label-text">2</p>
-    </div>
-    <div id="example-bg" class="custom-element ImageWithCaption  ">
-      <img id="example-bg-img" class="image  " src="./pros-assets/car-repair.jpg" />
-      <div id="example-bg-lbl" class="label  ">
-        <p class="label-text">Bild von emkanicepic auf Pixabay</p>
-      </div>
-    </div>
-    <div id="example-text" class="label  ">
-      <h1 class="label-header">
-        Beispiel</h1>
-      <ul class="label-text">
-        <li>
-          <p class="label-text">Arbeitsplatz: <span class="emphasis">Autowerkstatt</span></p>
-        <li>
-          <p class="label-text">Angestellte: <span class="emphasis">Amanda</span> und <span
-              class="emphasis">Bobbl</span></p>
-        <li>
-          <p class="label-text">Werkzeuge: <span class="emphasis">Licht</span> und <span
-              class="emphasis">Hebebühne</span></p>
-        <li>
-          <p class="label-text">Zwei Arten von Problemen</p>
-          <ul class="label-text">
-            <li>
-              <p class="label-text">Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation</p>
-            <li>
-              <p class="label-text">Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks</p>
-          </ul>
-      </ul>
-    </div>
-  </section>
-  <section id="one_sided_sync" class="slide" data-step-count=0>
-    <div id="one_sided_sync-page_number" class="label  ">
-      <p class="label-text">3</p>
-    </div>
-    <div id="one_sided_sync-text" class="label  ">
-      <h1 class="label-header">
-        Einseitige Synchronisation</h1>
-      <ol class="label-text">
-        <li>
-          <p class="label-text">Grundproblem</p>
-        <li>
-          <p class="label-text">Ständiges Überprüfen</p>
-        <li>
-          <p class="label-text">Getaktetes Überprüfen</p>
-        <li>
-          <p class="label-text">Überprüfen auf Anfrage</p>
-        <li>
-          <p class="label-text">Überprüfen auf Anfrage ohne Kenntnis anderer Threads</p>
-        <li>
-          <p class="label-text">Fazit zur einseitigen Synchronisation</p>
-      </ol>
-    </div>
-  </section>
-  <section id="base_problem" class="slide" data-step-count=0>
-    <div id="base_problem-page_number" class="label  ">
-      <p class="label-text">4</p>
-    </div>
-    <div id="base_problem-content" class="flex ">
-      <div id="base_problem-content-label-25" class="label  ">
-        <h1 class="label-header">
-          Einseitige Synchronisation: Grundproblem</h1>
-      </div>
-      <div id="base_problem-content-flex-42" class="flex ">
-        <div id="base_problem-content-flex-42-flex-33" class="flex ">
-          <div id="base_problem-content-flex-42-flex-33--31" class="custom-element TwoIcons  ">
-            <div id="base_problem-content-flex-42-flex-33--body" class="flex ">
-              <div id="base_problem-content-flex-42-flex-33--body--27" class="custom-element Icon  ">
-                <img id="base_problem-content-flex-42-flex-33--body--icon" class="image  "
-                  src="./pros-assets/amanda.png" />
-              </div>
-              <div id="base_problem-content-flex-42-flex-33--body--29" class="custom-element Icon  ">
-                <img id="base_problem-content-flex-42-flex-33--body--icon" class="image  "
-                  src="./pros-assets/light.png" />
-              </div>
-            </div>
-          </div>
-          <div id="base_problem-content-flex-42-flex-33-label-32" class="label  ">
-            <p class="label-text">Amanda hat das Licht</p>
-          </div>
-        </div>
-        <div id="base_problem-content-flex-42-flex-41" class="flex ">
-          <div id="base_problem-content-flex-42-flex-41--39" class="custom-element TwoIcons  ">
-            <div id="base_problem-content-flex-42-flex-41--body" class="flex ">
-              <div id="base_problem-content-flex-42-flex-41--body--35" class="custom-element Icon  ">
-                <img id="base_problem-content-flex-42-flex-41--body--icon" class="image  "
-                  src="./pros-assets/wait.png" />
-              </div>
-              <div id="base_problem-content-flex-42-flex-41--body--37" class="custom-element Icon  ">
-                <img id="base_problem-content-flex-42-flex-41--body--icon" class="image  "
-                  src="./pros-assets/bobbl.png" />
-              </div>
-            </div>
-          </div>
-          <div id="base_problem-content-flex-42-flex-41-label-40" class="label  ">
-            <p class="label-text">Bobbl wartet auf das Licht</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section id="continous_checking" class="slide" data-step-count=3>
-    <div id="continous_checking-page_number" class="label  ">
-      <p class="label-text">5</p>
-    </div>
-    <div id="continous_checking-content" class="flex ">
-      <div id="continous_checking-content-label-46" class="label  ">
-        <h1 class="label-header">
-          Ständiges Überprüfen</h1>
-      </div>
-      <div id="continous_checking-content-flex-59" class="flex  invisible">
-        <div id="continous_checking-content-flex-59--52" class="custom-element TwoIcons  ">
-          <div id="continous_checking-content-flex-59--body" class="flex ">
-            <div id="continous_checking-content-flex-59--body--48" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/amanda.png" />
-            </div>
-            <div id="continous_checking-content-flex-59--body--50" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="continous_checking-content-flex-59--58" class="custom-element TwoIcons  ">
-          <div id="continous_checking-content-flex-59--body" class="flex ">
-            <div id="continous_checking-content-flex-59--body--54" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-59--body--icon" class="image  "
-                src="./pros-assets/question_mark.png" />
-            </div>
-            <div id="continous_checking-content-flex-59--body--56" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="continous_checking-content-flex-72" class="flex  invisible">
-        <div id="continous_checking-content-flex-72--65" class="custom-element TwoIcons  ">
-          <div id="continous_checking-content-flex-72--body" class="flex ">
-            <div id="continous_checking-content-flex-72--body--61" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/amanda.png" />
-            </div>
-            <div id="continous_checking-content-flex-72--body--63" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="continous_checking-content-flex-72--71" class="custom-element TwoIcons  ">
-          <div id="continous_checking-content-flex-72--body" class="flex ">
-            <div id="continous_checking-content-flex-72--body--67" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-72--body--icon" class="image  "
-                src="./pros-assets/question_mark.png" />
-            </div>
-            <div id="continous_checking-content-flex-72--body--69" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="continous_checking-content-flex-83" class="flex  invisible">
-        <div id="continous_checking-content-flex-83-flex-76" class="flex ">
-          <div id="continous_checking-content-flex-83-flex-76--74" class="custom-element Icon  ">
-            <img id="continous_checking-content-flex-83-flex-76--icon" class="image  " src="./pros-assets/amanda.png" />
-          </div>
-          <div id="continous_checking-content-flex-83-flex-76--75" class="custom-element Empty  ">
-          </div>
-        </div>
-        <div id="continous_checking-content-flex-83--82" class="custom-element TwoIcons  ">
-          <div id="continous_checking-content-flex-83--body" class="flex ">
-            <div id="continous_checking-content-flex-83--body--78" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-83--body--icon" class="image  " src="./pros-assets/light.png" />
-            </div>
-            <div id="continous_checking-content-flex-83--body--80" class="custom-element Icon  ">
-              <img id="continous_checking-content-flex-83--body--icon" class="image  " src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section id="occasional_checking_1" class="slide" data-step-count=3>
-    <div id="occasional_checking_1-page_number" class="label  ">
-      <p class="label-text">6</p>
-    </div>
-    <div id="occasional_checking_1-content" class="flex ">
-      <div id="occasional_checking_1-content-label-87" class="label  ">
-        <h1 class="label-header">
-          Getaktetes Überprüfen</h1>
-      </div>
-      <div id="occasional_checking_1-content-flex-100" class="flex  invisible">
-        <div id="occasional_checking_1-content-flex-100--93" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_1-content-flex-100--body" class="flex ">
-            <div id="occasional_checking_1-content-flex-100--body--89" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-100--body--icon" class="image  "
-                src="./pros-assets/amanda.png" />
-            </div>
-            <div id="occasional_checking_1-content-flex-100--body--91" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-100--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="occasional_checking_1-content-flex-100--99" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_1-content-flex-100--body" class="flex ">
-            <div id="occasional_checking_1-content-flex-100--body--95" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-100--body--icon" class="image  "
-                src="./pros-assets/question_mark.png" />
-            </div>
-            <div id="occasional_checking_1-content-flex-100--body--97" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-100--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="occasional_checking_1-content-flex-113" class="flex  invisible">
-        <div id="occasional_checking_1-content-flex-113--106" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_1-content-flex-113--body" class="flex ">
-            <div id="occasional_checking_1-content-flex-113--body--102" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-113--body--icon" class="image  "
-                src="./pros-assets/amanda.png" />
-            </div>
-            <div id="occasional_checking_1-content-flex-113--body--104" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-113--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="occasional_checking_1-content-flex-113--112" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_1-content-flex-113--body" class="flex ">
-            <div id="occasional_checking_1-content-flex-113--body--108" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-113--body--icon" class="image  "
-                src="./pros-assets/wait.png" />
-            </div>
-            <div id="occasional_checking_1-content-flex-113--body--110" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-113--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="occasional_checking_1-content-flex-126" class="flex  invisible">
-        <div id="occasional_checking_1-content-flex-126--119" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_1-content-flex-126--body" class="flex ">
-            <div id="occasional_checking_1-content-flex-126--body--115" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-126--body--icon" class="image  "
-                src="./pros-assets/amanda.png" />
-            </div>
-            <div id="occasional_checking_1-content-flex-126--body--117" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-126--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="occasional_checking_1-content-flex-126--125" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_1-content-flex-126--body" class="flex ">
-            <div id="occasional_checking_1-content-flex-126--body--121" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-126--body--icon" class="image  "
-                src="./pros-assets/question_mark.png" />
-            </div>
-            <div id="occasional_checking_1-content-flex-126--body--123" class="custom-element Icon  ">
-              <img id="occasional_checking_1-content-flex-126--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section id="occasional_checking_2" class="slide" data-step-count=2>
-    <div id="occasional_checking_2-page_number" class="label  ">
-      <p class="label-text">7</p>
-    </div>
-    <div id="occasional_checking_2-content" class="flex ">
-      <div id="occasional_checking_2-content-label-130" class="label  ">
-        <h1 class="label-header">
-          Getaktetes Überprüfen</h1>
-      </div>
-      <div id="occasional_checking_2-content-flex-143" class="flex ">
-        <div id="occasional_checking_2-content-flex-143--136" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_2-content-flex-143--body" class="flex ">
-            <div id="occasional_checking_2-content-flex-143--body--132" class="custom-element Icon  ">
-              <img id="occasional_checking_2-content-flex-143--body--icon" class="image  "
-                src="./pros-assets/amanda.png" />
-            </div>
-            <div id="occasional_checking_2-content-flex-143--body--134" class="custom-element Icon  ">
-              <img id="occasional_checking_2-content-flex-143--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="occasional_checking_2-content-flex-143--142" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_2-content-flex-143--body" class="flex ">
-            <div id="occasional_checking_2-content-flex-143--body--138" class="custom-element Icon  ">
-              <img id="occasional_checking_2-content-flex-143--body--icon" class="image  "
-                src="./pros-assets/question_mark.png" />
-            </div>
-            <div id="occasional_checking_2-content-flex-143--body--140" class="custom-element Icon  ">
-              <img id="occasional_checking_2-content-flex-143--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="occasional_checking_2-content-flex-154" class="flex ">
-        <div id="occasional_checking_2-content-flex-154--145" class="custom-element Icon  ">
-          <img id="occasional_checking_2-content-flex-154--icon" class="image  " src="./pros-assets/amanda.png" />
-        </div>
-        <div id="occasional_checking_2-content-flex-154--147" class="custom-element Icon  ">
-          <img id="occasional_checking_2-content-flex-154--icon" class="image  " src="./pros-assets/light.png" />
-        </div>
-        <div id="occasional_checking_2-content-flex-154--153" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_2-content-flex-154--body" class="flex ">
-            <div id="occasional_checking_2-content-flex-154--body--149" class="custom-element Icon  ">
-              <img id="occasional_checking_2-content-flex-154--body--icon" class="image  "
-                src="./pros-assets/wait.png" />
-            </div>
-            <div id="occasional_checking_2-content-flex-154--body--151" class="custom-element Icon  ">
-              <img id="occasional_checking_2-content-flex-154--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="occasional_checking_2-content-flex-165" class="flex  invisible">
-        <div id="occasional_checking_2-content-flex-165-flex-158" class="flex ">
-          <div id="occasional_checking_2-content-flex-165-flex-158--156" class="custom-element Icon  ">
-            <img id="occasional_checking_2-content-flex-165-flex-158--icon" class="image  "
-              src="./pros-assets/amanda.png" />
-          </div>
-          <div id="occasional_checking_2-content-flex-165-flex-158--157" class="custom-element Empty  ">
-          </div>
-        </div>
-        <div id="occasional_checking_2-content-flex-165--164" class="custom-element TwoIcons  ">
-          <div id="occasional_checking_2-content-flex-165--body" class="flex ">
-            <div id="occasional_checking_2-content-flex-165--body--160" class="custom-element Icon  ">
-              <img id="occasional_checking_2-content-flex-165--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-            <div id="occasional_checking_2-content-flex-165--body--162" class="custom-element Icon  ">
-              <img id="occasional_checking_2-content-flex-165--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section id="checking_when_requested" class="slide" data-step-count=0>
-    <div id="checking_when_requested-page_number" class="label  ">
-      <p class="label-text">8</p>
-    </div>
-    <div id="checking_when_requested-content" class="flex ">
-      <div id="checking_when_requested-content-label-169" class="label  ">
-        <h1 class="label-header">
-          Überprüfen auf Anfrage</h1>
-      </div>
-      <div id="checking_when_requested-content-flex-182" class="flex ">
-        <div id="checking_when_requested-content-flex-182--175" class="custom-element TwoIcons  ">
-          <div id="checking_when_requested-content-flex-182--body" class="flex ">
-            <div id="checking_when_requested-content-flex-182--body--171" class="custom-element Icon  ">
-              <img id="checking_when_requested-content-flex-182--body--icon" class="image  "
-                src="./pros-assets/amanda.png" />
-            </div>
-            <div id="checking_when_requested-content-flex-182--body--173" class="custom-element Icon  ">
-              <img id="checking_when_requested-content-flex-182--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="checking_when_requested-content-flex-182--181" class="custom-element TwoIcons  ">
-          <div id="checking_when_requested-content-flex-182--body" class="flex ">
-            <div id="checking_when_requested-content-flex-182--body--177" class="custom-element Icon  ">
-              <img id="checking_when_requested-content-flex-182--body--icon" class="image  "
-                src="./pros-assets/question_mark.png" />
-            </div>
-            <div id="checking_when_requested-content-flex-182--body--179" class="custom-element Icon  ">
-              <img id="checking_when_requested-content-flex-182--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="checking_when_requested-content-flex-195" class="flex ">
-        <div id="checking_when_requested-content-flex-195--188" class="custom-element TwoIcons  ">
-          <div id="checking_when_requested-content-flex-195--body" class="flex ">
-            <div id="checking_when_requested-content-flex-195--body--184" class="custom-element Icon  ">
-              <img id="checking_when_requested-content-flex-195--body--icon" class="image  "
-                src="./pros-assets/amanda.png" />
-            </div>
-            <div id="checking_when_requested-content-flex-195--body--186" class="custom-element Icon  ">
-              <img id="checking_when_requested-content-flex-195--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="checking_when_requested-content-flex-195--194" class="custom-element TwoIcons  ">
-          <div id="checking_when_requested-content-flex-195--body" class="flex ">
-            <div id="checking_when_requested-content-flex-195--body--190" class="custom-element Icon  ">
-              <img id="checking_when_requested-content-flex-195--body--icon" class="image  "
-                src="./pros-assets/wait.png" />
-            </div>
-            <div id="checking_when_requested-content-flex-195--body--192" class="custom-element Icon  ">
-              <img id="checking_when_requested-content-flex-195--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="checking_when_requested-content-flex-205" class="flex ">
-        <div id="checking_when_requested-content-flex-205--196" class="custom-element Empty  ">
-        </div>
-        <div id="checking_when_requested-content-flex-205--197" class="custom-element Empty  ">
-        </div>
-        <div id="checking_when_requested-content-flex-205--199" class="custom-element Icon  ">
-          <img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/amanda.png" />
-        </div>
-        <div id="checking_when_requested-content-flex-205--201" class="custom-element Icon  ">
-          <img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/light.png" />
-        </div>
-        <div id="checking_when_requested-content-flex-205--203" class="custom-element Icon  ">
-          <img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/bobbl.png" />
-        </div>
-        <div id="checking_when_requested-content-flex-205--204" class="custom-element Empty  ">
-        </div>
-      </div>
-    </div>
-  </section>
-  <section id="checking_when_requested_without_thread_knowledge" class="slide" data-step-count=0>
-    <div id="checking_when_requested_without_thread_knowledge-page_number" class="label  ">
-      <p class="label-text">9</p>
-    </div>
-    <div id="checking_when_requested_without_thread_knowledge-content" class="flex ">
-      <div id="checking_when_requested_without_thread_knowledge-content-label-209" class="label  ">
-        <h1 class="label-header">
-          Überprüfen auf Anfrage ohne Kenntnis anderer Threads</h1>
-      </div>
-      <div id="checking_when_requested_without_thread_knowledge-content-flex-222" class="flex ">
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-222--215"
-          class="custom-element TwoIcons  ">
-          <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body" class="flex ">
-            <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--211"
-              class="custom-element Icon  ">
-              <img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  "
-                src="./pros-assets/amanda.png" />
-            </div>
-            <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--213"
-              class="custom-element Icon  ">
-              <img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-222--221"
-          class="custom-element TwoIcons  ">
-          <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body" class="flex ">
-            <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--217"
-              class="custom-element Icon  ">
-              <img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  "
-                src="./pros-assets/question_mark.png" />
-            </div>
-            <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--219"
-              class="custom-element Icon  ">
-              <img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="checking_when_requested_without_thread_knowledge-content-flex-235" class="flex ">
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-235--228"
-          class="custom-element TwoIcons  ">
-          <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body" class="flex ">
-            <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--224"
-              class="custom-element Icon  ">
-              <img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  "
-                src="./pros-assets/amanda.png" />
-            </div>
-            <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--226"
-              class="custom-element Icon  ">
-              <img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  "
-                src="./pros-assets/light.png" />
-            </div>
-          </div>
-        </div>
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-235--234"
-          class="custom-element TwoIcons  ">
-          <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body" class="flex ">
-            <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--230"
-              class="custom-element Icon  ">
-              <img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  "
-                src="./pros-assets/wait.png" />
-            </div>
-            <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--232"
-              class="custom-element Icon  ">
-              <img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  "
-                src="./pros-assets/bobbl.png" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="checking_when_requested_without_thread_knowledge-content-flex-245" class="flex ">
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--237" class="custom-element Icon  ">
-          <img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  "
-            src="./pros-assets/amanda.png" />
-        </div>
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--238" class="custom-element Empty  ">
-        </div>
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--239" class="custom-element Empty  ">
-        </div>
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--241" class="custom-element Icon  ">
-          <img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  "
-            src="./pros-assets/light.png" />
-        </div>
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--243" class="custom-element Icon  ">
-          <img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  "
-            src="./pros-assets/bobbl.png" />
-        </div>
-        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--244" class="custom-element Empty  ">
-        </div>
-      </div>
-    </div>
-  </section>
-  <section id="resume_one_sided" class="slide" data-step-count=0>
-    <div id="resume_one_sided-page_number" class="label  ">
-      <p class="label-text">10</p>
-    </div>
-    <div id="resume_one_sided-title" class="label  ">
-      <h1 class="label-header">
-        Fazit zur einseitigen Synchronisation</h1>
-    </div>
-  </section>
-  <section id="deadlocks" class="slide" data-step-count=0>
-    <div id="deadlocks-page_number" class="label  ">
-      <p class="label-text">11</p>
-    </div>
-    <div id="deadlocks-text" class="label  ">
-      <h1 class="label-header">
-        Deadlocks</h1>
-      <ol class="label-text">
-        <li>
-          <p class="label-text">Grundproblem</p>
-        <li>
-          <p class="label-text">Definition eines Deadlocks</p>
-        <li>
-          <p class="label-text">Präventive Deadlockverhinderung</p>
-        <li>
-          <p class="label-text">Deadlockverhinderung zur Laufzeit</p>
-        <li>
-          <p class="label-text">Deadlockerkennung zur Laufzeit</p>
-        <li>
-          <p class="label-text">Livelocks</p>
-        <li>
-          <p class="label-text">Fazit zu Deadlocks</p>
-      </ol>
-    </div>
-  </section>
-  <section id="deadlocks_problem" class="slide" data-step-count=0>
-    <div id="deadlocks_problem-page_number" class="label  ">
-      <p class="label-text">12</p>
-    </div>
-    <div id="deadlocks_problem-base" class="custom-element DeadlockIcons  ">
-      <div id="deadlocks_problem-base-amanda" class="custom-element Icon  ">
-        <img id="deadlocks_problem-base-amanda-icon" class="image  " src="./pros-assets/amanda.png" />
-      </div>
-      <div id="deadlocks_problem-base-bobbl" class="custom-element Icon  ">
-        <img id="deadlocks_problem-base-bobbl-icon" class="image  " src="./pros-assets/bobbl.png" />
-      </div>
-      <div id="deadlocks_problem-base-light" class="custom-element Icon  ">
-        <img id="deadlocks_problem-base-light-icon" class="image  " src="./pros-assets/light.png" />
-      </div>
-      <div id="deadlocks_problem-base-lift" class="custom-element Icon  ">
-        <img id="deadlocks_problem-base-lift-icon" class="image  " src="./pros-assets/lift.png" />
-      </div>
-    </div>
-    <div id="deadlocks_problem-amanda" class="custom-element Icon  ">
-      <img id="deadlocks_problem-amanda-icon" class="image  " src="./pros-assets/amanda.png" />
-    </div>
-  </section>
-</body>
-
-</html>
+            <body onload="init()" onkeydown="keydown(event)">
+<section id="code" class="slide" data-step-count=0>
+<div id="code-bg" class="custom-element ImageWithCaption  ">
+<img id="code-bg-img" class="image  " src="./pros-assets/code.jpg"/>
+<div id="code-bg-lbl" class="label  ">
+<p class="label-text">Image by Christopher Kuszajewski from Pixabay</p>
+</div>
+</div>
+</section>
+<section id="threads" class="slide" data-step-count=0>
+<div id="threads-bg" class="custom-element ImageWithCaption  ">
+<img id="threads-bg-img" class="image  " src="./pros-assets/threads.jpg"/>
+<div id="threads-bg-lbl" class="label  ">
+<p class="label-text">Bild von Myriams-Fotos auf Pixabay</p>
+</div>
+</div>
+</section>
+<section id="frozen" class="slide" data-step-count=0>
+<div id="frozen-bg" class="custom-element ImageWithCaption  ">
+<img id="frozen-bg-img" class="image  " src="./pros-assets/frozen.jpg"/>
+<div id="frozen-bg-lbl" class="label  ">
+<p class="label-text">Bild von adege auf Pixabay</p>
+</div>
+</div>
+</section>
+<section id="title" class="slide" data-step-count=0>
+<div id="title-title" class="label  ">
+<h1 class="label-header">
+Einseitige Synchronisation und Deadlocks</h1>
+</div>
+<div id="title-subtitle" class="label  ">
+<h2 class="label-header">
+Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik</h2>
+</div>
+</section>
+<section id="toc" class="slide" data-step-count=0>
+<div id="toc-page_number" class="label  ">
+<p class="label-text">1</p>
+</div>
+<div id="toc-toc" class="label  ">
+<h1 class="label-header">
+Übersicht</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Übersicht</p>
+  <li>
+<p class="label-text">Beispiel</p>
+  <li>
+<p class="label-text">Einseitige Synchronisation</p>
+  <li>
+<p class="label-text">Deadlocks</p>
+</ol>
+</div>
+</section>
+<section id="example" class="slide" data-step-count=0>
+<div id="example-page_number" class="label  ">
+<p class="label-text">2</p>
+</div>
+<div id="example-bg" class="custom-element ImageWithCaption  ">
+<img id="example-bg-img" class="image  " src="./pros-assets/car-repair.jpg"/>
+<div id="example-bg-lbl" class="label  ">
+<p class="label-text">Bild von emkanicepic auf Pixabay</p>
+</div>
+</div>
+<div id="example-text" class="label  ">
+<h1 class="label-header">
+Beispiel</h1>
+<ul class="label-text">
+  <li>
+<p class="label-text">Arbeitsplatz: <span class="emphasis">Autowerkstatt</span></p>
+  <li>
+<p class="label-text">Angestellte: <span class="emphasis">Amanda</span> und <span class="emphasis">Bobbl</span></p>
+  <li>
+<p class="label-text">Werkzeuge: <span class="emphasis">Licht</span> und <span class="emphasis">Hebebühne</span></p>
+  <li>
+<p class="label-text">Zwei Arten von Problemen</p>
+<ul class="label-text">
+  <li>
+<p class="label-text">Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation</p>
+  <li>
+<p class="label-text">Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks</p>
+</ul>
+</ul>
+</div>
+</section>
+<section id="one_sided_sync" class="slide" data-step-count=0>
+<div id="one_sided_sync-page_number" class="label  ">
+<p class="label-text">3</p>
+</div>
+<div id="one_sided_sync-text" class="label  ">
+<h1 class="label-header">
+Einseitige Synchronisation</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Grundproblem</p>
+  <li>
+<p class="label-text">Ständiges Überprüfen</p>
+  <li>
+<p class="label-text">Getaktetes Überprüfen</p>
+  <li>
+<p class="label-text">Überprüfen auf Anfrage</p>
+  <li>
+<p class="label-text">Überprüfen auf Anfrage ohne Kenntnis anderer Threads</p>
+  <li>
+<p class="label-text">Fazit zur einseitigen Synchronisation</p>
+</ol>
+</div>
+</section>
+<section id="base_problem" class="slide" data-step-count=0>
+<div id="base_problem-page_number" class="label  ">
+<p class="label-text">4</p>
+</div>
+<div id="base_problem-content" class="flex ">
+<div id="base_problem-content-label-25" class="label  ">
+<h1 class="label-header">
+Einseitige Synchronisation: Grundproblem</h1>
+</div>
+<div id="base_problem-content-flex-42" class="flex ">
+<div id="base_problem-content-flex-42-flex-33" class="flex ">
+<div id="base_problem-content-flex-42-flex-33--31" class="custom-element TwoIcons  ">
+<div id="base_problem-content-flex-42-flex-33--body" class="flex ">
+<div id="base_problem-content-flex-42-flex-33--body--27" class="custom-element Icon  ">
+<img id="base_problem-content-flex-42-flex-33--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="base_problem-content-flex-42-flex-33--body--29" class="custom-element Icon  ">
+<img id="base_problem-content-flex-42-flex-33--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="base_problem-content-flex-42-flex-33-label-32" class="label  ">
+<p class="label-text">Amanda hat das Licht</p>
+</div>
+</div>
+<div id="base_problem-content-flex-42-flex-41" class="flex ">
+<div id="base_problem-content-flex-42-flex-41--39" class="custom-element TwoIcons  ">
+<div id="base_problem-content-flex-42-flex-41--body" class="flex ">
+<div id="base_problem-content-flex-42-flex-41--body--35" class="custom-element Icon  ">
+<img id="base_problem-content-flex-42-flex-41--body--icon" class="image  " src="./pros-assets/wait.png"/>
+</div>
+<div id="base_problem-content-flex-42-flex-41--body--37" class="custom-element Icon  ">
+<img id="base_problem-content-flex-42-flex-41--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+<div id="base_problem-content-flex-42-flex-41-label-40" class="label  ">
+<p class="label-text">Bobbl wartet auf das Licht</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="continous_checking" class="slide" data-step-count=3>
+<div id="continous_checking-page_number" class="label  ">
+<p class="label-text">5</p>
+</div>
+<div id="continous_checking-content" class="flex ">
+<div id="continous_checking-content-label-46" class="label  ">
+<h1 class="label-header">
+Ständiges Überprüfen</h1>
+</div>
+<div id="continous_checking-content-flex-59" class="flex  invisible">
+<div id="continous_checking-content-flex-59--52" class="custom-element TwoIcons  ">
+<div id="continous_checking-content-flex-59--body" class="flex ">
+<div id="continous_checking-content-flex-59--body--48" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="continous_checking-content-flex-59--body--50" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="continous_checking-content-flex-59--58" class="custom-element TwoIcons  ">
+<div id="continous_checking-content-flex-59--body" class="flex ">
+<div id="continous_checking-content-flex-59--body--54" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/question_mark.png"/>
+</div>
+<div id="continous_checking-content-flex-59--body--56" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="continous_checking-content-flex-72" class="flex  invisible">
+<div id="continous_checking-content-flex-72--65" class="custom-element TwoIcons  ">
+<div id="continous_checking-content-flex-72--body" class="flex ">
+<div id="continous_checking-content-flex-72--body--61" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="continous_checking-content-flex-72--body--63" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="continous_checking-content-flex-72--71" class="custom-element TwoIcons  ">
+<div id="continous_checking-content-flex-72--body" class="flex ">
+<div id="continous_checking-content-flex-72--body--67" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/question_mark.png"/>
+</div>
+<div id="continous_checking-content-flex-72--body--69" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="continous_checking-content-flex-83" class="flex  invisible">
+<div id="continous_checking-content-flex-83-flex-76" class="flex ">
+<div id="continous_checking-content-flex-83-flex-76--74" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-83-flex-76--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="continous_checking-content-flex-83-flex-76--75" class="custom-element Empty  ">
+</div>
+</div>
+<div id="continous_checking-content-flex-83--82" class="custom-element TwoIcons  ">
+<div id="continous_checking-content-flex-83--body" class="flex ">
+<div id="continous_checking-content-flex-83--body--78" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-83--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+<div id="continous_checking-content-flex-83--body--80" class="custom-element Icon  ">
+<img id="continous_checking-content-flex-83--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="occasional_checking_1" class="slide" data-step-count=3>
+<div id="occasional_checking_1-page_number" class="label  ">
+<p class="label-text">6</p>
+</div>
+<div id="occasional_checking_1-content" class="flex ">
+<div id="occasional_checking_1-content-label-87" class="label  ">
+<h1 class="label-header">
+Getaktetes Überprüfen</h1>
+</div>
+<div id="occasional_checking_1-content-flex-100" class="flex  invisible">
+<div id="occasional_checking_1-content-flex-100--93" class="custom-element TwoIcons  ">
+<div id="occasional_checking_1-content-flex-100--body" class="flex ">
+<div id="occasional_checking_1-content-flex-100--body--89" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="occasional_checking_1-content-flex-100--body--91" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="occasional_checking_1-content-flex-100--99" class="custom-element TwoIcons  ">
+<div id="occasional_checking_1-content-flex-100--body" class="flex ">
+<div id="occasional_checking_1-content-flex-100--body--95" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/question_mark.png"/>
+</div>
+<div id="occasional_checking_1-content-flex-100--body--97" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="occasional_checking_1-content-flex-113" class="flex  invisible">
+<div id="occasional_checking_1-content-flex-113--106" class="custom-element TwoIcons  ">
+<div id="occasional_checking_1-content-flex-113--body" class="flex ">
+<div id="occasional_checking_1-content-flex-113--body--102" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="occasional_checking_1-content-flex-113--body--104" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="occasional_checking_1-content-flex-113--112" class="custom-element TwoIcons  ">
+<div id="occasional_checking_1-content-flex-113--body" class="flex ">
+<div id="occasional_checking_1-content-flex-113--body--108" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/wait.png"/>
+</div>
+<div id="occasional_checking_1-content-flex-113--body--110" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="occasional_checking_1-content-flex-126" class="flex  invisible">
+<div id="occasional_checking_1-content-flex-126--119" class="custom-element TwoIcons  ">
+<div id="occasional_checking_1-content-flex-126--body" class="flex ">
+<div id="occasional_checking_1-content-flex-126--body--115" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="occasional_checking_1-content-flex-126--body--117" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="occasional_checking_1-content-flex-126--125" class="custom-element TwoIcons  ">
+<div id="occasional_checking_1-content-flex-126--body" class="flex ">
+<div id="occasional_checking_1-content-flex-126--body--121" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/question_mark.png"/>
+</div>
+<div id="occasional_checking_1-content-flex-126--body--123" class="custom-element Icon  ">
+<img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="occasional_checking_2" class="slide" data-step-count=2>
+<div id="occasional_checking_2-page_number" class="label  ">
+<p class="label-text">7</p>
+</div>
+<div id="occasional_checking_2-content" class="flex ">
+<div id="occasional_checking_2-content-label-130" class="label  ">
+<h1 class="label-header">
+Getaktetes Überprüfen</h1>
+</div>
+<div id="occasional_checking_2-content-flex-143" class="flex ">
+<div id="occasional_checking_2-content-flex-143--136" class="custom-element TwoIcons  ">
+<div id="occasional_checking_2-content-flex-143--body" class="flex ">
+<div id="occasional_checking_2-content-flex-143--body--132" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="occasional_checking_2-content-flex-143--body--134" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="occasional_checking_2-content-flex-143--142" class="custom-element TwoIcons  ">
+<div id="occasional_checking_2-content-flex-143--body" class="flex ">
+<div id="occasional_checking_2-content-flex-143--body--138" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/question_mark.png"/>
+</div>
+<div id="occasional_checking_2-content-flex-143--body--140" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="occasional_checking_2-content-flex-154" class="flex ">
+<div id="occasional_checking_2-content-flex-154--145" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-154--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="occasional_checking_2-content-flex-154--147" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-154--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+<div id="occasional_checking_2-content-flex-154--153" class="custom-element TwoIcons  ">
+<div id="occasional_checking_2-content-flex-154--body" class="flex ">
+<div id="occasional_checking_2-content-flex-154--body--149" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-154--body--icon" class="image  " src="./pros-assets/wait.png"/>
+</div>
+<div id="occasional_checking_2-content-flex-154--body--151" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-154--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="occasional_checking_2-content-flex-165" class="flex  invisible">
+<div id="occasional_checking_2-content-flex-165-flex-158" class="flex ">
+<div id="occasional_checking_2-content-flex-165-flex-158--156" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-165-flex-158--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="occasional_checking_2-content-flex-165-flex-158--157" class="custom-element Empty  ">
+</div>
+</div>
+<div id="occasional_checking_2-content-flex-165--164" class="custom-element TwoIcons  ">
+<div id="occasional_checking_2-content-flex-165--body" class="flex ">
+<div id="occasional_checking_2-content-flex-165--body--160" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-165--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+<div id="occasional_checking_2-content-flex-165--body--162" class="custom-element Icon  ">
+<img id="occasional_checking_2-content-flex-165--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="checking_when_requested" class="slide" data-step-count=0>
+<div id="checking_when_requested-page_number" class="label  ">
+<p class="label-text">8</p>
+</div>
+<div id="checking_when_requested-content" class="flex ">
+<div id="checking_when_requested-content-label-169" class="label  ">
+<h1 class="label-header">
+Überprüfen auf Anfrage</h1>
+</div>
+<div id="checking_when_requested-content-flex-182" class="flex ">
+<div id="checking_when_requested-content-flex-182--175" class="custom-element TwoIcons  ">
+<div id="checking_when_requested-content-flex-182--body" class="flex ">
+<div id="checking_when_requested-content-flex-182--body--171" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-182--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="checking_when_requested-content-flex-182--body--173" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-182--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="checking_when_requested-content-flex-182--181" class="custom-element TwoIcons  ">
+<div id="checking_when_requested-content-flex-182--body" class="flex ">
+<div id="checking_when_requested-content-flex-182--body--177" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-182--body--icon" class="image  " src="./pros-assets/question_mark.png"/>
+</div>
+<div id="checking_when_requested-content-flex-182--body--179" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-182--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="checking_when_requested-content-flex-195" class="flex ">
+<div id="checking_when_requested-content-flex-195--188" class="custom-element TwoIcons  ">
+<div id="checking_when_requested-content-flex-195--body" class="flex ">
+<div id="checking_when_requested-content-flex-195--body--184" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-195--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="checking_when_requested-content-flex-195--body--186" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-195--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="checking_when_requested-content-flex-195--194" class="custom-element TwoIcons  ">
+<div id="checking_when_requested-content-flex-195--body" class="flex ">
+<div id="checking_when_requested-content-flex-195--body--190" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-195--body--icon" class="image  " src="./pros-assets/wait.png"/>
+</div>
+<div id="checking_when_requested-content-flex-195--body--192" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-195--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="checking_when_requested-content-flex-205" class="flex ">
+<div id="checking_when_requested-content-flex-205--196" class="custom-element Empty  ">
+</div>
+<div id="checking_when_requested-content-flex-205--197" class="custom-element Empty  ">
+</div>
+<div id="checking_when_requested-content-flex-205--199" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="checking_when_requested-content-flex-205--201" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+<div id="checking_when_requested-content-flex-205--203" class="custom-element Icon  ">
+<img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+<div id="checking_when_requested-content-flex-205--204" class="custom-element Empty  ">
+</div>
+</div>
+</div>
+</section>
+<section id="checking_when_requested_without_thread_knowledge" class="slide" data-step-count=0>
+<div id="checking_when_requested_without_thread_knowledge-page_number" class="label  ">
+<p class="label-text">9</p>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content" class="flex ">
+<div id="checking_when_requested_without_thread_knowledge-content-label-209" class="label  ">
+<h1 class="label-header">
+Überprüfen auf Anfrage ohne Kenntnis anderer Threads</h1>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222" class="flex ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222--215" class="custom-element TwoIcons  ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body" class="flex ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--211" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--213" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222--221" class="custom-element TwoIcons  ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body" class="flex ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--217" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  " src="./pros-assets/question_mark.png"/>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--219" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235" class="flex ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235--228" class="custom-element TwoIcons  ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body" class="flex ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--224" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--226" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+</div>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235--234" class="custom-element TwoIcons  ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body" class="flex ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--230" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  " src="./pros-assets/wait.png"/>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--232" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+</div>
+</div>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-245" class="flex ">
+<div id="checking_when_requested_without_thread_knowledge-content-flex-245--237" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-245--238" class="custom-element Empty  ">
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-245--239" class="custom-element Empty  ">
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-245--241" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-245--243" class="custom-element Icon  ">
+<img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+<div id="checking_when_requested_without_thread_knowledge-content-flex-245--244" class="custom-element Empty  ">
+</div>
+</div>
+</div>
+</section>
+<section id="resume_one_sided" class="slide" data-step-count=0>
+<div id="resume_one_sided-page_number" class="label  ">
+<p class="label-text">10</p>
+</div>
+<div id="resume_one_sided-title" class="label  ">
+<h1 class="label-header">
+Fazit zur einseitigen Synchronisation</h1>
+</div>
+</section>
+<section id="deadlocks" class="slide" data-step-count=0>
+<div id="deadlocks-page_number" class="label  ">
+<p class="label-text">11</p>
+</div>
+<div id="deadlocks-text" class="label  ">
+<h1 class="label-header">
+Deadlocks</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Grundproblem</p>
+  <li>
+<p class="label-text">Definition eines Deadlocks</p>
+  <li>
+<p class="label-text">Präventive Deadlockverhinderung</p>
+  <li>
+<p class="label-text">Deadlockverhinderung zur Laufzeit</p>
+  <li>
+<p class="label-text">Deadlockerkennung zur Laufzeit</p>
+  <li>
+<p class="label-text">Livelocks</p>
+  <li>
+<p class="label-text">Fazit zu Deadlocks</p>
+</ol>
+</div>
+</section>
+<section id="deadlocks_problem" class="slide" data-step-count=0>
+<div id="deadlocks_problem-page_number" class="label  ">
+<p class="label-text">12</p>
+</div>
+<div id="deadlocks_problem-base" class="custom-element DeadlockIcons  ">
+<div id="deadlocks_problem-base-amanda" class="custom-element Icon  ">
+<img id="deadlocks_problem-base-amanda-icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+<div id="deadlocks_problem-base-bobbl" class="custom-element Icon  ">
+<img id="deadlocks_problem-base-bobbl-icon" class="image  " src="./pros-assets/bobbl.png"/>
+</div>
+<div id="deadlocks_problem-base-light" class="custom-element Icon  ">
+<img id="deadlocks_problem-base-light-icon" class="image  " src="./pros-assets/light.png"/>
+</div>
+<div id="deadlocks_problem-base-lift" class="custom-element Icon  ">
+<img id="deadlocks_problem-base-lift-icon" class="image  " src="./pros-assets/lift.png"/>
+</div>
+</div>
+<div id="deadlocks_problem-amanda" class="custom-element Icon  ">
+<img id="deadlocks_problem-amanda-icon" class="image  " src="./pros-assets/amanda.png"/>
+</div>
+</section>
+</body></html>
