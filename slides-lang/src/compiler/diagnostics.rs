@@ -5,7 +5,7 @@ use super::{
     lexer::Token,
 };
 
-use crate::{Files, Location};
+use crate::{Context, Files, Location};
 
 #[derive(Debug)]
 pub struct Diagnostic {
@@ -162,6 +162,20 @@ impl Diagnostics {
                 function_type.argument_count()
             ),
             location,
+        );
+    }
+
+    pub(crate) fn report_unexpected_token(
+        &mut self,
+        actual: Token,
+        expected: super::lexer::TokenKind,
+    ) {
+        self.report_error(
+            format!(
+                "Expected a {:?} but actually found a {:?}",
+                expected, actual.kind
+            ),
+            actual.location,
         );
     }
 }

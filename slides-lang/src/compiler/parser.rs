@@ -1,4 +1,7 @@
-use super::lexer::{self, Token, TokenKind};
+use super::{
+    diagnostics::Diagnostics,
+    lexer::{self, Token, TokenKind},
+};
 use crate::{Context, FileId, Files, Location};
 
 #[derive(Debug, Clone)]
@@ -688,10 +691,11 @@ impl Parser {
         &self.tokens[self.index]
     }
 
-    fn match_token(&mut self, expected: TokenKind) -> Token {
+    fn match_token(&mut self, expected: TokenKind, diagnostics: &mut Diagnostics) -> Token {
         if self.current_token().kind == expected {
             self.next_token()
         } else {
+            diagnostics.report_unexpected_token(*self.current_token(), expected);
             Token::fabricate(expected, self.current_token().location)
         }
     }
@@ -750,7 +754,7 @@ fn parse_presentation(parser: &mut Parser, context: &mut Context) -> Ast {
             statements.push(SyntaxNode::error(consumed, true));
         }
     }
-    let eof = parser.match_token(TokenKind::Eof);
+    let eof = parser.match_token(TokenKind::Eof, &mut context.diagnostics);
     Ast { statements, eof }
 }
 
@@ -771,10 +775,10 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
 }
 
 fn parse_template_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let template_keyword = parser.match_token(TokenKind::TemplateKeyword);
-    let name = parser.match_token(TokenKind::Identifier);
+    let template_keyword = parser.match_token(TokenKind::TemplateKeyword, &mut context.diagnostics);
+    let name = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
     let parameters = parse_parameter_node(parser, context);
-    let colon = parser.match_token(TokenKind::SingleChar(':'));
+    let colon = parser.match_token(TokenKind::SingleChar(':'), &mut context.diagnostics);
     let mut body = Vec::new();
     while !is_start_of_top_level_statement(parser.current_token().kind) {
         let position = parser.position();
@@ -787,20 +791,20 @@ fn parse_template_statement(parser: &mut Parser, context: &mut Context) -> Synta
     SyntaxNode::template_statement(template_keyword, name, parameters, colon, body)
 }
 
-fn parse_import_statement(parser: &mut Parser, _context: &mut Context) -> SyntaxNode {
-    let import_keyword = parser.match_token(TokenKind::ImportKeyword);
-    let type_ = parser.match_token(TokenKind::Identifier);
-    let string = parser.match_token(TokenKind::String);
+fn parse_import_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let import_keyword = parser.match_token(TokenKind::ImportKeyword, &mut context.diagnostics);
+    let type_ = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    let string = parser.match_token(TokenKind::String, &mut context.diagnostics);
     let path = SyntaxNode::typed_string(type_, string);
-    let semicolon = parser.match_token(TokenKind::SingleChar(';'));
+    let semicolon = parser.match_token(TokenKind::SingleChar(';'), &mut context.diagnostics);
     SyntaxNode::import_statement(import_keyword, path, semicolon)
 }
 
 fn parse_element_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let element_keyword = parser.match_token(TokenKind::ElementKeyword);
-    let name = parser.match_token(TokenKind::Identifier);
+    let element_keyword = parser.match_token(TokenKind::ElementKeyword, &mut context.diagnostics);
+    let name = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
     let parameters = parse_parameter_node(parser, context);
-    let colon = parser.match_token(TokenKind::SingleChar(':'));
+    let colon = parser.match_token(TokenKind::SingleChar(':'), &mut context.diagnostics);
     let mut body = Vec::new();
     while !is_start_of_top_level_statement(parser.current_token().kind) {
         let position = parser.position();
@@ -814,16 +818,16 @@ fn parse_element_statement(parser: &mut Parser, context: &mut Context) -> Syntax
 }
 
 fn parse_parameter_node(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let lparen = parser.match_token(TokenKind::SingleChar('('));
+    let lparen = parser.match_token(TokenKind::SingleChar('('), &mut context.diagnostics);
     let mut parameters = Vec::new();
     while parser.current_token().kind != TokenKind::Eof
         && parser.current_token().kind != TokenKind::SingleChar(')')
     {
         let position = parser.position();
 
-        let identifier = parser.match_token(TokenKind::Identifier);
-        let colon = parser.match_token(TokenKind::SingleChar(':'));
-        let type_ = parser.match_token(TokenKind::Identifier);
+        let identifier = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+        let colon = parser.match_token(TokenKind::SingleChar(':'), &mut context.diagnostics);
+        let type_ = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
         let optional_equals = parser.try_match_token(TokenKind::SingleChar('='));
         let optional_initializer = if optional_equals.is_some() {
             Some(parse_expression(parser, context))
@@ -845,14 +849,14 @@ fn parse_parameter_node(parser: &mut Parser, context: &mut Context) -> SyntaxNod
             parameters.push((SyntaxNode::error(consumed, true), None));
         }
     }
-    let rparen = parser.match_token(TokenKind::SingleChar(')'));
+    let rparen = parser.match_token(TokenKind::SingleChar(')'), &mut context.diagnostics);
     SyntaxNode::parameter_block(lparen, parameters, rparen)
 }
 
 fn parse_slide_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let slide_keyword = parser.match_token(TokenKind::SlideKeyword);
-    let name = parser.match_token(TokenKind::Identifier);
-    let colon = parser.match_token(TokenKind::SingleChar(':'));
+    let slide_keyword = parser.match_token(TokenKind::SlideKeyword, &mut context.diagnostics);
+    let name = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    let colon = parser.match_token(TokenKind::SingleChar(':'), &mut context.diagnostics);
     let mut body = Vec::new();
     while !is_start_of_top_level_statement(parser.current_token().kind) {
         let position = parser.position();
@@ -867,12 +871,12 @@ fn parse_slide_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNo
 }
 
 fn parse_styling_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let styling_keyword = parser.match_token(TokenKind::StylingKeyword);
-    let name = parser.match_token(TokenKind::Identifier);
-    let lparen = parser.match_token(TokenKind::SingleChar('('));
-    let type_ = parser.match_token(TokenKind::Identifier);
-    let rparen = parser.match_token(TokenKind::SingleChar(')'));
-    let colon = parser.match_token(TokenKind::SingleChar(':'));
+    let styling_keyword = parser.match_token(TokenKind::StylingKeyword, &mut context.diagnostics);
+    let name = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    let lparen = parser.match_token(TokenKind::SingleChar('('), &mut context.diagnostics);
+    let type_ = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    let rparen = parser.match_token(TokenKind::SingleChar(')'), &mut context.diagnostics);
+    let colon = parser.match_token(TokenKind::SingleChar(':'), &mut context.diagnostics);
     let mut body = Vec::new();
     while !is_start_of_top_level_statement(parser.current_token().kind) {
         let position = parser.position();
@@ -897,22 +901,22 @@ fn parse_assignment_statemnt(parser: &mut Parser, context: &mut Context) -> Synt
     if parser.current_token().kind == TokenKind::SingleChar('=') {
         let equals = parser.next_token();
         let assignment = parse_expression(parser, context);
-        let semicolon = parser.match_token(TokenKind::SingleChar(';'));
+        let semicolon = parser.match_token(TokenKind::SingleChar(';'), &mut context.diagnostics);
 
         SyntaxNode::assignment_statement(expression, equals, assignment, semicolon)
     } else {
-        let semicolon = parser.match_token(TokenKind::SingleChar(';'));
+        let semicolon = parser.match_token(TokenKind::SingleChar(';'), &mut context.diagnostics);
 
         SyntaxNode::expression_statement(expression, semicolon)
     }
 }
 
 fn parse_variable_declaration(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let let_keyword = parser.match_token(TokenKind::LetKeyword);
-    let name = parser.match_token(TokenKind::Identifier);
-    let equals = parser.match_token(TokenKind::SingleChar('='));
+    let let_keyword = parser.match_token(TokenKind::LetKeyword, &mut context.diagnostics);
+    let name = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    let equals = parser.match_token(TokenKind::SingleChar('='), &mut context.diagnostics);
     let expression = parse_expression(parser, context);
-    let semicolon = parser.match_token(TokenKind::SingleChar(';'));
+    let semicolon = parser.match_token(TokenKind::SingleChar(';'), &mut context.diagnostics);
 
     SyntaxNode::variable_declaration(let_keyword, name, equals, expression, semicolon)
 }
@@ -986,13 +990,14 @@ fn parse_function_call(parser: &mut Parser, context: &mut Context) -> SyntaxNode
                         arguments.push((SyntaxNode::error(consumed, true), None));
                     }
                 }
-                let rparen = parser.match_token(TokenKind::SingleChar(')'));
+                let rparen =
+                    parser.match_token(TokenKind::SingleChar(')'), &mut context.diagnostics);
                 base = SyntaxNode::function_call(base, lparen, arguments, rparen);
             }
             TokenKind::SingleChar('[') => todo!(),
             TokenKind::SingleChar('.') => {
                 let period = parser.next_token();
-                let member = parser.match_token(TokenKind::Identifier);
+                let member = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
                 base = SyntaxNode::member_access(base, period, member);
             }
             _ => break,
@@ -1038,21 +1043,21 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     }
 }
 
-fn parse_inferred_member(parser: &mut Parser, _: &mut Context) -> SyntaxNode {
-    let period = parser.match_token(TokenKind::SingleChar('.'));
-    let member = parser.match_token(TokenKind::Identifier);
+fn parse_inferred_member(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let period = parser.match_token(TokenKind::SingleChar('.'), &mut context.diagnostics);
+    let member = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
     SyntaxNode::inferred_member(period, member)
 }
 
 fn parse_dict(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let lbrace = parser.match_token(TokenKind::SingleChar('{'));
+    let lbrace = parser.match_token(TokenKind::SingleChar('{'), &mut context.diagnostics);
     let mut entries = Vec::new();
     while parser.current_token().kind != TokenKind::SingleChar('}')
         && parser.current_token().kind != TokenKind::Eof
     {
         let position = parser.position();
         let dict_identifier = parse_dict_identifier(parser, context);
-        let colon = parser.match_token(TokenKind::SingleChar(':'));
+        let colon = parser.match_token(TokenKind::SingleChar(':'), &mut context.diagnostics);
         let value = parse_expression(parser, context);
         let optional_comma = parser.try_match_token(TokenKind::SingleChar(','));
 
@@ -1064,12 +1069,12 @@ fn parse_dict(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
             entries.push((SyntaxNode::error(consumed, true), None));
         }
     }
-    let rbrace = parser.match_token(TokenKind::SingleChar('}'));
+    let rbrace = parser.match_token(TokenKind::SingleChar('}'), &mut context.diagnostics);
     SyntaxNode::dict(lbrace, entries, rbrace)
 }
 
 fn parse_array(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
-    let lbracket = parser.match_token(TokenKind::SingleChar('['));
+    let lbracket = parser.match_token(TokenKind::SingleChar('['), &mut context.diagnostics);
     let mut entries = Vec::new();
     while parser.current_token().kind != TokenKind::SingleChar(']')
         && parser.current_token().kind != TokenKind::Eof
@@ -1083,26 +1088,26 @@ fn parse_array(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
             entries.push((SyntaxNode::error(consumed, true), None));
         }
     }
-    let rbracket = parser.match_token(TokenKind::SingleChar(']'));
+    let rbracket = parser.match_token(TokenKind::SingleChar(']'), &mut context.diagnostics);
     SyntaxNode::array(lbracket, entries, rbracket)
 }
 
-fn parse_dict_identifier(parser: &mut Parser, _: &mut Context) -> Token {
-    let mut identifier = parser.match_token(TokenKind::Identifier);
-    while parser.current_token().kind == TokenKind::SingleChar('-') {
-        // TODO: Ensure that `foo - bar` is not a valid dict identifier
-        // TODO: Ensure that `foo-2` is parsed correctly!
-        let minus_token = parser.match_token(TokenKind::SingleChar('-'));
-        identifier = match Token::combine(identifier, minus_token, TokenKind::Identifier) {
-            Ok(it) => it,
-            Err(it) => it,
-        };
-        let identifier_part = parser.match_token(TokenKind::Identifier);
-        identifier = match Token::combine(identifier, identifier_part, TokenKind::Identifier) {
-            Ok(it) => it,
-            Err(it) => it,
-        };
-    }
+fn parse_dict_identifier(parser: &mut Parser, context: &mut Context) -> Token {
+    let identifier = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    // while parser.current_token().kind == TokenKind::SingleChar('-') {
+    //     // TODO: Ensure that `foo - bar` is not a valid dict identifier
+    //     // TODO: Ensure that `foo-2` is parsed correctly!
+    //     let minus_token = parser.match_token(TokenKind::SingleChar('-'), &mut context.diagnostics);
+    //     identifier = match Token::combine(identifier, minus_token, TokenKind::Identifier) {
+    //         Ok(it) => it,
+    //         Err(it) => it,
+    //     };
+    //     let identifier_part = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    //     identifier = match Token::combine(identifier, identifier_part, TokenKind::Identifier) {
+    //         Ok(it) => it,
+    //         Err(it) => it,
+    //     };
+    // }
     identifier
 }
 

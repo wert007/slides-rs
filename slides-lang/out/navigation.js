@@ -10,7 +10,7 @@ let currentStep = 0;
 let currentStepCount = 0;
 let stepReached = [];
 
-function init() {
+function init_navigation() {
     slides = document.getElementsByClassName("slide");
     var slide_id = window.location.hash.slice(1);
     activeSlide = 0;
@@ -22,6 +22,10 @@ function init() {
     }
     slides[activeSlide].classList.add("active");
     currentStepCount = slides[activeSlide].dataset.stepCount;
+}
+
+function getElementById(id) {
+    return document.querySelector(`[data-element-id="${id}"]`);
 }
 
 /**
