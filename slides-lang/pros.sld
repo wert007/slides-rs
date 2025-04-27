@@ -328,12 +328,12 @@ element deadlock_icons():
         halign: HAlign.Center,
         valign: VAlign.Top,
     };
-    members = {
-        amanda: amanda,
-        bobbl: bobbl,
-        light: light,
-        lift: lift,
-    };
+    // members = {
+    //     amanda: amanda,
+    //     bobbl: bobbl,
+    //     light: light,
+    //     lift: lift,
+    // };
 
 slide deadlocks_problem:
     page_number();

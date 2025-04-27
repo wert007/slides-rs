@@ -1186,11 +1186,11 @@ fn bind_element_statement(
             .try_register_variable(id, type_, element_statement.name.location)
             .expect("cannot fail");
     }
-    let members_id = context.string_interner.create_or_get_variable("members");
-    let type_ = context.type_interner.get_or_intern(Type::DynamicDict);
-    scope
-        .try_register_variable(members_id, type_, element_statement.name.location)
-        .expect("cannot fail");
+    // let members_id = context.string_interner.create_or_get_variable("members");
+    // let type_ = context.type_interner.get_or_intern(Type::DynamicDict);
+    // scope
+    //     .try_register_variable(members_id, type_, element_statement.name.location)
+    //     .expect("cannot fail");
     let parameters = bind_parameter_block(
         element_statement
             .parameters
@@ -1206,26 +1206,46 @@ fn bind_element_statement(
 
     for statement in element_statement.body {
         let statement = bind_node(statement, binder, context);
-        if let BoundNodeKind::AssignmentStatement(a) = &statement.kind {
-            if let BoundNodeKind::VariableReference(members_var) = &a.lhs.kind {
-                if members_var.id == members_id {
-                    if let BoundNodeKind::Conversion(conversion) = &a.value.kind {
-                        if let BoundNodeKind::Dict(dict) = &conversion.base.kind {
-                            for (name, entry) in dict.iter() {
-                                // TODO: Add check, that entry is a simple
-                                // variable reference, everything else would be
-                                // very fishy or straight up wrong.
-                                // TODO: Use string_interner for name?
-                                members.insert(name.clone(), entry.type_);
-                            }
-                            // No need to evaluate this at runtime again.
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
+        // if let BoundNodeKind::AssignmentStatement(a) = &statement.kind {
+        //     if let BoundNodeKind::VariableReference(members_var) = &a.lhs.kind {
+        //         if members_var.id == members_id {
+        //             if let BoundNodeKind::Conversion(conversion) = &a.value.kind {
+        //                 if let BoundNodeKind::Dict(dict) = &conversion.base.kind {
+        //                     for (name, entry) in dict.iter() {
+        //                         // TODO: Add check, that entry is a simple
+        //                         // variable reference, everything else would be
+        //                         // very fishy or straight up wrong.
+        //                         // TODO: Use string_interner for name?
+        //                         members.insert(name.clone(), entry.type_);
+        //                     }
+        //                     // No need to evaluate this at runtime again.
+        //                     continue;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
         body.push(statement);
+    }
+
+    let argument_types = parameters
+        .iter()
+        .map(|v| binder.look_up_variable(v.id).unwrap().type_)
+        .collect();
+
+    let scope = binder.drop_scope();
+    debug_scope(
+        &format!(
+            "element {}",
+            element_statement.name.text(&context.loaded_files)
+        ),
+        &scope,
+        &context,
+    );
+
+    for (id, var) in scope.variables {
+        let name = context.string_interner.resolve_variable(id);
+        members.insert(name.into(), var.type_);
     }
 
     let element_type = context
@@ -1239,22 +1259,10 @@ fn bind_element_statement(
 
     let function_type = Type::Function(FunctionType {
         min_argument_count: parameters.iter().filter(|p| p.value.is_none()).count(),
-        argument_types: parameters
-            .iter()
-            .map(|v| binder.look_up_variable(v.id).unwrap().type_)
-            .collect(),
+        argument_types,
         return_type: element_type,
     });
     let function_type = context.type_interner.get_or_intern(function_type);
-    let scope = binder.drop_scope();
-    debug_scope(
-        &format!(
-            "element {}",
-            element_statement.name.text(&context.loaded_files)
-        ),
-        &scope,
-        &context,
-    );
     let Some(name) = binder.expect_register_variable_token(
         element_statement.name,
         function_type,
