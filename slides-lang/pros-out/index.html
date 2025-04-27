@@ -12,14 +12,15 @@
 
             
 <!-- From arrows arrow function -->
+globals.arrows = { lines: []}
 
-    new LeaderLine(
+    globals.arrows.lines[0] = new LeaderLine(
         getElementById(257),
         getElementById(261),
         {
             parent: document.getElementById("deadlocks_problem"),
-            path: "grid",
-color: "rgb(89, 89, 89, 1)",
+            color: "rgb(89, 89, 89, 1)",
+path: "grid",
 startSocket: "bottom",
 
         },
@@ -28,7 +29,7 @@ startSocket: "bottom",
 
 <!-- From arrows arrow function -->
 
-    new LeaderLine(
+    globals.arrows.lines[1] = new LeaderLine(
         getElementById(257),
         getElementById(263),
         {
@@ -43,13 +44,13 @@ color: "rgb(89, 89, 89, 1)",
 
 <!-- From arrows arrow function -->
 
-    new LeaderLine(
+    globals.arrows.lines[2] = new LeaderLine(
         getElementById(259),
         getElementById(261),
         {
             parent: document.getElementById("deadlocks_problem"),
-            path: "grid",
-startSocket: "bottom",
+            startSocket: "bottom",
+path: "grid",
 color: "rgb(89, 89, 89, 1)",
 
         },
@@ -58,14 +59,14 @@ color: "rgb(89, 89, 89, 1)",
 
 <!-- From arrows arrow function -->
 
-    new LeaderLine(
+    globals.arrows.lines[3] = new LeaderLine(
         getElementById(259),
         getElementById(263),
         {
             parent: document.getElementById("deadlocks_problem"),
-            color: "rgb(89, 89, 89, 1)",
+            startSocket: "top",
 path: "grid",
-startSocket: "top",
+color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -73,13 +74,13 @@ startSocket: "top",
 
 <!-- From arrows arrow function -->
 
-    new LeaderLine(
+    globals.arrows.lines[4] = new LeaderLine(
         getElementById(317),
         getElementById(319),
         {
             parent: document.getElementById("deadlock_additional_resources"),
-            middleLabel: "fordert zusätzlich an",
-color: "rgb(89, 89, 89, 1)",
+            color: "rgb(89, 89, 89, 1)",
+middleLabel: LeaderLine.captionLabel("fordert zusätzlich an", { classList: 'label'}),
 
         },
     );
@@ -87,12 +88,12 @@ color: "rgb(89, 89, 89, 1)",
 
 <!-- From arrows arrow function -->
 
-    new LeaderLine(
+    globals.arrows.lines[5] = new LeaderLine(
         getElementById(325),
         getElementById(329),
         {
             parent: document.getElementById("deadlock_no_release"),
-            middleLabel: "gibt zurück",
+            middleLabel: LeaderLine.captionLabel("gibt zurück", { classList: 'label'}),
 color: "rgb(89, 89, 89, 1)",
 
         },
@@ -101,13 +102,13 @@ color: "rgb(89, 89, 89, 1)",
 
 <!-- From arrows arrow function -->
 
-    new LeaderLine(
+    globals.arrows.lines[6] = new LeaderLine(
         getElementById(327),
         getElementById(331),
         {
             parent: document.getElementById("deadlock_no_release"),
-            color: "rgb(89, 89, 89, 1)",
-middleLabel: "wird entzogen",
+            middleLabel: LeaderLine.captionLabel("wird entzogen", { classList: 'label'}),
+color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -115,15 +116,15 @@ middleLabel: "wird entzogen",
 
 <!-- From arrows arrow function -->
 
-    new LeaderLine(
+    globals.arrows.lines[7] = new LeaderLine(
         getElementById(345),
         getElementById(350),
         {
             parent: document.getElementById("deadlock_cyclic_wait"),
             color: "rgb(89, 89, 89, 1)",
-startSocket: "top",
-middleLabel: "fordert an",
 endSocket: "top",
+middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
+startSocket: "top",
 
         },
     );
@@ -131,15 +132,15 @@ endSocket: "top",
 
 <!-- From arrows arrow function -->
 
-    new LeaderLine(
+    globals.arrows.lines[8] = new LeaderLine(
         getElementById(352),
         getElementById(347),
         {
             parent: document.getElementById("deadlock_cyclic_wait"),
-            color: "rgb(89, 89, 89, 1)",
-middleLabel: "fordert an",
+            startSocket: "bottom",
+color: "rgb(89, 89, 89, 1)",
+middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
 endSocket: "bottom",
-startSocket: "bottom",
 
         },
     );
@@ -148,6 +149,13 @@ startSocket: "bottom",
 
 
         }
+
+            function onSlideChange() {
+        <!-- From module arrows import -->
+for (var line of globals.arrows.lines) { line.position(); }
+
+
+            }
         </script>
             
 <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">

@@ -723,6 +723,7 @@ pub mod component {
             pub enum Placement {
                 HtmlHead,
                 JavascriptInit,
+                JavascriptSlideChange,
             }
             impl ::core::fmt::Debug for Placement {
                 fn fmt(
@@ -736,6 +737,9 @@ pub mod component {
                         Placement::JavascriptInit => {
                             f.debug_tuple("Placement::JavascriptInit").finish()
                         }
+                        Placement::JavascriptSlideChange => {
+                            f.debug_tuple("Placement::JavascriptSlideChange").finish()
+                        }
                     }
                 }
             }
@@ -748,6 +752,7 @@ pub mod component {
                     match val {
                         0 => Placement::HtmlHead,
                         1 => Placement::JavascriptInit,
+                        2 => Placement::JavascriptSlideChange,
                         _ => panic!("invalid enum discriminant"),
                     }
                 }
@@ -1684,8 +1689,8 @@ pub(crate) use __export_host_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1489] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xd6\x0a\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1513] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xee\x0a\x01A\x02\x01\
 A\x0e\x01B\x05\x01m\x06\x04void\x06string\x03int\x05float\x07element\x04dict\x04\
 \0\x04type\x03\0\0\x01p\x01\x01r\x03\x04names\x04args\x02\x0bresult-type\x01\x04\
 \0\x08function\x03\0\x03\x03\0\x16component:arrows/types\x05\0\x01B\x15\x01r\x01\
@@ -1698,26 +1703,27 @@ nit\x01s\0\x08position\x01\x04\0\x04dict\x01\x09\0\x05array\x01\x0a\0\x07element
 -allocator.create\x01\x0e\x01h\x02\x01@\x02\x04self\x0f\x05value\x0c\0\x01\x04\0\
 \x20[method]value-allocator.allocate\x01\x10\x01@\x02\x04self\x0f\x05value\x01\0\
 \x0c\x04\0\x1b[method]value-allocator.get\x01\x11\x03\0\x17component:arrows/valu\
-es\x05\x01\x01B\x0a\x01m\x02\x09html-head\x0fjavascript-init\x04\0\x09placement\x03\
-\0\0\x04\0\x06slides\x03\x01\x01h\x02\x01@\x03\x04self\x03\x03urls\x04paths\x01\0\
-\x04\0\x1c[method]slides.download-file\x01\x04\x01@\x02\x04self\x03\x04paths\x01\
-\0\x04\0![method]slides.add-file-reference\x01\x05\x01@\x04\x04self\x03\x04texts\
-\x06sources\x09placement\x01\x01\0\x04\0#[method]slides.place-text-in-output\x01\
-\x06\x03\0\x17component:arrows/slides\x05\x02\x02\x03\0\0\x04type\x02\x03\0\0\x08\
-function\x02\x03\0\x01\x05value\x02\x03\0\x01\x0fvalue-allocator\x02\x03\0\x01\x0b\
-value-index\x02\x03\0\x02\x06slides\x01B\x1c\x02\x03\x02\x01\x03\x04\0\x04type\x03\
-\0\0\x02\x03\x02\x01\x04\x04\0\x08function\x03\0\x02\x02\x03\x02\x01\x05\x04\0\x05\
-value\x03\0\x04\x02\x03\x02\x01\x06\x04\0\x0fvalue-allocator\x03\0\x06\x02\x03\x02\
-\x01\x07\x04\0\x0bvalue-index\x03\0\x08\x02\x03\x02\x01\x08\x04\0\x06slides\x03\0\
-\x0a\x01q\x04\x12function-not-found\0\0\x0cinvalid-type\0\0\x17argument-count-mi\
-smatch\0\0\x0einternal-error\x01s\0\x04\0\x05error\x03\0\x0c\x04\0\x06module\x03\
-\x01\x01i\x0b\x01i\x0e\x01@\x01\x06slides\x0f\0\x10\x04\0\x15[static]module.crea\
-te\x01\x11\x01h\x0e\x01p\x03\x01@\x01\x04self\x12\0\x13\x04\0\"[method]module.av\
-ailable-functions\x01\x14\x01i\x07\x01p\x09\x01j\x01\x09\x01\x0d\x01@\x05\x04sel\
-f\x12\x06slides\x0f\x04names\x09allocator\x15\x04args\x16\0\x17\x04\0\x1c[method\
-]module.call-function\x01\x18\x04\0\x18component:arrows/modules\x05\x09\x04\0\x15\
-component:arrows/host\x04\0\x0b\x0a\x01\0\x04host\x03\0\0\0G\x09producers\x01\x0c\
-processed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
+es\x05\x01\x01B\x0a\x01m\x03\x09html-head\x0fjavascript-init\x17javascript-slide\
+-change\x04\0\x09placement\x03\0\0\x04\0\x06slides\x03\x01\x01h\x02\x01@\x03\x04\
+self\x03\x03urls\x04paths\x01\0\x04\0\x1c[method]slides.download-file\x01\x04\x01\
+@\x02\x04self\x03\x04paths\x01\0\x04\0![method]slides.add-file-reference\x01\x05\
+\x01@\x04\x04self\x03\x04texts\x06sources\x09placement\x01\x01\0\x04\0#[method]s\
+lides.place-text-in-output\x01\x06\x03\0\x17component:arrows/slides\x05\x02\x02\x03\
+\0\0\x04type\x02\x03\0\0\x08function\x02\x03\0\x01\x05value\x02\x03\0\x01\x0fval\
+ue-allocator\x02\x03\0\x01\x0bvalue-index\x02\x03\0\x02\x06slides\x01B\x1c\x02\x03\
+\x02\x01\x03\x04\0\x04type\x03\0\0\x02\x03\x02\x01\x04\x04\0\x08function\x03\0\x02\
+\x02\x03\x02\x01\x05\x04\0\x05value\x03\0\x04\x02\x03\x02\x01\x06\x04\0\x0fvalue\
+-allocator\x03\0\x06\x02\x03\x02\x01\x07\x04\0\x0bvalue-index\x03\0\x08\x02\x03\x02\
+\x01\x08\x04\0\x06slides\x03\0\x0a\x01q\x04\x12function-not-found\0\0\x0cinvalid\
+-type\0\0\x17argument-count-mismatch\0\0\x0einternal-error\x01s\0\x04\0\x05error\
+\x03\0\x0c\x04\0\x06module\x03\x01\x01i\x0b\x01i\x0e\x01@\x01\x06slides\x0f\0\x10\
+\x04\0\x15[static]module.create\x01\x11\x01h\x0e\x01p\x03\x01@\x01\x04self\x12\0\
+\x13\x04\0\"[method]module.available-functions\x01\x14\x01i\x07\x01p\x09\x01j\x01\
+\x09\x01\x0d\x01@\x05\x04self\x12\x06slides\x0f\x04names\x09allocator\x15\x04arg\
+s\x16\0\x17\x04\0\x1c[method]module.call-function\x01\x18\x04\0\x18component:arr\
+ows/modules\x05\x09\x04\0\x15component:arrows/host\x04\0\x0b\x0a\x01\0\x04host\x03\
+\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.227.1\x10wit-\
+bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

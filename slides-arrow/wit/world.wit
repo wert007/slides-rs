@@ -55,6 +55,7 @@ interface slides {
     enum placement {
         html-head,
         javascript-init,
+        javascript-slide-change,
     }
 
     resource slides {

@@ -92,8 +92,15 @@ impl Presentation {
             emitter.raw_html(),
             r#"
         }}
+
+            function onSlideChange() {{
+        {}
+            }}
         </script>
-            "#
+            "#,
+            self.extern_texts
+                .get(&FilePlacement::JavascriptSlideChange)
+                .unwrap_or(&String::new())
         )?;
 
         let mut google_font_references = HashSet::new();
@@ -184,6 +191,7 @@ impl Presentation {
 pub enum FilePlacement {
     HtmlHead,
     JavascriptInit,
+    JavascriptSlideChange,
 }
 
 pub enum ExternText {

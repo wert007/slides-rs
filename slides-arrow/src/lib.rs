@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::atomic::AtomicBool};
+use std::{
+    collections::HashMap,
+    sync::atomic::{AtomicBool, AtomicUsize},
+};
 
 use bindings::{
     component::arrows::{
@@ -20,6 +23,7 @@ impl Guest for Component {
 
 struct Arrows {
     is_library_downloaded: AtomicBool,
+    created_lines: AtomicUsize,
 }
 impl Arrows {
     fn arrow(
@@ -47,6 +51,12 @@ impl Arrows {
                 "<script src=\"pros-assets/leader-line.min.js\"></script>",
                 "arrows module",
                 slides::Placement::HtmlHead,
+            );
+
+            slides.place_text_in_output(
+                "for (var line of globals.arrows.lines) { line.position(); }",
+                "module arrows import",
+                slides::Placement::JavascriptSlideChange,
             );
         }
         let mut text = String::new();
@@ -78,8 +88,12 @@ impl Arrows {
                         .expect("Infallible");
                 }
                 "middle_label" => {
-                    writeln!(options_text, "middleLabel: {},", value_to_string(&value)?)
-                        .expect("Infallible");
+                    writeln!(
+                        options_text,
+                        "middleLabel: LeaderLine.captionLabel({}, {{ classList: 'label'}}),",
+                        value_to_string(&value)?
+                    )
+                    .expect("Infallible");
                 }
                 _ => {
                     return Err(modules::Error::InternalError(format!(
@@ -89,10 +103,16 @@ impl Arrows {
             }
         }
         let parent_option = format!("document.getElementById(\"{namespace}\")");
+        let index = self
+            .created_lines
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        if index == 0 {
+            writeln!(text, "globals.arrows = {{ lines: []}}").expect("infallible");
+        }
         writeln!(
             text,
             "
-    new LeaderLine(
+    globals.arrows.lines[{index}] = new LeaderLine(
         getElementById({from}),
         getElementById({to}),
         {{
@@ -115,6 +135,7 @@ impl GuestModule for Arrows {
     fn create(_slides: slides::Slides) -> modules::Module {
         Module::new(Self {
             is_library_downloaded: AtomicBool::new(false),
+            created_lines: AtomicUsize::new(0),
         })
     }
 

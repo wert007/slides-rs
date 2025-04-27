@@ -193,6 +193,7 @@ impl From<slides::Placement> for FilePlacement {
         match value {
             slides::Placement::HtmlHead => Self::HtmlHead,
             slides::Placement::JavascriptInit => Self::JavascriptInit,
+            slides::Placement::JavascriptSlideChange => Self::JavascriptSlideChange,
         }
     }
 }

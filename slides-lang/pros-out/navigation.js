@@ -9,6 +9,7 @@ let activeSlide;
 let currentStep = 0;
 let currentStepCount = 0;
 let stepReached = [];
+var globals = {};
 
 function init_navigation() {
     slides = document.getElementsByClassName("slide");
@@ -79,6 +80,7 @@ function move_to_slide(target) {
     window.location.hash = slides[activeSlide].id;
     currentStepCount = slides[activeSlide].dataset.stepCount;
     currentStep = 0;
+    onSlideChange();
 }
 
 stepReached.push({
