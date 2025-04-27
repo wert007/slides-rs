@@ -164,6 +164,7 @@ pub struct BaseElementStyling {
     pub width: StyleUnit,
     pub height: StyleUnit,
     pub is_visible: bool,
+    pub rotate: i64,
     z_index: Option<usize>,
 }
 
@@ -202,6 +203,10 @@ impl BaseElementStyling {
 
     pub fn set_filter(&mut self, filter: Filter) {
         self.filter = filter;
+    }
+
+    pub fn set_rotation(&mut self, degree: i64) {
+        self.rotate = degree;
     }
 }
 
@@ -321,6 +326,10 @@ impl ToCss for BaseElementStyling {
 
         if self.filter != Filter::Unspecified {
             writeln!(result, "    filter: {};", self.filter.to_css()).expect("infallible");
+        }
+
+        if self.rotate != 0 {
+            writeln!(result, "    rotate: {}deg;", self.rotate).expect("infallible");
         }
         result
     }

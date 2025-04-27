@@ -322,4 +322,8 @@ impl ElementRefMut {
             ElementRefMut::Flex(it) => it.write().unwrap().animations.add_animations(&value),
         }
     }
+
+    pub fn set_rotation(&mut self, degree: i64) {
+        self.apply_to_base_element_styling(|base| base.set_rotation(degree));
+    }
 }

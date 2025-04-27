@@ -345,6 +345,10 @@ fn assign_to_slide_type(
             base.as_mut_base_element()
                 .set_filter(value.value.into_filter());
         }
+        "rotate" => {
+            base.as_mut_base_element()
+                .set_rotation(value.value.into_integer());
+        }
         "animations" => {
             let animations = value
                 .value

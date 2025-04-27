@@ -122,7 +122,6 @@ impl Presentation {
             <body onload="init()" onkeydown="keydown(event)">"#
         )?;
         for (index, mut slide) in self.slides.into_iter().enumerate() {
-            slide.set_fallback_id(format!("slide-{index}"));
             slide.output_to_html(emitter)?
         }
 
@@ -195,7 +194,7 @@ pub enum ExternText {
 #[derive(Debug, Clone)]
 pub struct Slide {
     pub index: usize,
-    id: Option<String>,
+    name: Option<String>,
     elements: Vec<Element>,
     styling: ElementStyling<SlideStyling>,
     current_z_index: usize,
@@ -206,7 +205,7 @@ impl Slide {
     pub fn new(index: usize) -> Self {
         Self {
             index,
-            id: None,
+            name: None,
             elements: Vec::new(),
             styling: SlideStyling::new(),
             current_z_index: 0,
@@ -230,7 +229,7 @@ impl Slide {
     }
 
     fn output_to_html<W: Write>(self, emitter: &mut PresentationEmitter<W>) -> Result<()> {
-        let id = self.id.expect("id should have been set here!");
+        let id = self.name();
         self.styling
             .to_css_rule(ToCssLayout::unknown(), &format!("#{id}"), emitter.raw_css())?;
         writeln!(
@@ -255,10 +254,6 @@ impl Slide {
         Ok(())
     }
 
-    fn set_fallback_id(&mut self, fallback: String) {
-        self.id.get_or_insert(fallback);
-    }
-
     fn collect_google_font_references(&self, fonts: &mut HashSet<String>) -> Result<()> {
         for element in &self.elements {
             element.collect_google_font_references(fonts)?;
@@ -266,8 +261,14 @@ impl Slide {
         Ok(())
     }
 
+    pub fn name(&self) -> String {
+        self.name
+            .clone()
+            .unwrap_or_else(|| format!("slide-{}", self.index))
+    }
+
     pub fn with_name(mut self, name: impl Into<String>) -> Slide {
-        self.id = Some(name.into());
+        self.name = Some(name.into());
         self
     }
 
