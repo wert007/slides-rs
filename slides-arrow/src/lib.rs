@@ -28,7 +28,8 @@ impl Arrows {
         allocator: &mut modules::ValueAllocator,
         from: u32,
         to: u32,
-        parent: u32,
+        parent: Option<u32>,
+        namespace: &str,
         options: HashMap<String, ValueIndex>,
     ) -> Result<(), modules::Error> {
         use std::fmt::Write;
@@ -69,6 +70,18 @@ impl Arrows {
                     writeln!(options_text, "{key}: {},", value_to_string(&value)?)
                         .expect("infallible");
                 }
+                "start_socket" => {
+                    writeln!(options_text, "startSocket: {},", value_to_string(&value)?)
+                        .expect("Infallible");
+                }
+                "end_socket" => {
+                    writeln!(options_text, "endSocket: {},", value_to_string(&value)?)
+                        .expect("Infallible");
+                }
+                "middle_label" => {
+                    writeln!(options_text, "middleLabel: {},", value_to_string(&value)?)
+                        .expect("Infallible");
+                }
                 _ => {
                     return Err(modules::Error::InternalError(format!(
                         "Invalid option: {key}"
@@ -76,6 +89,10 @@ impl Arrows {
                 }
             }
         }
+        let parent_option = match parent {
+            Some(parent) => format!("getElementById({parent})"),
+            None => format!("document.getElementById(\"{namespace}\")"),
+        };
         writeln!(
             text,
             "
@@ -83,7 +100,7 @@ impl Arrows {
         getElementById({from}),
         getElementById({to}),
         {{
-            parent: getElementById({parent}),
+            parent: {parent_option},
             {options_text}
         }},
     );"
@@ -126,12 +143,25 @@ impl GuestModule for Arrows {
                     return Err(modules::Error::ArgumentCountMismatch);
                 }
                 let from = allocator.get(args[0]).try_into_element()?.id;
+                let namespace_from = allocator.get(args[0]).try_into_element()?.namespace;
                 let to = allocator.get(args[1]).try_into_element()?.id;
-                let Some(parent) = allocator.get(args[1]).try_into_element()?.parent else {
-                    return Err(modules::Error::InternalError("parent must be set".into()));
+                let namespace_to = allocator.get(args[1]).try_into_element()?.namespace;
+                let namespace = if namespace_to.len() < namespace_from.len() {
+                    namespace_to
+                } else {
+                    namespace_from
                 };
+                let parent = allocator.get(args[1]).try_into_element()?.parent;
                 let options = allocator.get(args[2]).try_into_dict()?;
-                self.arrow(slides, &mut allocator, from, to, parent, options)?;
+                self.arrow(
+                    slides,
+                    &mut allocator,
+                    from,
+                    to,
+                    parent,
+                    &namespace,
+                    options,
+                )?;
                 allocator.allocate(&Value::Void)
                 // allocator.
             }
