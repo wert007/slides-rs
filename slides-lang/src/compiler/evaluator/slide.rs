@@ -92,11 +92,12 @@ fn evaluate_statement(
         | BoundNodeKind::MemberAccess(_)
         | BoundNodeKind::Conversion(_) => {
             let value = evaluate_expression(statement, evaluator, context);
-            if let Some(element) = value.value.try_convert_to_element() {
-                if element.parent().is_none() {
-                    evaluator.slide.as_mut().unwrap().add_element_ref(element);
-                }
-            }
+            // if let Some(mut element) = value.value.try_convert_to_element() {
+            //     if element.parent().is_none() {
+            //         element.set_namespace(evaluator.slide.as_ref().unwrap().name());
+            //         evaluator.slide.as_mut().unwrap().add_element_ref(element);
+            //     }
+            // }
             Ok(())
         }
         BoundNodeKind::VariableDeclaration(variable_declaration) => {
@@ -178,7 +179,7 @@ pub(super) fn evaluate_expression(
     evaluator: &mut Evaluator,
     context: &mut Context,
 ) -> Value {
-    match expression.kind {
+    let value = match expression.kind {
         BoundNodeKind::FunctionCall(function_call) => {
             evaluate_function_call(function_call, evaluator, context)
         }
@@ -207,7 +208,14 @@ pub(super) fn evaluate_expression(
             evaluate_binary(binary, expression.location, evaluator, context)
         }
         _ => unreachable!("Only expressions can be evaluated!"),
+    };
+    if let Some(mut element) = value.value.clone().try_convert_to_element() {
+        if element.parent().is_none() {
+            element.set_namespace(evaluator.slide.as_ref().unwrap().name());
+            // evaluator.slide.as_mut().unwrap().add_element_ref(element);
+        }
     }
+    value
 }
 
 fn evaluate_binary(

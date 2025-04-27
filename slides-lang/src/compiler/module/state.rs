@@ -93,6 +93,15 @@ impl HostValueAllocator {
                 };
                 self.allocate(values::Value::Element(element))
             }
+            value::Value::CustomElement(element) => {
+                let element = values::Element {
+                    id: element.id().raw() as u32,
+                    parent: element.parent().map(|p| p.raw() as u32),
+                    name: element.name(),
+                    namespace: element.namespace(),
+                };
+                self.allocate(values::Value::Element(element))
+            }
             value => todo!("Cannot allocate native value! {value:#?}"),
         }
     }
