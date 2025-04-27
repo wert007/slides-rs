@@ -20,14 +20,14 @@ styling default(Slide):
     padding = { top: 0.2sh, right: 0.1sw, bottom: 0.2sh, left: 0.1sw, };
 
 element image_with_caption(img: Image, caption: String):
-    img = img { object_fit: ObjectFit.Cover, valign: VAlign.Stretch, halign: HAlign.Stretch, }
+    img = img { object_fit: ObjectFit.Cover, valign: VAlign.Stretch, halign: HAlign.Stretch, };
     let lbl =
         label(caption) {
             valign: VAlign.Bottom,
             halign: HAlign.Right,
             text_color: c"white",
             font_size: 0.8,
-        }
+        };
     valign = VAlign.Stretch;
     halign = HAlign.Stretch;
 
@@ -65,7 +65,7 @@ slide title:
             valign: VAlign.Bottom,
             halign: HAlign.Stretch,
             margin: { bottom: 0.50sh, },
-        }
+        };
     let subtitle =
         l"## Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
             text_align: TextAlign.Center,
@@ -74,7 +74,7 @@ slide title:
             halign: HAlign.Stretch,
             text_color: c"#595959",
             margin: { top: 0.50sh, left: 0.15sw, right: 0.15sw, },
-        }
+        };
 
 slide toc:
     page_number();

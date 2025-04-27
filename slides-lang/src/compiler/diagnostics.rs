@@ -178,4 +178,20 @@ impl Diagnostics {
             actual.location,
         );
     }
+
+    pub(crate) fn report_invalid_binary_operation(
+        &mut self,
+        lhs_type: &Type,
+        operator: super::binder::BoundBinaryOperator,
+        rhs_type: &Type,
+        location: Location,
+    ) {
+        self.report_error(
+            format!(
+                "Invalid binary operation: {lhs_type:?} {} {rhs_type:?}",
+                operator.to_string()
+            ),
+            location,
+        );
+    }
 }

@@ -135,6 +135,41 @@ impl Value {
         })
     }
 
+    pub fn convert_to_string(self) -> String {
+        match self {
+            Value::String(string) => string,
+            Value::Float(float) => float.to_string(),
+            Value::Integer(int) => int.to_string(),
+            Value::StyleUnit(style_unit) => style_unit.to_string(),
+            Value::Color(color) => color.to_string(),
+            Value::Path(path) => path.to_string_lossy().to_string(),
+            Value::Void(_) => unreachable!(),
+            Value::StyleReference(styling_reference) => format!("{styling_reference}"),
+            Value::Background(background) => todo!(),
+            Value::Label(label) => todo!(),
+            Value::Grid(grid) => todo!(),
+            Value::Flex(flex) => todo!(),
+            Value::GridEntry(grid_entry) => todo!(),
+            Value::Image(image) => todo!(),
+            Value::ObjectFit(object_fit) => todo!(),
+            Value::VerticalAlignment(vertical_alignment) => todo!(),
+            Value::HorizontalAlignment(horizontal_alignment) => todo!(),
+            Value::TextAlign(text_align) => todo!(),
+            Value::Font(font) => todo!(),
+            Value::Dict(hash_map) => todo!(),
+            Value::UserFunction(user_function_value) => todo!(),
+            Value::CustomElement(custom_element) => todo!(),
+            Value::Thickness(thickness) => todo!(),
+            Value::Array(values) => todo!(),
+            Value::Filter(filter) => todo!(),
+            Value::Animation(animation) => todo!(),
+            Value::TextStyling(rw_lock) => todo!(),
+            Value::Element(element) => todo!(),
+            Value::Position(position) => todo!(),
+            Value::Module(module) => todo!(),
+        }
+    }
+
     pub fn as_mut_base_element(&self) -> slides_rs_core::ElementRefMut {
         match self {
             Value::Label(label) => slides_rs_core::ElementRefMut::Label(label.clone()),

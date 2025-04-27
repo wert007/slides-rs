@@ -28,6 +28,7 @@ pub struct TypeId(usize);
 impl TypeId {
     pub const ERROR: TypeId = TypeId(0);
     pub const VOID: TypeId = TypeId(1);
+    pub const FLOAT: TypeId = TypeId(2);
     pub const INTEGER: TypeId = TypeId(3);
     pub const BOOL: TypeId = TypeId(4);
     pub const STRING: TypeId = TypeId(5);
@@ -36,6 +37,7 @@ impl TypeId {
     pub const STYLING: TypeId = TypeId(8);
     pub const BACKGROUND: TypeId = TypeId(9);
     pub const COLOR: TypeId = TypeId(10);
+    pub const STYLE_UNIT: TypeId = TypeId(16);
     pub const ELEMENT: TypeId = TypeId(18);
     pub const ANIMATION: TypeId = TypeId(27);
 }
@@ -50,6 +52,7 @@ impl TypeInterner {
         let mut result = Self { types };
         debug_assert_eq!(result.get_or_intern(Type::Error), TypeId::ERROR);
         debug_assert_eq!(result.get_or_intern(Type::Void), TypeId::VOID);
+        debug_assert_eq!(result.get_or_intern(Type::Float), TypeId::FLOAT);
         debug_assert_eq!(result.get_or_intern(Type::Integer), TypeId::INTEGER);
         debug_assert_eq!(result.get_or_intern(Type::Bool), TypeId::BOOL);
         debug_assert_eq!(result.get_or_intern(Type::String), TypeId::STRING);
@@ -58,6 +61,7 @@ impl TypeInterner {
         debug_assert_eq!(result.get_or_intern(Type::Styling), TypeId::STYLING);
         debug_assert_eq!(result.get_or_intern(Type::Background), TypeId::BACKGROUND);
         debug_assert_eq!(result.get_or_intern(Type::Color), TypeId::COLOR);
+        debug_assert_eq!(result.get_or_intern(Type::StyleUnit), TypeId::STYLE_UNIT);
         debug_assert_eq!(result.get_or_intern(Type::Element), TypeId::ELEMENT);
         debug_assert_eq!(result.get_or_intern(Type::Animation), TypeId::ANIMATION);
         result

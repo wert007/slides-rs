@@ -534,14 +534,34 @@ pub enum BoundBinaryOperator {
 impl BoundBinaryOperator {
     fn type_(&self, lhs: TypeId, rhs: TypeId) -> TypeId {
         match (lhs, rhs) {
+            (TypeId::ERROR, _) | (_, TypeId::ERROR) => TypeId::ERROR,
             (TypeId::INTEGER, TypeId::INTEGER) => TypeId::INTEGER,
-            _ => TypeId::ERROR,
+            (TypeId::FLOAT, TypeId::INTEGER)
+            | (TypeId::INTEGER, TypeId::FLOAT)
+            | (TypeId::FLOAT, TypeId::FLOAT) => TypeId::FLOAT,
+            (TypeId::STRING, _) | (_, TypeId::STRING) => TypeId::STRING,
+            (TypeId::DICT, TypeId::DICT) => TypeId::DICT,
+            (TypeId::FLOAT, TypeId::STYLE_UNIT) | (TypeId::STYLE_UNIT, TypeId::FLOAT) => {
+                TypeId::STYLE_UNIT
+            }
+            _ => todo!("{lhs:?} {rhs:?}"),
+            // _ => TypeId::ERROR,
         }
     }
 
     pub(crate) fn execute(&self, lhs: Value, rhs: Value) -> Value {
         match self {
-            BoundBinaryOperator::Addition => (lhs.into_integer() + rhs.into_integer()).into(),
+            BoundBinaryOperator::Addition => match (lhs, rhs) {
+                (Value::Integer(lhs), Value::Integer(rhs)) => (lhs + rhs).into(),
+                (Value::Float(lhs), Value::Float(rhs)) => (lhs + rhs).into(),
+                (Value::Integer(lhs), Value::Float(rhs)) => ((lhs as f64) + rhs).into(),
+                (Value::Float(lhs), Value::Integer(rhs)) => (lhs + (rhs as f64)).into(),
+                (Value::StyleUnit(lhs), Value::StyleUnit(rhs)) => (lhs + rhs).into(),
+                (Value::String(lhs), Value::String(rhs)) => ([lhs, rhs].join("")).into(),
+                (Value::String(lhs), rhs) => ([lhs, rhs.convert_to_string()].join("")).into(),
+                (lhs, Value::String(rhs)) => ([lhs.convert_to_string(), rhs].join("")).into(),
+                _ => unreachable!(),
+            },
             BoundBinaryOperator::Subtraction => (lhs.into_integer() - rhs.into_integer()).into(),
             BoundBinaryOperator::Multiplication => match (lhs, rhs) {
                 (Value::Integer(lhs), Value::Integer(rhs)) => (lhs * rhs).into(),
@@ -977,16 +997,19 @@ fn bind_binary(
     binder.push_expected_type(lhs.type_);
     let rhs = bind_node(*binary.rhs, binder, context);
     binder.drop_expected_type();
-    let operator = bind_binary_operator(binary.operator, binder, context);
+    let (lhs, operator, rhs) = bind_binary_operator(lhs, binary.operator, rhs, binder, context);
     BoundNode::binary(location, lhs, operator, rhs)
 }
 
 fn bind_binary_operator(
+    lhs: BoundNode,
     operator: Token,
-    _binder: &mut Binder,
+    rhs: BoundNode,
+    binder: &mut Binder,
     context: &mut Context,
-) -> BoundBinaryOperator {
-    match operator.text(&context.loaded_files) {
+) -> (BoundNode, BoundBinaryOperator, BoundNode) {
+    let location = Location::combine(lhs.location, rhs.location);
+    let operator = match operator.text(&context.loaded_files) {
         "+" => BoundBinaryOperator::Addition,
         "-" => BoundBinaryOperator::Subtraction,
         "*" => BoundBinaryOperator::Multiplication,
@@ -994,7 +1017,63 @@ fn bind_binary_operator(
         "&" => BoundBinaryOperator::And,
         "|" => BoundBinaryOperator::Or,
         unknown => BoundBinaryOperator::Unknown(context.string_interner.create_or_get(unknown)),
-    }
+    };
+    let [lhs_type, rhs_type] = context.type_interner.resolve_types([lhs.type_, rhs.type_]);
+    let (lhs_type, rhs_type) = match (lhs_type, operator, rhs_type) {
+        (Type::Error, _, _) | (_, _, Type::Error) => (TypeId::ERROR, TypeId::ERROR),
+        (Type::Integer, BoundBinaryOperator::Addition, Type::Integer) => {
+            (TypeId::INTEGER, TypeId::INTEGER)
+        }
+        (Type::Float, BoundBinaryOperator::Addition, Type::Float) => (TypeId::FLOAT, TypeId::FLOAT),
+        (Type::String, BoundBinaryOperator::Addition, _) => (TypeId::STRING, TypeId::STRING),
+        (_, BoundBinaryOperator::Addition, Type::String) => (TypeId::STRING, TypeId::STRING),
+        (Type::Integer, BoundBinaryOperator::Subtraction, Type::Integer) => {
+            (TypeId::INTEGER, TypeId::INTEGER)
+        }
+        (Type::Float, BoundBinaryOperator::Subtraction, Type::Float) => {
+            (TypeId::FLOAT, TypeId::FLOAT)
+        }
+        (Type::Integer, BoundBinaryOperator::Multiplication, Type::Integer) => {
+            (TypeId::INTEGER, TypeId::INTEGER)
+        }
+        (
+            Type::Float,
+            BoundBinaryOperator::Multiplication | BoundBinaryOperator::Division,
+            Type::StyleUnit,
+        ) => (TypeId::FLOAT, TypeId::STYLE_UNIT),
+        (
+            Type::StyleUnit,
+            BoundBinaryOperator::Multiplication | BoundBinaryOperator::Division,
+            Type::Float,
+        ) => (TypeId::STYLE_UNIT, TypeId::FLOAT),
+        (Type::Float, BoundBinaryOperator::Multiplication, Type::Float) => {
+            (TypeId::FLOAT, TypeId::FLOAT)
+        }
+        (Type::Integer, BoundBinaryOperator::Division, Type::Integer) => {
+            (TypeId::INTEGER, TypeId::INTEGER)
+        }
+        (Type::Float, BoundBinaryOperator::Division, Type::Float) => (TypeId::FLOAT, TypeId::FLOAT),
+        (Type::DynamicDict, BoundBinaryOperator::Or, Type::DynamicDict) => {
+            (TypeId::DICT, TypeId::DICT)
+        }
+        (Type::TypedDict(_), BoundBinaryOperator::Or, Type::DynamicDict)
+        | (Type::DynamicDict, BoundBinaryOperator::Or, Type::TypedDict(_)) => {
+            (TypeId::DICT, TypeId::DICT)
+        }
+        (Type::TypedDict(_), BoundBinaryOperator::Or, Type::TypedDict(_)) => {
+            // TODO: We should not loose type information here
+            (TypeId::DICT, TypeId::DICT)
+        }
+        _ => {
+            context
+                .diagnostics
+                .report_invalid_binary_operation(lhs_type, operator, rhs_type, location);
+            (TypeId::ERROR, TypeId::ERROR)
+        }
+    };
+    let lhs = bind_conversion(lhs, lhs_type, ConversionKind::Implicit, binder, context);
+    let rhs = bind_conversion(rhs, rhs_type, ConversionKind::Implicit, binder, context);
+    (lhs, operator, rhs)
 }
 
 fn bind_array(
