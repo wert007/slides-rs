@@ -28,7 +28,6 @@ impl Arrows {
         allocator: &mut modules::ValueAllocator,
         from: u32,
         to: u32,
-        parent: Option<u32>,
         namespace: &str,
         options: HashMap<String, ValueIndex>,
     ) -> Result<(), modules::Error> {
@@ -89,10 +88,7 @@ impl Arrows {
                 }
             }
         }
-        let parent_option = match parent {
-            Some(parent) => format!("getElementById({parent})"),
-            None => format!("document.getElementById(\"{namespace}\")"),
-        };
+        let parent_option = format!("document.getElementById(\"{namespace}\")");
         writeln!(
             text,
             "
@@ -146,22 +142,17 @@ impl GuestModule for Arrows {
                 let namespace_from = allocator.get(args[0]).try_into_element()?.namespace;
                 let to = allocator.get(args[1]).try_into_element()?.id;
                 let namespace_to = allocator.get(args[1]).try_into_element()?.namespace;
-                let namespace = if namespace_to.len() < namespace_from.len() {
-                    namespace_to
-                } else {
-                    namespace_from
-                };
-                let parent = allocator.get(args[1]).try_into_element()?.parent;
+                let namespace = namespace_from
+                    .split_once('-')
+                    .map(|(n, _)| n)
+                    .unwrap_or(&namespace_from);
+                if !namespace_to.starts_with(namespace) {
+                    return Err(modules::Error::InternalError(format!(
+                        "Elements have different namespaces: {namespace_from} and {namespace_to}"
+                    )));
+                }
                 let options = allocator.get(args[2]).try_into_dict()?;
-                self.arrow(
-                    slides,
-                    &mut allocator,
-                    from,
-                    to,
-                    parent,
-                    &namespace,
-                    options,
-                )?;
+                self.arrow(slides, &mut allocator, from, to, &namespace, options)?;
                 allocator.allocate(&Value::Void)
                 // allocator.
             }

@@ -521,11 +521,13 @@ slide deadlock_cyclic_wait:
     let left = stackh([ icon("amanda"), icon("lift") ]) {
         halign: HAlign.Stretch,
         valign: VAlign.Center,
+        height: 0.30sh,
         margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
     };
     let right = stackh([ icon("light"), icon("bobbl") ]) {
         halign: HAlign.Stretch,
         valign: VAlign.Center,
+        height: 0.30sh,
         margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
     };
     arrows.arrow(left.children[0], right.children[0], { color: c"#595959", middle_label: "fordert an", start_socket: "top", end_socket: "top" });

@@ -17,9 +17,9 @@
         getElementById(257),
         getElementById(261),
         {
-            parent: getElementById(264),
-            color: "rgb(89, 89, 89, 1)",
-path: "grid",
+            parent: document.getElementById("deadlocks_problem"),
+            path: "grid",
+color: "rgb(89, 89, 89, 1)",
 startSocket: "bottom",
 
         },
@@ -32,10 +32,10 @@ startSocket: "bottom",
         getElementById(257),
         getElementById(263),
         {
-            parent: getElementById(264),
-            color: "rgb(89, 89, 89, 1)",
-startSocket: "top",
+            parent: document.getElementById("deadlocks_problem"),
+            startSocket: "top",
 path: "grid",
+color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -47,10 +47,10 @@ path: "grid",
         getElementById(259),
         getElementById(261),
         {
-            parent: getElementById(264),
+            parent: document.getElementById("deadlocks_problem"),
             path: "grid",
-color: "rgb(89, 89, 89, 1)",
 startSocket: "bottom",
+color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -62,7 +62,7 @@ startSocket: "bottom",
         getElementById(259),
         getElementById(263),
         {
-            parent: getElementById(264),
+            parent: document.getElementById("deadlocks_problem"),
             color: "rgb(89, 89, 89, 1)",
 path: "grid",
 startSocket: "top",
@@ -78,8 +78,8 @@ startSocket: "top",
         getElementById(319),
         {
             parent: document.getElementById("deadlock_additional_resources"),
-            color: "rgb(89, 89, 89, 1)",
-middleLabel: "fordert zusätzlich an",
+            middleLabel: "fordert zusätzlich an",
+color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -91,7 +91,7 @@ middleLabel: "fordert zusätzlich an",
         getElementById(325),
         getElementById(329),
         {
-            parent: getElementById(334),
+            parent: document.getElementById("deadlock_no_release"),
             middleLabel: "gibt zurück",
 color: "rgb(89, 89, 89, 1)",
 
@@ -105,7 +105,7 @@ color: "rgb(89, 89, 89, 1)",
         getElementById(327),
         getElementById(331),
         {
-            parent: getElementById(337),
+            parent: document.getElementById("deadlock_no_release"),
             color: "rgb(89, 89, 89, 1)",
 middleLabel: "wird entzogen",
 
@@ -117,13 +117,13 @@ middleLabel: "wird entzogen",
 
     new LeaderLine(
         getElementById(345),
-        getElementById(349),
+        getElementById(350),
         {
-            parent: getElementById(353),
-            middleLabel: "fordert an",
+            parent: document.getElementById("deadlock_cyclic_wait"),
+            color: "rgb(89, 89, 89, 1)",
 startSocket: "top",
+middleLabel: "fordert an",
 endSocket: "top",
-color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -132,14 +132,14 @@ color: "rgb(89, 89, 89, 1)",
 <!-- From arrows arrow function -->
 
     new LeaderLine(
+        getElementById(352),
         getElementById(347),
-        getElementById(351),
         {
-            parent: getElementById(352),
-            startSocket: "bottom",
+            parent: document.getElementById("deadlock_cyclic_wait"),
+            color: "rgb(89, 89, 89, 1)",
 middleLabel: "fordert an",
-color: "rgb(89, 89, 89, 1)",
 endSocket: "bottom",
+startSocket: "bottom",
 
         },
     );
@@ -913,20 +913,20 @@ Definition eines Deadlocks</h1>
 <p class="label-text">Zyklische Wartebedingung</p>
 </ol>
 </div>
-<div id="deadlock_cyclic_wait-left" class="flex " data-element-id="352">
+<div id="deadlock_cyclic_wait-left" class="flex " data-element-id="348">
 <div id="deadlock_cyclic_wait-left--345" class="custom-element Icon  " data-element-id="345">
 <img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="344"/>
 </div>
-<div id="deadlock_cyclic_wait-left--351" class="custom-element Icon  " data-element-id="351">
-<img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="350"/>
+<div id="deadlock_cyclic_wait-left--347" class="custom-element Icon  " data-element-id="347">
+<img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="346"/>
 </div>
 </div>
 <div id="deadlock_cyclic_wait-right" class="flex " data-element-id="353">
-<div id="deadlock_cyclic_wait-right--349" class="custom-element Icon  " data-element-id="349">
-<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/light.png" data-element-id="348"/>
+<div id="deadlock_cyclic_wait-right--350" class="custom-element Icon  " data-element-id="350">
+<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/light.png" data-element-id="349"/>
 </div>
-<div id="deadlock_cyclic_wait-right--347" class="custom-element Icon  " data-element-id="347">
-<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="346"/>
+<div id="deadlock_cyclic_wait-right--352" class="custom-element Icon  " data-element-id="352">
+<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="351"/>
 </div>
 </div>
 </section>

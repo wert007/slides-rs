@@ -2010,6 +2010,7 @@ ol {
     left: calc(0.1 * var(--slide-width));
     right: calc(0.6 * var(--slide-width));
     width: calc(+ 100%+ (-0.7 * var(--slide-width)));
+    height: calc(0.3 * var(--slide-height));
     transform: translate(0%, -50%);
     z-index: 1;
 }
@@ -2034,6 +2035,7 @@ ol {
     left: calc(0.6 * var(--slide-width));
     right: calc(0.1 * var(--slide-width));
     width: calc(+ 100%+ (-0.7 * var(--slide-width)));
+    height: calc(0.3 * var(--slide-height));
     transform: translate(0%, -50%);
     z-index: 2;
 }
