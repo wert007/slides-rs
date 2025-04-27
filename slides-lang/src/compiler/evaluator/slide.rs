@@ -439,25 +439,35 @@ fn evaluate_member_access(
             _ => unreachable!("Type {enum_type:?} is not an enum!"),
         };
         Value { value, location }
-    } else if let Some((name, members)) = context
-        .type_interner
-        .resolve(member_access.base.type_)
-        .try_as_custom_element_ref()
-    {
-        let base = evaluate_expression(*member_access.base, evaluator, context)
-            .value
-            .into_custom_element();
-        let member = context.string_interner.resolve(member_access.member);
-        let value = base
-            .read()
-            .unwrap()
-            .element_by_name(member)
-            .expect("member to be element")
-            .clone()
-            .into();
-        Value { value, location }
     } else {
-        todo!()
+        let base = evaluate_expression(*member_access.base, evaluator, context);
+        let value = match base.value {
+            value::Value::CustomElement(base) => {
+                let member = context.string_interner.resolve(member_access.member);
+                base.read()
+                    .unwrap()
+                    .element_by_name(member)
+                    .expect("member to be element")
+                    .clone()
+                    .into()
+            }
+            value::Value::Flex(base) => {
+                let member = context.string_interner.resolve(member_access.member);
+                match member {
+                    "children" => value::Value::Array(
+                        base.read()
+                            .unwrap()
+                            .children()
+                            .into_iter()
+                            .map(|e| e.clone().into())
+                            .collect(),
+                    ),
+                    _ => unreachable!("Member {member} not found!"),
+                }
+            }
+            _ => todo!(),
+        };
+        Value { value, location }
     }
 }
 

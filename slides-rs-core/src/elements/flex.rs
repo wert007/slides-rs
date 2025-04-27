@@ -33,6 +33,10 @@ impl Flex {
         }
     }
 
+    pub fn children(&self) -> &[Element] {
+        &self.children
+    }
+
     pub fn styling_mut(&mut self) -> &mut ElementStyling<FlexStyling> {
         &mut self.styling
     }

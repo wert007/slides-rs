@@ -74,7 +74,7 @@ macro_rules! default_element {
     };
 }
 
-pub const MEMBERS: [MemberDeclarations; 15] = [
+pub const MEMBERS: [MemberDeclarations; 16] = [
     MemberDeclarations::rename::<TextStyling>("TextStyling"),
     MemberDeclarations::rename::<LabelStyling>("Label"),
     default_element!("Label"),
@@ -98,6 +98,11 @@ pub const MEMBERS: [MemberDeclarations; 15] = [
     MemberDeclarations::rename::<GridEntry>("GridEntry"),
     MemberDeclarations::rename::<FlexStyling>("Flex"),
     default_element!("Flex"),
+    MemberDeclarations {
+        name: "Flex",
+        members_names: &["children"],
+        members_rust_types: &["Array:Element"],
+    },
 ];
 
 pub(crate) fn normalize_type_name(mut name: &str) -> &str {

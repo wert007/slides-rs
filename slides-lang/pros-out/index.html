@@ -18,9 +18,9 @@
         getElementById(261),
         {
             parent: getElementById(264),
-            startSocket: "bottom",
+            color: "rgb(89, 89, 89, 1)",
 path: "grid",
-color: "rgb(89, 89, 89, 1)",
+startSocket: "bottom",
 
         },
     );
@@ -33,9 +33,9 @@ color: "rgb(89, 89, 89, 1)",
         getElementById(263),
         {
             parent: getElementById(264),
-            startSocket: "top",
+            path: "grid",
 color: "rgb(89, 89, 89, 1)",
-path: "grid",
+startSocket: "top",
 
         },
     );
@@ -48,9 +48,9 @@ path: "grid",
         getElementById(261),
         {
             parent: getElementById(264),
-            path: "grid",
-startSocket: "bottom",
+            startSocket: "bottom",
 color: "rgb(89, 89, 89, 1)",
+path: "grid",
 
         },
     );
@@ -64,8 +64,82 @@ color: "rgb(89, 89, 89, 1)",
         {
             parent: getElementById(264),
             path: "grid",
-startSocket: "top",
 color: "rgb(89, 89, 89, 1)",
+startSocket: "top",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    new LeaderLine(
+        getElementById(317),
+        getElementById(319),
+        {
+            parent: document.getElementById("deadlock_additional_resources"),
+            color: "rgb(89, 89, 89, 1)",
+middleLabel: "fordert zusätzlich an",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    new LeaderLine(
+        getElementById(325),
+        getElementById(329),
+        {
+            parent: getElementById(334),
+            middleLabel: "gibt zurück",
+color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    new LeaderLine(
+        getElementById(327),
+        getElementById(331),
+        {
+            parent: getElementById(337),
+            middleLabel: "wird entzogen",
+color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    new LeaderLine(
+        getElementById(345),
+        getElementById(349),
+        {
+            parent: getElementById(353),
+            color: "rgb(89, 89, 89, 1)",
+startSocket: "top",
+endSocket: "top",
+middleLabel: "fordert an",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    new LeaderLine(
+        getElementById(347),
+        getElementById(351),
+        {
+            parent: getElementById(352),
+            middleLabel: "fordert an",
+color: "rgb(89, 89, 89, 1)",
+startSocket: "bottom",
+endSocket: "bottom",
 
         },
     );
@@ -652,6 +726,207 @@ Deadlocks: Grundproblem</h1>
 </div>
 <div id="deadlocks_problem-base-lift" class="custom-element Icon  " data-element-id="263">
 <img id="deadlocks_problem-base-lift-icon" class="image  " src="./pros-assets/lift.png" data-element-id="262"/>
+</div>
+</div>
+<div id="deadlocks_problem-wait_amanda" class="custom-element Icon  " data-element-id="266">
+<img id="deadlocks_problem-wait_amanda-icon" class="image  " src="./pros-assets/wait.png" data-element-id="265"/>
+</div>
+<div id="deadlocks_problem-wait_bobbl" class="custom-element Icon  " data-element-id="268">
+<img id="deadlocks_problem-wait_bobbl-icon" class="image  " src="./pros-assets/wait.png" data-element-id="267"/>
+</div>
+</section>
+<section id="deadlock_definition" class="slide" data-step-count=0>
+<div id="deadlock_definition-page_number" class="label  " data-element-id="269">
+<p class="label-text">13</p>
+</div>
+<div id="deadlock_definition-content" class="label  " data-element-id="271">
+<h1 class="label-header">
+Definition eines Deadlocks</h1>
+<p class="label-text">Benötigte Bedingungen:</p>
+<ol class="label-text">
+  <li>
+<p class="label-text">Bedingung des wechselseitigen Ausschlusses</p>
+  <li>
+<p class="label-text">Belegungs- und Wartebedingung</p>
+  <li>
+<p class="label-text">Ununterbrechbarkeitsbedingung</p>
+  <li>
+<p class="label-text">Zyklische Wartebedingung</p>
+</ol>
+</div>
+</section>
+<section id="deadlock_unique_access" class="slide" data-step-count=0>
+<div id="deadlock_unique_access-page_number" class="label  " data-element-id="272">
+<p class="label-text">14</p>
+</div>
+<div id="deadlock_unique_access-title" class="label  " data-element-id="274">
+<h1 class="label-header">
+Definition eines Deadlocks</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Bedingung des wechselseitigen Ausschlusses</p>
+</ol>
+</div>
+<div id="deadlock_unique_access-seperator" class="custom-element Empty  " data-element-id="275">
+</div>
+<div id="deadlock_unique_access-left" class="custom-element DeadlockUniqueAccessYes  " data-element-id="295">
+<div id="deadlock_unique_access-left-content" class="flex " data-element-id="294">
+<div id="deadlock_unique_access-left-content-label-276" class="label  " data-element-id="276">
+<p class="label-text">Möglich</p>
+</div>
+<div id="deadlock_unique_access-left-content-flex-284" class="flex " data-element-id="284">
+<div id="deadlock_unique_access-left-content-flex-284--278" class="custom-element Icon  " data-element-id="278">
+<img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="277"/>
+</div>
+<div id="deadlock_unique_access-left-content-flex-284--279" class="custom-element Empty  " data-element-id="279">
+</div>
+<div id="deadlock_unique_access-left-content-flex-284--281" class="custom-element Icon  " data-element-id="281">
+<img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/light.png" data-element-id="280"/>
+</div>
+<div id="deadlock_unique_access-left-content-flex-284--283" class="custom-element Icon  " data-element-id="283">
+<img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="282"/>
+</div>
+</div>
+<div id="deadlock_unique_access-left-content-label-285" class="label  " data-element-id="285">
+<p class="label-text">oder</p>
+</div>
+<div id="deadlock_unique_access-left-content-flex-293" class="flex " data-element-id="293">
+<div id="deadlock_unique_access-left-content-flex-293--287" class="custom-element Icon  " data-element-id="287">
+<img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="286"/>
+</div>
+<div id="deadlock_unique_access-left-content-flex-293--289" class="custom-element Icon  " data-element-id="289">
+<img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/light.png" data-element-id="288"/>
+</div>
+<div id="deadlock_unique_access-left-content-flex-293--290" class="custom-element Empty  " data-element-id="290">
+</div>
+<div id="deadlock_unique_access-left-content-flex-293--292" class="custom-element Icon  " data-element-id="292">
+<img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="291"/>
+</div>
+</div>
+</div>
+</div>
+<div id="deadlock_unique_access-right" class="custom-element DeadlockUniqueAccessNo  " data-element-id="308">
+<div id="deadlock_unique_access-right-content" class="flex " data-element-id="307">
+<div id="deadlock_unique_access-right-content-label-296" class="label  " data-element-id="296">
+<p class="label-text">Nicht möglich</p>
+</div>
+<div id="deadlock_unique_access-right-content--306" class="custom-element Crossed  " data-element-id="306">
+<div id="deadlock_unique_access-right-content--inner" class="flex " data-element-id="303">
+<div id="deadlock_unique_access-right-content--inner--298" class="custom-element Icon  " data-element-id="298">
+<img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="297"/>
+</div>
+<div id="deadlock_unique_access-right-content--inner--300" class="custom-element Icon  " data-element-id="300">
+<img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/light.png" data-element-id="299"/>
+</div>
+<div id="deadlock_unique_access-right-content--inner--302" class="custom-element Icon  " data-element-id="302">
+<img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="301"/>
+</div>
+</div>
+<div id="deadlock_unique_access-right-content--line1" class="custom-element Empty  " data-element-id="304">
+</div>
+<div id="deadlock_unique_access-right-content--line2" class="custom-element Empty  " data-element-id="305">
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="deadlock_additional_resources" class="slide" data-step-count=0>
+<div id="deadlock_additional_resources-page_number" class="label  " data-element-id="309">
+<p class="label-text">15</p>
+</div>
+<div id="deadlock_additional_resources-title" class="label  " data-element-id="311">
+<h1 class="label-header">
+Definition eines Deadlocks</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Belegungs- und Wartebedingung</p>
+</ol>
+</div>
+<div id="deadlock_additional_resources-left" class="custom-element TwoIcons  " data-element-id="317">
+<div id="deadlock_additional_resources-left-body" class="flex " data-element-id="316">
+<div id="deadlock_additional_resources-left-body--313" class="custom-element Icon  " data-element-id="313">
+<img id="deadlock_additional_resources-left-body--icon" class="image  " src="./pros-assets/lift.png" data-element-id="312"/>
+</div>
+<div id="deadlock_additional_resources-left-body--315" class="custom-element Icon  " data-element-id="315">
+<img id="deadlock_additional_resources-left-body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="314"/>
+</div>
+</div>
+</div>
+<div id="deadlock_additional_resources-right" class="custom-element Icon  " data-element-id="319">
+<img id="deadlock_additional_resources-right-icon" class="image  " src="./pros-assets/light.png" data-element-id="318"/>
+</div>
+</section>
+<section id="deadlock_no_release" class="slide" data-step-count=0>
+<div id="deadlock_no_release-page_number" class="label  " data-element-id="320">
+<p class="label-text">16</p>
+</div>
+<div id="deadlock_no_release-title" class="label  " data-element-id="322">
+<h1 class="label-header">
+Definition eines Deadlocks</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Ununterbrechbarkeitsbedingung</p>
+</ol>
+</div>
+<div id="deadlock_no_release-seperator" class="custom-element Empty  " data-element-id="323">
+</div>
+<div id="deadlock_no_release-left" class="flex " data-element-id="334">
+<div id="deadlock_no_release-left--325" class="custom-element Icon  " data-element-id="325">
+<img id="deadlock_no_release-left--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="324"/>
+</div>
+<div id="deadlock_no_release-left--332" class="custom-element Empty  " data-element-id="332">
+</div>
+<div id="deadlock_no_release-left--333" class="custom-element Empty  " data-element-id="333">
+</div>
+<div id="deadlock_no_release-left--329" class="custom-element Icon  " data-element-id="329">
+<img id="deadlock_no_release-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="328"/>
+</div>
+</div>
+<div id="deadlock_no_release-right" class="custom-element Crossed  " data-element-id="340">
+<div id="deadlock_no_release-right-inner" class="flex " data-element-id="337">
+<div id="deadlock_no_release-right-inner--327" class="custom-element Icon  " data-element-id="327">
+<img id="deadlock_no_release-right-inner--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="326"/>
+</div>
+<div id="deadlock_no_release-right-inner--335" class="custom-element Empty  " data-element-id="335">
+</div>
+<div id="deadlock_no_release-right-inner--336" class="custom-element Empty  " data-element-id="336">
+</div>
+<div id="deadlock_no_release-right-inner--331" class="custom-element Icon  " data-element-id="331">
+<img id="deadlock_no_release-right-inner--icon" class="image  " src="./pros-assets/lift.png" data-element-id="330"/>
+</div>
+</div>
+<div id="deadlock_no_release-right-line1" class="custom-element Empty  " data-element-id="338">
+</div>
+<div id="deadlock_no_release-right-line2" class="custom-element Empty  " data-element-id="339">
+</div>
+</div>
+</section>
+<section id="deadlock_cyclic_wait" class="slide" data-step-count=0>
+<div id="deadlock_cyclic_wait-page_number" class="label  " data-element-id="341">
+<p class="label-text">17</p>
+</div>
+<div id="deadlock_cyclic_wait-title" class="label  " data-element-id="343">
+<h1 class="label-header">
+Definition eines Deadlocks</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Zyklische Wartebedingung</p>
+</ol>
+</div>
+<div id="deadlock_cyclic_wait-left" class="flex " data-element-id="352">
+<div id="deadlock_cyclic_wait-left--345" class="custom-element Icon  " data-element-id="345">
+<img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="344"/>
+</div>
+<div id="deadlock_cyclic_wait-left--351" class="custom-element Icon  " data-element-id="351">
+<img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="350"/>
+</div>
+</div>
+<div id="deadlock_cyclic_wait-right" class="flex " data-element-id="353">
+<div id="deadlock_cyclic_wait-right--349" class="custom-element Icon  " data-element-id="349">
+<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/light.png" data-element-id="348"/>
+</div>
+<div id="deadlock_cyclic_wait-right--347" class="custom-element Icon  " data-element-id="347">
+<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="346"/>
 </div>
 </div>
 </section>
