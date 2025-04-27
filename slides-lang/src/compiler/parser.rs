@@ -90,6 +90,14 @@ pub struct Array {
 }
 
 #[derive(Debug, Clone)]
+pub struct ArrayAccess {
+    pub base: Box<SyntaxNode>,
+    pub lbracket: Token,
+    pub index: Box<SyntaxNode>,
+    pub rbracket: Token,
+}
+
+#[derive(Debug, Clone)]
 pub struct InferredMember {
     pub period: Token,
     pub member: Token,
@@ -166,6 +174,7 @@ pub enum SyntaxNodeKind {
     DictEntry(DictEntry),
     Dict(Dict),
     Array(Array),
+    ArrayAccess(ArrayAccess),
     InferredMember(InferredMember),
     PostInitialization(PostInitialization),
     Parameter(Parameter),
@@ -508,6 +517,24 @@ impl SyntaxNode {
             }),
         }
     }
+
+    fn array_access(
+        base: SyntaxNode,
+        lbracket: Token,
+        index: SyntaxNode,
+        rbracket: Token,
+    ) -> SyntaxNode {
+        let location = Location::combine(base.location, rbracket.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::ArrayAccess(ArrayAccess {
+                base: Box::new(base),
+                lbracket,
+                index: Box::new(index),
+                rbracket,
+            }),
+        }
+    }
 }
 
 pub struct Ast {
@@ -604,6 +631,12 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
                 files,
                 format!("{indent}    = "),
             );
+        }
+        SyntaxNodeKind::ArrayAccess(array_access) => {
+            println!("Array Access (Index):");
+            debug_syntax_node(&array_access.index, files, format!("{indent}    "));
+            println!("{indent}Array Access (Base):");
+            debug_syntax_node(&array_access.base, files, format!("{indent}    "));
         }
         SyntaxNodeKind::FunctionCall(function_call) => {
             println!("Function Call:");
@@ -994,7 +1027,13 @@ fn parse_function_call(parser: &mut Parser, context: &mut Context) -> SyntaxNode
                     parser.match_token(TokenKind::SingleChar(')'), &mut context.diagnostics);
                 base = SyntaxNode::function_call(base, lparen, arguments, rparen);
             }
-            TokenKind::SingleChar('[') => todo!(),
+            TokenKind::SingleChar('[') => {
+                let lbracket = parser.next_token();
+                let index = parse_expression(parser, context);
+                let rbracket =
+                    parser.match_token(TokenKind::SingleChar(']'), &mut context.diagnostics);
+                base = SyntaxNode::array_access(base, lbracket, index, rbracket);
+            }
             TokenKind::SingleChar('.') => {
                 let period = parser.next_token();
                 let member = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);

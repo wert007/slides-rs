@@ -134,6 +134,12 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 format!("{indent}    "),
             );
         }
+        BoundNodeKind::ArrayAccess(array_access) => {
+            println!("Array Access (index):",);
+            debug_bound_node(&array_access.index, context, format!("{indent}    "));
+            println!("{indent}Array Access (base):",);
+            debug_bound_node(&array_access.base, context, format!("{indent}    "));
+        }
         BoundNodeKind::FunctionCall(function_call) => {
             println!(
                 "FunctionCall: {:?}",
@@ -480,15 +486,21 @@ pub struct TemplateStatement {
     pub parameters: Vec<Parameter>,
     pub body: Vec<BoundNode>,
 }
-#[derive(Debug, Clone)]
 
+#[derive(Debug, Clone)]
+pub struct ArrayAccess {
+    pub base: Box<BoundNode>,
+    pub index: Box<BoundNode>,
+}
+
+#[derive(Debug, Clone)]
 pub struct FunctionCall {
     pub base: Box<BoundNode>,
     pub arguments: Vec<BoundNode>,
     pub function_type: FunctionType,
 }
-#[derive(Debug, Clone)]
 
+#[derive(Debug, Clone)]
 pub struct SlideStatement {
     pub name: VariableId,
     pub body: Vec<BoundNode>,
@@ -610,6 +622,7 @@ pub enum BoundNodeKind {
     ElementStatement(ElementStatement),
     TemplateStatement(TemplateStatement),
     ImportStatement(PathBuf),
+    ArrayAccess(ArrayAccess),
     FunctionCall(FunctionCall),
     VariableReference(Variable),
     Literal(Value),
@@ -903,6 +916,24 @@ impl BoundNode {
             constant_value: None,
         }
     }
+
+    fn array_access(
+        location: Location,
+        base: BoundNode,
+        index: BoundNode,
+        type_: TypeId,
+    ) -> BoundNode {
+        BoundNode {
+            base: None,
+            location,
+            kind: BoundNodeKind::ArrayAccess(ArrayAccess {
+                base: Box::new(base),
+                index: Box::new(index),
+            }),
+            type_,
+            constant_value: None,
+        }
+    }
 }
 
 fn constant_conversion(value: Value, target: TypeId, _kind: ConversionKind) -> Option<Value> {
@@ -970,6 +1001,9 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         SyntaxNodeKind::AssignmentStatement(assignment_statement) => {
             bind_assignment_statement(assignment_statement, statement.location, binder, context)
         }
+        SyntaxNodeKind::ArrayAccess(array_access) => {
+            bind_array_access(array_access, statement.location, binder, context)
+        }
         SyntaxNodeKind::FunctionCall(function_call) => {
             bind_function_call(function_call, statement.location, binder, context)
         }
@@ -985,6 +1019,33 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         SyntaxNodeKind::Binary(binary) => bind_binary(binary, statement.location, binder, context),
         unsupported => unreachable!("Not supported: {}", unsupported.as_ref()),
     }
+}
+
+fn bind_array_access(
+    array_access: parser::ArrayAccess,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    let base = bind_node(*array_access.base, binder, context);
+    binder.push_expected_type(TypeId::INTEGER);
+    let index = bind_node(*array_access.index, binder, context);
+    binder.drop_expected_type();
+    let index = bind_conversion(
+        index,
+        TypeId::INTEGER,
+        ConversionKind::Implicit,
+        binder,
+        context,
+    );
+    let base_type = context.type_interner.resolve(base.type_);
+    let Some(type_) = base_type.try_as_array_ref() else {
+        context
+            .diagnostics
+            .report_cannot_convert(&Type::Array(TypeId::ERROR), base_type, location);
+        return BoundNode::error(location);
+    };
+    BoundNode::array_access(location, base, index, *type_)
 }
 
 fn bind_binary(
