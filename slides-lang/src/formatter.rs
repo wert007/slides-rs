@@ -367,6 +367,9 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::AssignmentStatement(assignment_statement) => {
             format_assignment_statement(assignment_statement, formatter, context)
         }
+        SyntaxNodeKind::ArrayAccess(array_access) => {
+            format_array_access(array_access, formatter, context)
+        }
         SyntaxNodeKind::FunctionCall(function_call) => {
             format_function_call(function_call, formatter, context)
         }
@@ -388,6 +391,26 @@ fn format_node<W: Write + fmt::Debug>(
         }
         SyntaxNodeKind::Binary(binary) => format_binary(binary, formatter, context),
     }
+}
+
+fn format_array_access<W: Write + fmt::Debug>(
+    array_access: compiler::parser::ArrayAccess,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> std::result::Result<(), std::io::Error> {
+    format_node(*array_access.base, formatter, context)?;
+    formatter.emit_token(
+        array_access.lbracket,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    format_node(*array_access.index, formatter, context)?;
+    formatter.emit_token(
+        array_access.rbracket,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    Ok(())
 }
 
 fn format_binary<W: Write + fmt::Debug>(

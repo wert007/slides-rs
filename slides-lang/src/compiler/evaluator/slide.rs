@@ -204,6 +204,9 @@ pub(super) fn evaluate_expression(
         BoundNodeKind::Array(array) => {
             evaluate_array(array, expression.location, evaluator, context)
         }
+        BoundNodeKind::ArrayAccess(array_access) => {
+            evaluate_array_access(array_access, expression.location, evaluator, context)
+        }
         BoundNodeKind::Binary(binary) => {
             evaluate_binary(binary, expression.location, evaluator, context)
         }
@@ -216,6 +219,19 @@ pub(super) fn evaluate_expression(
         }
     }
     value
+}
+
+fn evaluate_array_access(
+    array_access: binder::ArrayAccess,
+    location: Location,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> Value {
+    let value = evaluate_expression(*array_access.base, evaluator, context);
+    let index = evaluate_expression(*array_access.index, evaluator, context);
+    let index = evaluator.ensure_unsigned(index);
+    let value = value.value.into_array()[index].clone();
+    Value { value, location }
 }
 
 fn evaluate_binary(

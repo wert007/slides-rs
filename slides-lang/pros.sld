@@ -518,20 +518,15 @@ slide deadlock_cyclic_wait:
         # Definition eines Deadlocks
          4. Zyklische Wartebedingung
     """ { halign: HAlign.Stretch, valign: VAlign.Top, };
-    let amanda = icon("amanda");
-    let bobbl = icon("bobbl");
-    let light = icon("light");
-    let lift = icon("lift");
-    let left = stackh([ amanda, lift ]) {
+    let left = stackh([ icon("amanda"), icon("lift") ]) {
         halign: HAlign.Stretch,
         valign: VAlign.Center,
         margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
     };
-    let a = left.children;
-    let right = stackh([ light, bobbl ]) {
+    let right = stackh([ icon("light"), icon("bobbl") ]) {
         halign: HAlign.Stretch,
         valign: VAlign.Center,
         margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
     };
-    arrows.arrow(amanda, light, { color: c"#595959", middle_label: "fordert an", start_socket: "top", end_socket: "top" });
-    arrows.arrow(bobbl, lift, { color: c"#595959", middle_label: "fordert an", start_socket: "bottom", end_socket: "bottom" });
+    arrows.arrow(left.children[0], right.children[0], { color: c"#595959", middle_label: "fordert an", start_socket: "top", end_socket: "top" });
+    arrows.arrow(right.children[1], left.children[1], { color: c"#595959", middle_label: "fordert an", start_socket: "bottom", end_socket: "bottom" });
