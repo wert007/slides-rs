@@ -45,13 +45,13 @@ template page_number(color: Color = c"black"):
 slide code:
     let bg =
         image_with_caption(
-            image(p"./pros-assets/code.jpg"),
+            image(p"./pros-assets/code.jpg"), 
             "Image by Christopher Kuszajewski from Pixabay");
 
 slide threads:
     let bg =
         image_with_caption(
-            image(p"./pros-assets/threads.jpg"),
+            image(p"./pros-assets/threads.jpg"), 
             "Bild von Myriams-Fotos auf Pixabay");
 
 slide frozen:
@@ -91,7 +91,7 @@ slide toc:
 slide example:
     let bg =
         image_with_caption(
-            image(p"./pros-assets/car-repair.jpg") { filter: brightness(0.4), },
+            image(p"./pros-assets/car-repair.jpg") { filter: brightness(0.4), }, 
             "Bild von emkanicepic auf Pixabay");
 
     page_number(c"white");
@@ -125,27 +125,24 @@ slide one_sided_sync:
 element icon(name: String):
     let icon = image(p'./pros-assets/{name}.png') { width: 100%, height: 100%, };
 
-element two_icons(icon1: String, icon2: String, size: StyleUnit = 30%):
+element two_icons(icon1: String, icon2: String):
     let body =
-        stackh([ icon(icon1) { width: size, }, icon(icon2) { width: size, }, ]) {
-            width: 100%,
-            height: 100%,
-        };
+        stackh([ icon(icon1), icon(icon2), ]) { width: 100%, height: 100%, };
 
 slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
     let amanda =
         stackv(
-            [
-                two_icons("amanda", "light", 50%),
-                l"Amanda hat das Licht" { text_align: TextAlign.Center, },
+            [ 
+                two_icons("amanda", "light", 50%), 
+                l"Amanda hat das Licht" { text_align: TextAlign.Center, }, 
             ]);
     let bobbl =
         stackv(
-            [
-                two_icons("wait", "bobbl", 50%),
-                l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, },
+            [ 
+                two_icons("wait", "bobbl", 50%), 
+                l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, }, 
             ]);
     let row = stackh([ amanda, bobbl ]) { height: 50%, };
     let content =
@@ -243,12 +240,12 @@ slide checking_when_requested:
     let row2 = stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) { height: 30%, };
     let row3 =
         stackh(
-            [
-                empty(),
-                empty(),
-                icon('amanda') { height: 100%, },
-                icon('light') { height: 100%, },
-                icon('bobbl') { height: 100%, },
+            [ 
+                empty(), 
+                empty(), 
+                icon('amanda') { height: 100%, }, 
+                icon('light') { height: 100%, }, 
+                icon('bobbl') { height: 100%, }, 
                 empty()
             ]) { height: 30%, };
     let content =
@@ -268,13 +265,13 @@ slide checking_when_requested_without_thread_knowledge:
     let row2 = stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) { height: 30%, };
     let row3 =
         stackh(
-            [
-                icon('amanda') { height: 100%, },
-                empty(),
-                empty(),
-                icon('light') { height: 100%, },
-                icon('bobbl') { height: 100%, },
-                empty(),
+            [ 
+                icon('amanda') { height: 100%, }, 
+                empty(), 
+                empty(), 
+                icon('light') { height: 100%, }, 
+                icon('bobbl') { height: 100%, }, 
+                empty(), 
             ]) { height: 30%, };
     let content =
         stackv([ title, row1, row2, row3 ]) {
@@ -381,154 +378,175 @@ slide deadlocks_problem:
 
 slide deadlock_definition:
     page_number();
-    let content = l"""
-        # Definition eines Deadlocks
+    let content =
+        l"""
+            # Definition eines Deadlocks
 
-        Benötigte Bedingungen:
+            Benötigte Bedingungen:
 
-        1. Bedingung des wechselseitigen Ausschlusses
-        2. Belegungs- und Wartebedingung
-        3. Ununterbrechbarkeitsbedingung
-        4. Zyklische Wartebedingung
-""";
+            1. Bedingung des wechselseitigen Ausschlusses
+            2. Belegungs- und Wartebedingung
+            3. Ununterbrechbarkeitsbedingung
+            4. Zyklische Wartebedingung
+        """;
 
 element deadlock_unique_access_yes():
-    let content = stackv([
-        l"Möglich" { text_align: TextAlign.Center, },
-        stackh([icon("amanda"), empty(), icon("light"), icon("bobbl")]) { height: 25% },
-        l"oder" { text_align: TextAlign.Center, },
-        stackh([icon("amanda"), icon("light"), empty(), icon("bobbl")]) { height: 25% },
-    ]) {
-        height: 100%,
-        width: 100%,
-    };
+    let content =
+        stackv(
+            [ 
+                l"Möglich" { text_align: TextAlign.Center, }, 
+                stackh([ icon("amanda"), empty(), icon("light"), icon("bobbl") ]) { height: 25%, }, 
+                l"oder" { text_align: TextAlign.Center, }, 
+                stackh([ icon("amanda"), icon("light"), empty(), icon("bobbl") ]) { height: 25%, }, 
+            ]) { height: 100%, width: 100%, };
 
 element crossed(inner: Element):
-    inner = inner {
-        halign: HAlign.Stretch,
-        valign: VAlign.Stretch,
-    };
-    let line1 = empty() {
-        width: 0.005sw,
-        halign: HAlign.Center,
-        valign: VAlign.Stretch,
-        // margin: {top: 0.3sh, bottom: 0.1sh},
-        rotate: 45,
-        background: c"red",
-    };
-    let line2 = empty() {
-        width: 0.005sw,
-        halign: HAlign.Center,
-        valign: VAlign.Stretch,
-        // margin: {top: 0.3sh, bottom: 0.1sh},
-        rotate: 0-45,
-        background: c"red",
-    };
+    inner = inner { halign: HAlign.Stretch, valign: VAlign.Stretch, };
+    let line1 =
+        empty() {
+            width: 0.005sw,
+            halign: HAlign.Center,
+            valign: VAlign.Stretch,
+            // margin: {top: 0.3sh, bottom: 0.1sh},
+            rotate: 45,
+            background: c"red",
+        };
+    let line2 =
+        empty() {
+            width: 0.005sw,
+            halign: HAlign.Center,
+            valign: VAlign.Stretch,
+            // margin: {top: 0.3sh, bottom: 0.1sh},
+            rotate: 0 - 45,
+            background: c"red",
+        };
 
 element deadlock_unique_access_no():
-    let content = stackv([
-        l"Nicht möglich" { text_align: TextAlign.Center, },
-        crossed(stackh([icon("amanda"), icon("light"), icon("bobbl")])),
-    ]) {
-        height: 100%,
-        width: 100%,
-    };
+    let content =
+        stackv(
+            [ 
+                l"Nicht möglich" { text_align: TextAlign.Center, }, 
+                crossed(stackh([ icon("amanda"), icon("light"), icon("bobbl") ])), 
+            ]) { height: 100%, width: 100%, };
 
 slide deadlock_unique_access:
     page_number();
-    let title = l"""
-        # Definition eines Deadlocks
-         1. Bedingung des wechselseitigen Ausschlusses
-    """ { halign: HAlign.Stretch, valign: VAlign.Top, };
-    let seperator = empty() {
-        width: 0.005sw,
-        halign: HAlign.Center,
-        valign: VAlign.Stretch,
-        margin: {top: 0.3sh, bottom: 0.1sh},
-        background: c"#78909c",
-    };
-    let left = deadlock_unique_access_yes() {
-        halign: HAlign.Stretch,
-        valign: VAlign.Stretch,
-        margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
-    };
-    let right = deadlock_unique_access_no() {
-        halign: HAlign.Stretch,
-        valign: VAlign.Stretch,
-        margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
-    };
-
+    let title =
+        l"""
+            # Definition eines Deadlocks
+             1. Bedingung des wechselseitigen Ausschlusses
+        """ { halign: HAlign.Stretch, valign: VAlign.Top, };
+    let seperator =
+        empty() {
+            width: 0.005sw,
+            halign: HAlign.Center,
+            valign: VAlign.Stretch,
+            margin: { top: 0.3sh, bottom: 0.1sh, },
+            background: c"#78909c",
+        };
+    let left =
+        deadlock_unique_access_yes() {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
+        };
+    let right =
+        deadlock_unique_access_no() {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
+        };
 
 slide deadlock_additional_resources:
     page_number();
-    let size = 0.4sh;
-    let title = l"""
-        # Definition eines Deadlocks
-         2. Belegungs- und Wartebedingung
-    """ { halign: HAlign.Stretch, valign: VAlign.Top, };
-    let left = two_icons("lift", "amanda") {
-        halign: HAlign.Left,
-        valign: VAlign.Center,
-        width: size * 2.0,
-        height: size,
-    };
-    let right = icon("light")  {
-        halign: HAlign.Right,
-        valign: VAlign.Center,
-        width: size,
-        height: size,
-    };
-    arrows.arrow(left, right, { color: c"#595959", middle_label: "fordert zusätzlich an"});
-
+    let size = 0.3sh;
+    let title =
+        l"""
+            # Definition eines Deadlocks
+             2. Belegungs- und Wartebedingung
+        """ { halign: HAlign.Stretch, valign: VAlign.Top, };
+    let left =
+        two_icons("lift", "amanda") {
+            halign: HAlign.Left,
+            valign: VAlign.Center,
+            width: size * 2.0,
+            height: size,
+        };
+    let right =
+        icon("light") {
+            halign: HAlign.Right,
+            valign: VAlign.Center,
+            width: size,
+            height: size,
+        };
+    arrows.arrow(left, right, { color: c"#595959", middle_label: "fordert zusätzlich an", });
 
 slide deadlock_no_release:
     page_number();
-    let title = l"""
-        # Definition eines Deadlocks
-        3. Ununterbrechbarkeitsbedingung
-    """ { halign: HAlign.Stretch, valign: VAlign.Top, };
-    let seperator = empty() {
-        width: 0.005sw,
-        halign: HAlign.Center,
-        valign: VAlign.Stretch,
-        margin: {top: 0.3sh, bottom: 0.1sh},
-        background: c"#78909c",
-    };
+    let title =
+        l"""
+            # Definition eines Deadlocks
+            3. Ununterbrechbarkeitsbedingung
+        """ { halign: HAlign.Stretch, valign: VAlign.Top, };
+    let seperator =
+        empty() {
+            width: 0.005sw,
+            halign: HAlign.Center,
+            valign: VAlign.Stretch,
+            margin: { top: 0.3sh, bottom: 0.1sh, },
+            background: c"#78909c",
+        };
     let left_amanda = icon("amanda");
     let right_amanda = icon("amanda");
     let left_lift = icon("lift");
     let right_lift = icon("lift");
-    let left = stackh([ left_amanda, empty(), empty(), left_lift ]) {
-        halign: HAlign.Stretch,
-        valign: VAlign.Stretch,
-        margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
-    };
-    let right = crossed(stackh([ right_amanda, empty(), empty(), right_lift ])) {
-        halign: HAlign.Stretch,
-        valign: VAlign.Stretch,
-        margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
-    };
-    arrows.arrow(left_amanda, left_lift, { color: c"#595959", middle_label: "gibt zurück" });
-    arrows.arrow(right_amanda, right_lift, { color: c"#595959", middle_label: "wird entzogen" });
-
+    let left =
+        stackh([ left_amanda, empty(), empty(), left_lift ]) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
+        };
+    let right =
+        crossed(stackh([ right_amanda, empty(), empty(), right_lift ])) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Stretch,
+            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
+        };
+    arrows.arrow(left_amanda, left_lift, { color: c"#595959", middle_label: "gibt zurück", });
+    arrows.arrow(right_amanda, right_lift, { color: c"#595959", middle_label: "wird entzogen", });
 
 slide deadlock_cyclic_wait:
     page_number();
-    let title = l"""
-        # Definition eines Deadlocks
-         4. Zyklische Wartebedingung
-    """ { halign: HAlign.Stretch, valign: VAlign.Top, };
-    let left = stackh([ icon("amanda"), icon("lift") ]) {
-        halign: HAlign.Stretch,
-        valign: VAlign.Center,
-        height: 0.30sh,
-        margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
-    };
-    let right = stackh([ icon("light"), icon("bobbl") ]) {
-        halign: HAlign.Stretch,
-        valign: VAlign.Center,
-        height: 0.30sh,
-        margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
-    };
-    arrows.arrow(left.children[0], right.children[0], { color: c"#595959", middle_label: "fordert an", start_socket: "top", end_socket: "top" });
-    arrows.arrow(right.children[1], left.children[1], { color: c"#595959", middle_label: "fordert an", start_socket: "bottom", end_socket: "bottom" });
+    let title =
+        l"""
+            # Definition eines Deadlocks
+             4. Zyklische Wartebedingung
+        """ { halign: HAlign.Stretch, valign: VAlign.Top, };
+    let left =
+        stackh([ icon("amanda"), icon("lift") ]) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Center,
+            height: 0.30sh,
+            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
+        };
+    let right =
+        stackh([ icon("light"), icon("bobbl") ]) {
+            halign: HAlign.Stretch,
+            valign: VAlign.Center,
+            height: 0.30sh,
+            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
+        };
+    arrows.arrow(
+        left.children[0], 
+        right.children[0], 
+        {   color: c"#595959", middle_label: "fordert an", start_socket: "top", end_socket: "top", });
+    arrows.arrow(
+        right.children[1], 
+        left.children[1], 
+        {
+            color: c"#595959",
+            middle_label: "fordert an",
+            start_socket: "bottom",
+            end_socket: "bottom",
+        });
+
