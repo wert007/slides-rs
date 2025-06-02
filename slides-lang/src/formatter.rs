@@ -247,6 +247,7 @@ impl<W: Write + fmt::Debug> Write for Formatter<W> {
                     .unwrap_or_default();
 
                 self.line_buffer.truncate(trunc);
+                assert_ne!(self.line_buffer.last().copied().unwrap_or_default(), b' ');
                 self.line_buffer.push(b'\n');
                 self.flush()?;
                 self.column = 0;
@@ -452,16 +453,26 @@ fn format_array<W: Write + fmt::Debug>(
     formatter.emit_token(
         array.lbracket,
         &context.loaded_files,
-        TokenConfig::TRAILING_SPACE,
+        TokenConfig::default(),
     )?;
+    if !split {
+        formatter.ensure_space()?;
+    }
     formatter.indent += 4;
-    for (expression, comma) in array.entries {
+    let entries_len = array.entries.len();
+    for (i, (expression, comma)) in array.entries.into_iter().enumerate() {
         if split {
             formatter.ensure_indented_line()?;
+        } else if i > 0 {
+            formatter.ensure_space()?;
         }
         format_node(expression, formatter, context)?;
-        if let Some(comma) = comma {
-            formatter.emit_token(comma, &context.loaded_files, TokenConfig::TRAILING_SPACE)?;
+        if split || i < entries_len - 1 {
+            if let Some(comma) = comma {
+                formatter.emit_token(comma, &context.loaded_files, TokenConfig::default())?;
+            } else {
+                write!(formatter, ",")?;
+            }
         }
     }
     formatter.indent -= 4;
@@ -677,11 +688,16 @@ fn format_dict<W: Write + fmt::Debug>(
         formatter.ensure_space()?;
     }
     formatter.indent += 4;
-    for (entry, comma) in dict.entries {
+    let entries_len = dict.entries.len();
+    for (i, (entry, comma)) in dict.entries.into_iter().enumerate() {
         format_node(entry, formatter, context)?;
-        match comma {
-            Some(it) => formatter.emit_token(it, &context.loaded_files, TokenConfig::default())?,
-            None => write!(formatter, ",")?,
+        if split || i < entries_len - 1 {
+            match comma {
+                Some(it) => {
+                    formatter.emit_token(it, &context.loaded_files, TokenConfig::default())?
+                }
+                None => write!(formatter, ",")?,
+            }
         }
         if split {
             formatter.ensure_new_line()?;
@@ -879,15 +895,22 @@ fn format_function_call<W: Write + fmt::Debug>(
     formatter.indent += 4;
     for (i, (argument, comma)) in function_call.arguments.into_iter().enumerate() {
         if split {
-            formatter.ensure_indented_line()?;
+            if i > 0
+                || formatter.available_space()
+                    < calculate_minimum_length(argument.location, &context.loaded_files)
+            {
+                formatter.ensure_indented_line()?;
+            }
+        } else if i > 0 {
+            formatter.ensure_space()?;
         }
         format_node(argument, formatter, context)?;
         if i != arguments_count - 1 {
             match comma {
                 Some(it) => {
-                    formatter.emit_token(it, &context.loaded_files, TokenConfig::TRAILING_SPACE)?
+                    formatter.emit_token(it, &context.loaded_files, TokenConfig::default())?
                 }
-                None => write!(formatter, ", ")?,
+                None => write!(formatter, ",")?,
             }
         }
     }

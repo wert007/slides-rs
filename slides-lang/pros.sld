@@ -17,10 +17,10 @@ styling default(Label):
 
 styling default(Slide):
     background = c"#f3f3f3";
-    padding = { top: 0.2sh, right: 0.1sw, bottom: 0.2sh, left: 0.1sw, };
+    padding = { top: 0.2sh, right: 0.1sw, bottom: 0.2sh, left: 0.1sw };
 
 element image_with_caption(img: Image, caption: String):
-    img = img { object_fit: ObjectFit.Cover, valign: VAlign.Stretch, halign: HAlign.Stretch, };
+    img = img { object_fit: ObjectFit.Cover, valign: VAlign.Stretch, halign: HAlign.Stretch };
     let lbl =
         label(caption) {
             valign: VAlign.Bottom,
@@ -44,14 +44,12 @@ template page_number(color: Color = c"black"):
 
 slide code:
     let bg =
-        image_with_caption(
-            image(p"./pros-assets/code.jpg"), 
+        image_with_caption(image(p"./pros-assets/code.jpg"),
             "Image by Christopher Kuszajewski from Pixabay");
 
 slide threads:
     let bg =
-        image_with_caption(
-            image(p"./pros-assets/threads.jpg"), 
+        image_with_caption(image(p"./pros-assets/threads.jpg"),
             "Bild von Myriams-Fotos auf Pixabay");
 
 slide frozen:
@@ -64,7 +62,7 @@ slide title:
             font_size: 2.5,
             valign: VAlign.Bottom,
             halign: HAlign.Stretch,
-            margin: { bottom: 0.50sh, },
+            margin: { bottom: 0.50sh },
         };
     let subtitle =
         l"## Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik" {
@@ -73,7 +71,7 @@ slide title:
             valign: VAlign.Top,
             halign: HAlign.Stretch,
             text_color: c"#595959",
-            margin: { top: 0.50sh, left: 0.15sw, right: 0.15sw, },
+            margin: { top: 0.50sh, left: 0.15sw, right: 0.15sw },
         };
 
 slide toc:
@@ -90,8 +88,7 @@ slide toc:
 
 slide example:
     let bg =
-        image_with_caption(
-            image(p"./pros-assets/car-repair.jpg") { filter: brightness(0.4), }, 
+        image_with_caption(image(p"./pros-assets/car-repair.jpg") { filter: brightness(0.4) },
             "Bild von emkanicepic auf Pixabay");
 
     page_number(c"white");
@@ -106,7 +103,7 @@ slide example:
              - Zwei Arten von Problemen
                 - Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation
                 - Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks
-        """ { text_color: c"white", };
+        """ { text_color: c"white" };
 
 slide one_sided_sync:
     page_number();
@@ -123,33 +120,32 @@ slide one_sided_sync:
         """;
 
 element icon(name: String):
-    let icon = image(p'./pros-assets/{name}.png') { width: 100%, height: 100%, };
+    let icon = image(p'./pros-assets/{name}.png') { width: 100%, height: 100% };
 
 element two_icons(icon1: String, icon2: String):
-    let body =
-        stackh([ icon(icon1), icon(icon2), ]) { width: 100%, height: 100%, };
+    let body = stackh([ icon(icon1), icon(icon2) ]) { width: 100%, height: 100% };
 
 slide base_problem:
     page_number();
     let title = l"# Einseitige Synchronisation: Grundproblem";
     let amanda =
         stackv(
-            [ 
-                two_icons("amanda", "light", 50%), 
-                l"Amanda hat das Licht" { text_align: TextAlign.Center, }, 
+            [
+                two_icons("amanda", "light", 50%),
+                l"Amanda hat das Licht" { text_align: TextAlign.Center },
             ]);
     let bobbl =
         stackv(
-            [ 
-                two_icons("wait", "bobbl", 50%), 
-                l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center, }, 
+            [
+                two_icons("wait", "bobbl", 50%),
+                l"Bobbl wartet auf das Licht" { text_align: TextAlign.Center },
             ]);
-    let row = stackh([ amanda, bobbl ]) { height: 50%, };
+    let row = stackh([ amanda, bobbl ]) { height: 50% };
     let content =
         stackv([ title, row ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh },
         };
 
 element empty():
@@ -179,7 +175,7 @@ slide continous_checking:
         stackv([ title, row1, row2, row3 ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh },
         };
 
 slide occasional_checking_1:
@@ -205,7 +201,7 @@ slide occasional_checking_1:
         stackv([ title, row1, row2, row3 ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh },
         };
 
 slide occasional_checking_2:
@@ -216,8 +212,7 @@ slide occasional_checking_2:
         stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
             height: 30%,
         };
-    let row2 =
-        stackh([ icon('amanda'), icon('light'), two_icons('wait', 'bobbl') ]) { height: 30%, };
+    let row2 = stackh([ icon('amanda'), icon('light'), two_icons('wait', 'bobbl') ]) { height: 30% };
     let row3 =
         stackh([ stackh([ icon('amanda'), empty() ]), two_icons('light', 'bobbl') ]) {
             height: 30%,
@@ -227,7 +222,7 @@ slide occasional_checking_2:
         stackv([ title, row1, row2, row3 ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh },
         };
 
 slide checking_when_requested:
@@ -237,22 +232,22 @@ slide checking_when_requested:
         stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
             height: 30%,
         };
-    let row2 = stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) { height: 30%, };
+    let row2 = stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) { height: 30% };
     let row3 =
         stackh(
-            [ 
-                empty(), 
-                empty(), 
-                icon('amanda') { height: 100%, }, 
-                icon('light') { height: 100%, }, 
-                icon('bobbl') { height: 100%, }, 
-                empty()
-            ]) { height: 30%, };
+            [
+                empty(),
+                empty(),
+                icon('amanda') { height: 100% },
+                icon('light') { height: 100% },
+                icon('bobbl') { height: 100% },
+                empty(),
+            ]) { height: 30% };
     let content =
         stackv([ title, row1, row2, row3 ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh },
         };
 
 slide checking_when_requested_without_thread_knowledge:
@@ -262,22 +257,22 @@ slide checking_when_requested_without_thread_knowledge:
         stackh([ two_icons('amanda', 'light'), two_icons('question_mark', 'bobbl') ]) {
             height: 30%,
         };
-    let row2 = stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) { height: 30%, };
+    let row2 = stackh([ two_icons('amanda', 'light'), two_icons('wait', 'bobbl') ]) { height: 30% };
     let row3 =
         stackh(
-            [ 
-                icon('amanda') { height: 100%, }, 
-                empty(), 
-                empty(), 
-                icon('light') { height: 100%, }, 
-                icon('bobbl') { height: 100%, }, 
-                empty(), 
-            ]) { height: 30%, };
+            [
+                icon('amanda') { height: 100% },
+                empty(),
+                empty(),
+                icon('light') { height: 100% },
+                icon('bobbl') { height: 100% },
+                empty(),
+            ]) { height: 30% };
     let content =
         stackv([ title, row1, row2, row3 ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh, },
+            margin: { left: 0.10sw, top: 0.20sh, right: 0.10sw, bottom: 0.20sh },
         };
 
 slide resume_one_sided:
@@ -329,7 +324,7 @@ element deadlock_icons():
             valign: VAlign.Bottom,
         };
     let lift =
-        icon('lift') { width: size * 0.5, height: size, halign: HAlign.Center, valign: VAlign.Top, };
+        icon('lift') { width: size * 0.5, height: size, halign: HAlign.Center, valign: VAlign.Top };
 
 // members = {
 //     amanda: amanda,
@@ -342,28 +337,28 @@ slide deadlocks_problem:
     let title =
         l"# Deadlocks: Grundproblem" {
             halign: HAlign.Stretch,
-            margin: { left: 0.10sw, right: 0.10sw, top: 0.10sh, bottom: 0.10sh, },
+            margin: { left: 0.10sw, right: 0.10sw, top: 0.10sh, bottom: 0.10sh },
         };
     let base =
         deadlock_icons() {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, right: 0.10sw, top: 0.40sh, bottom: 0.10sh, },
+            margin: { left: 0.10sw, right: 0.10sw, top: 0.40sh, bottom: 0.10sh },
         };
     // let position = positionInside(a, 0.0, 0.5);
     // let amanda = base.amanda;
-    let options = { color: c"#595959", path: "grid", };
-    arrows.arrow(base.amanda, base.light, options | { startSocket: "bottom", });
-    arrows.arrow(base.amanda, base.lift, options | { startSocket: "top", });
-    arrows.arrow(base.bobbl, base.light, options | { startSocket: "bottom", });
-    arrows.arrow(base.bobbl, base.lift, options | { startSocket: "top", });
+    let options = { color: c"#595959", path: "grid" };
+    arrows.arrow(base.amanda, base.light, options | { startSocket: "bottom" });
+    arrows.arrow(base.amanda, base.lift, options | { startSocket: "top" });
+    arrows.arrow(base.bobbl, base.light, options | { startSocket: "bottom" });
+    arrows.arrow(base.bobbl, base.lift, options | { startSocket: "top" });
     let wait_amanda =
         icon('wait') {
             width: 5%,
             height: 10%,
             valign: VAlign.Bottom,
             halign: HAlign.Left,
-            margin: { bottom: 0.10sh, left: 0.25sw, },
+            margin: { bottom: 0.10sh, left: 0.25sw },
             background: c"#f3f3f3",
         };
     let wait_bobbl =
@@ -372,7 +367,7 @@ slide deadlocks_problem:
             height: 10%,
             halign: HAlign.Right,
             valign: VAlign.Top,
-            margin: { top: 0.40sh, right: 0.25sw, },
+            margin: { top: 0.40sh, right: 0.25sw },
             background: c"#f3f3f3",
         };
 
@@ -393,15 +388,15 @@ slide deadlock_definition:
 element deadlock_unique_access_yes():
     let content =
         stackv(
-            [ 
-                l"Möglich" { text_align: TextAlign.Center, }, 
-                stackh([ icon("amanda"), empty(), icon("light"), icon("bobbl") ]) { height: 25%, }, 
-                l"oder" { text_align: TextAlign.Center, }, 
-                stackh([ icon("amanda"), icon("light"), empty(), icon("bobbl") ]) { height: 25%, }, 
-            ]) { height: 100%, width: 100%, };
+            [
+                l"Möglich" { text_align: TextAlign.Center },
+                stackh([ icon("amanda"), empty(), icon("light"), icon("bobbl") ]) { height: 25% },
+                l"oder" { text_align: TextAlign.Center },
+                stackh([ icon("amanda"), icon("light"), empty(), icon("bobbl") ]) { height: 25% },
+            ]) { height: 100%, width: 100% };
 
 element crossed(inner: Element):
-    inner = inner { halign: HAlign.Stretch, valign: VAlign.Stretch, };
+    inner = inner { halign: HAlign.Stretch, valign: VAlign.Stretch };
     let line1 =
         empty() {
             width: 0.005sw,
@@ -424,10 +419,10 @@ element crossed(inner: Element):
 element deadlock_unique_access_no():
     let content =
         stackv(
-            [ 
-                l"Nicht möglich" { text_align: TextAlign.Center, }, 
-                crossed(stackh([ icon("amanda"), icon("light"), icon("bobbl") ])), 
-            ]) { height: 100%, width: 100%, };
+            [
+                l"Nicht möglich" { text_align: TextAlign.Center },
+                crossed(stackh([ icon("amanda"), icon("light"), icon("bobbl") ])),
+            ]) { height: 100%, width: 100% };
 
 slide deadlock_unique_access:
     page_number();
@@ -435,26 +430,26 @@ slide deadlock_unique_access:
         l"""
             # Definition eines Deadlocks
              1. Bedingung des wechselseitigen Ausschlusses
-        """ { halign: HAlign.Stretch, valign: VAlign.Top, };
+        """ { halign: HAlign.Stretch, valign: VAlign.Top };
     let seperator =
         empty() {
             width: 0.005sw,
             halign: HAlign.Center,
             valign: VAlign.Stretch,
-            margin: { top: 0.3sh, bottom: 0.1sh, },
+            margin: { top: 0.3sh, bottom: 0.1sh },
             background: c"#78909c",
         };
     let left =
         deadlock_unique_access_yes() {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
+            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh },
         };
     let right =
         deadlock_unique_access_no() {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
+            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh },
         };
 
 slide deadlock_additional_resources:
@@ -464,7 +459,7 @@ slide deadlock_additional_resources:
         l"""
             # Definition eines Deadlocks
              2. Belegungs- und Wartebedingung
-        """ { halign: HAlign.Stretch, valign: VAlign.Top, };
+        """ { halign: HAlign.Stretch, valign: VAlign.Top };
     let left =
         two_icons("lift", "amanda") {
             halign: HAlign.Left,
@@ -473,13 +468,8 @@ slide deadlock_additional_resources:
             height: size,
         };
     let right =
-        icon("light") {
-            halign: HAlign.Right,
-            valign: VAlign.Center,
-            width: size,
-            height: size,
-        };
-    arrows.arrow(left, right, { color: c"#595959", middle_label: "fordert zusätzlich an", });
+        icon("light") { halign: HAlign.Right, valign: VAlign.Center, width: size, height: size };
+    arrows.arrow(left, right, { color: c"#595959", middle_label: "fordert zusätzlich an" });
 
 slide deadlock_no_release:
     page_number();
@@ -487,13 +477,13 @@ slide deadlock_no_release:
         l"""
             # Definition eines Deadlocks
             3. Ununterbrechbarkeitsbedingung
-        """ { halign: HAlign.Stretch, valign: VAlign.Top, };
+        """ { halign: HAlign.Stretch, valign: VAlign.Top };
     let seperator =
         empty() {
             width: 0.005sw,
             halign: HAlign.Center,
             valign: VAlign.Stretch,
-            margin: { top: 0.3sh, bottom: 0.1sh, },
+            margin: { top: 0.3sh, bottom: 0.1sh },
             background: c"#78909c",
         };
     let left_amanda = icon("amanda");
@@ -504,16 +494,16 @@ slide deadlock_no_release:
         stackh([ left_amanda, empty(), empty(), left_lift ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
+            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh },
         };
     let right =
         crossed(stackh([ right_amanda, empty(), empty(), right_lift ])) {
             halign: HAlign.Stretch,
             valign: VAlign.Stretch,
-            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
+            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh },
         };
-    arrows.arrow(left_amanda, left_lift, { color: c"#595959", middle_label: "gibt zurück", });
-    arrows.arrow(right_amanda, right_lift, { color: c"#595959", middle_label: "wird entzogen", });
+    arrows.arrow(left_amanda, left_lift, { color: c"#595959", middle_label: "gibt zurück" });
+    arrows.arrow(right_amanda, right_lift, { color: c"#595959", middle_label: "wird entzogen" });
 
 slide deadlock_cyclic_wait:
     page_number();
@@ -521,28 +511,26 @@ slide deadlock_cyclic_wait:
         l"""
             # Definition eines Deadlocks
              4. Zyklische Wartebedingung
-        """ { halign: HAlign.Stretch, valign: VAlign.Top, };
+        """ { halign: HAlign.Stretch, valign: VAlign.Top };
     let left =
         stackh([ icon("amanda"), icon("lift") ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Center,
             height: 0.30sh,
-            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh, },
+            margin: { left: 0.10sw, right: 0.60sw, top: 0.30sh, bottom: 0.10sh },
         };
     let right =
         stackh([ icon("light"), icon("bobbl") ]) {
             halign: HAlign.Stretch,
             valign: VAlign.Center,
             height: 0.30sh,
-            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh, },
+            margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh },
         };
-    arrows.arrow(
-        left.children[0], 
-        right.children[0], 
-        {   color: c"#595959", middle_label: "fordert an", start_socket: "top", end_socket: "top", });
-    arrows.arrow(
-        right.children[1], 
-        left.children[1], 
+    arrows.arrow(left.children[0],
+        right.children[0],
+        {   color: c"#595959", middle_label: "fordert an", start_socket: "top", end_socket: "top" });
+    arrows.arrow(right.children[1],
+        left.children[1],
         {
             color: c"#595959",
             middle_label: "fordert an",

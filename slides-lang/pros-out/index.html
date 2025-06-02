@@ -1,941 +1,1096 @@
 <html>
-            <head>
-            <link href="style.css" rel="stylesheet"/>
-            <script src="navigation.js"></script>
 
-            <!-- For Google font! -->
-            <link rel="preconnect" href="https://fonts.googleapis.com">
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-            <script>
-                function init() {
-                    init_navigation();
+<head>
+  <link href="style.css" rel="stylesheet" />
+  <script src="navigation.js"></script>
 
-            
-<!-- From arrows arrow function -->
-globals.arrows = { lines: []}
+  <!-- For Google font! -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script>
+    function init() {
+      init_navigation();
 
-    globals.arrows.lines[0] = new LeaderLine(
+
+      // <!-- From arrows arrow function -->
+      globals.arrows = { lines: [] }
+
+      globals.arrows.lines[0] = new LeaderLine(
         getElementById(257),
         getElementById(261),
         {
-            parent: document.getElementById("deadlocks_problem"),
-            startSocket: "bottom",
-color: "rgb(89, 89, 89, 1)",
-path: "grid",
+          parent: document.getElementById("deadlocks_problem"),
+          startSocket: "bottom",
+          color: "rgb(89, 89, 89, 1)",
+          path: "grid",
 
         },
-    );
+      );
 
 
-<!-- From arrows arrow function -->
+      //<!-- From arrows arrow function -->
 
-    globals.arrows.lines[1] = new LeaderLine(
+      globals.arrows.lines[1] = new LeaderLine(
         getElementById(257),
         getElementById(263),
         {
-            parent: document.getElementById("deadlocks_problem"),
-            color: "rgb(89, 89, 89, 1)",
-startSocket: "top",
-path: "grid",
+          parent: document.getElementById("deadlocks_problem"),
+          path: "grid",
+          color: "rgb(89, 89, 89, 1)",
+          startSocket: "top",
 
         },
-    );
+      );
 
 
-<!-- From arrows arrow function -->
+      // <!-- From arrows arrow function -->
 
-    globals.arrows.lines[2] = new LeaderLine(
+      globals.arrows.lines[2] = new LeaderLine(
         getElementById(259),
         getElementById(261),
         {
-            parent: document.getElementById("deadlocks_problem"),
-            startSocket: "bottom",
-path: "grid",
-color: "rgb(89, 89, 89, 1)",
+          parent: document.getElementById("deadlocks_problem"),
+          startSocket: "bottom",
+          color: "rgb(89, 89, 89, 1)",
+          path: "grid",
 
         },
-    );
+      );
 
 
-<!-- From arrows arrow function -->
+      // <!-- From arrows arrow function -->
 
-    globals.arrows.lines[3] = new LeaderLine(
+      globals.arrows.lines[3] = new LeaderLine(
         getElementById(259),
         getElementById(263),
         {
-            parent: document.getElementById("deadlocks_problem"),
-            startSocket: "top",
-path: "grid",
-color: "rgb(89, 89, 89, 1)",
+          parent: document.getElementById("deadlocks_problem"),
+          color: "rgb(89, 89, 89, 1)",
+          path: "grid",
+          startSocket: "top",
 
         },
-    );
+      );
 
 
-<!-- From arrows arrow function -->
+      // <!-- From arrows arrow function -->
 
-    globals.arrows.lines[4] = new LeaderLine(
+      globals.arrows.lines[4] = new LeaderLine(
         getElementById(317),
         getElementById(319),
         {
-            parent: document.getElementById("deadlock_additional_resources"),
-            color: "rgb(89, 89, 89, 1)",
-middleLabel: LeaderLine.captionLabel("fordert zusätzlich an", { classList: 'label'}),
+          parent: document.getElementById("deadlock_additional_resources"),
+          color: "rgb(89, 89, 89, 1)",
+          middleLabel: LeaderLine.captionLabel("fordert zusätzlich an", { classList: 'label' }),
 
         },
-    );
+      );
 
 
-<!-- From arrows arrow function -->
+      // <!-- From arrows arrow function -->
 
-    globals.arrows.lines[5] = new LeaderLine(
+      globals.arrows.lines[5] = new LeaderLine(
         getElementById(325),
         getElementById(329),
         {
-            parent: document.getElementById("deadlock_no_release"),
-            middleLabel: LeaderLine.captionLabel("gibt zurück", { classList: 'label'}),
-color: "rgb(89, 89, 89, 1)",
+          parent: document.getElementById("deadlock_no_release"),
+          color: "rgb(89, 89, 89, 1)",
+          middleLabel: LeaderLine.captionLabel("gibt zurück", { classList: 'label' }),
 
         },
-    );
+      );
 
 
-<!-- From arrows arrow function -->
+      // <!-- From arrows arrow function -->
 
-    globals.arrows.lines[6] = new LeaderLine(
+      globals.arrows.lines[6] = new LeaderLine(
         getElementById(327),
         getElementById(331),
         {
-            parent: document.getElementById("deadlock_no_release"),
-            color: "rgb(89, 89, 89, 1)",
-middleLabel: LeaderLine.captionLabel("wird entzogen", { classList: 'label'}),
+          parent: document.getElementById("deadlock_no_release"),
+          middleLabel: LeaderLine.captionLabel("wird entzogen", { classList: 'label' }),
+          color: "rgb(89, 89, 89, 1)",
 
         },
-    );
+      );
 
 
-<!-- From arrows arrow function -->
+      // <!-- From arrows arrow function -->
 
-    globals.arrows.lines[7] = new LeaderLine(
+      globals.arrows.lines[7] = new LeaderLine(
         getElementById(345),
         getElementById(350),
         {
-            parent: document.getElementById("deadlock_cyclic_wait"),
-            color: "rgb(89, 89, 89, 1)",
-endSocket: "top",
-middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
-startSocket: "top",
+          parent: document.getElementById("deadlock_cyclic_wait"),
+          color: "rgb(89, 89, 89, 1)",
+          middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label' }),
+          endSocket: "top",
+          startSocket: "top",
 
         },
-    );
+      );
 
 
-<!-- From arrows arrow function -->
+      // <!-- From arrows arrow function -->
 
-    globals.arrows.lines[8] = new LeaderLine(
+      globals.arrows.lines[8] = new LeaderLine(
         getElementById(352),
         getElementById(347),
         {
-            parent: document.getElementById("deadlock_cyclic_wait"),
-            startSocket: "bottom",
-color: "rgb(89, 89, 89, 1)",
-middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
-endSocket: "bottom",
+          parent: document.getElementById("deadlock_cyclic_wait"),
+          endSocket: "bottom",
+          color: "rgb(89, 89, 89, 1)",
+          startSocket: "bottom",
+          middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label' }),
 
         },
-    );
+      );
 
 
 
 
-        }
+    }
 
-            function onSlideChange() {
-        <!-- From module arrows import -->
-for (var line of globals.arrows.lines) { line.position(); }
+    function onSlideChange() {
+      // <!-- From module arrows import -->
+      for (var line of globals.arrows.lines) { line.position(); }
 
 
-            }
-        </script>
-            
-<link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
-<!-- From arrows module -->
-<script src="pros-assets/leader-line.min.js"></script>
+    }
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
+  <!-- From arrows module -->
+  <script src="pros-assets/leader-line.min.js"></script>
 
 
 </head>
-            <body onload="init()" onkeydown="keydown(event)">
-<section id="code" class="slide" data-step-count=0>
-<div id="code-bg" class="custom-element ImageWithCaption  " data-element-id="2">
-<img id="code-bg-img" class="image  " src="./pros-assets/code.jpg" data-element-id="0"/>
-<div id="code-bg-lbl" class="label  " data-element-id="1">
-<p class="label-text">Image by Christopher Kuszajewski from Pixabay</p>
-</div>
-</div>
-</section>
-<section id="threads" class="slide" data-step-count=0>
-<div id="threads-bg" class="custom-element ImageWithCaption  " data-element-id="5">
-<img id="threads-bg-img" class="image  " src="./pros-assets/threads.jpg" data-element-id="3"/>
-<div id="threads-bg-lbl" class="label  " data-element-id="4">
-<p class="label-text">Bild von Myriams-Fotos auf Pixabay</p>
-</div>
-</div>
-</section>
-<section id="frozen" class="slide" data-step-count=0>
-<div id="frozen-bg" class="custom-element ImageWithCaption  " data-element-id="8">
-<img id="frozen-bg-img" class="image  " src="./pros-assets/frozen.jpg" data-element-id="6"/>
-<div id="frozen-bg-lbl" class="label  " data-element-id="7">
-<p class="label-text">Bild von adege auf Pixabay</p>
-</div>
-</div>
-</section>
-<section id="title" class="slide" data-step-count=0>
-<div id="title-title" class="label  " data-element-id="9">
-<h1 class="label-header">
-Einseitige Synchronisation und Deadlocks</h1>
-</div>
-<div id="title-subtitle" class="label  " data-element-id="10">
-<h2 class="label-header">
-Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische Informatik</h2>
-</div>
-</section>
-<section id="toc" class="slide" data-step-count=0>
-<div id="toc-page_number" class="label  " data-element-id="11">
-<p class="label-text">1</p>
-</div>
-<div id="toc-toc" class="label  " data-element-id="13">
-<h1 class="label-header">
-Übersicht</h1>
-<ol class="label-text">
-  <li>
-<p class="label-text">Übersicht</p>
-  <li>
-<p class="label-text">Beispiel</p>
-  <li>
-<p class="label-text">Einseitige Synchronisation</p>
-  <li>
-<p class="label-text">Deadlocks</p>
-</ol>
-</div>
-</section>
-<section id="example" class="slide" data-step-count=0>
-<div id="example-page_number" class="label  " data-element-id="17">
-<p class="label-text">2</p>
-</div>
-<div id="example-bg" class="custom-element ImageWithCaption  " data-element-id="16">
-<img id="example-bg-img" class="image  " src="./pros-assets/car-repair.jpg" data-element-id="14"/>
-<div id="example-bg-lbl" class="label  " data-element-id="15">
-<p class="label-text">Bild von emkanicepic auf Pixabay</p>
-</div>
-</div>
-<div id="example-text" class="label  " data-element-id="19">
-<h1 class="label-header">
-Beispiel</h1>
-<ul class="label-text">
-  <li>
-<p class="label-text">Arbeitsplatz: <span class="emphasis">Autowerkstatt</span></p>
-  <li>
-<p class="label-text">Angestellte: <span class="emphasis">Amanda</span> und <span class="emphasis">Bobbl</span></p>
-  <li>
-<p class="label-text">Werkzeuge: <span class="emphasis">Licht</span> und <span class="emphasis">Hebebühne</span></p>
-  <li>
-<p class="label-text">Zwei Arten von Problemen</p>
-<ul class="label-text">
-  <li>
-<p class="label-text">Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation</p>
-  <li>
-<p class="label-text">Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks</p>
-</ul>
-</ul>
-</div>
-</section>
-<section id="one_sided_sync" class="slide" data-step-count=0>
-<div id="one_sided_sync-page_number" class="label  " data-element-id="20">
-<p class="label-text">3</p>
-</div>
-<div id="one_sided_sync-text" class="label  " data-element-id="22">
-<h1 class="label-header">
-Einseitige Synchronisation</h1>
-<ol class="label-text">
-  <li>
-<p class="label-text">Grundproblem</p>
-  <li>
-<p class="label-text">Ständiges Überprüfen</p>
-  <li>
-<p class="label-text">Getaktetes Überprüfen</p>
-  <li>
-<p class="label-text">Überprüfen auf Anfrage</p>
-  <li>
-<p class="label-text">Überprüfen auf Anfrage ohne Kenntnis anderer Threads</p>
-  <li>
-<p class="label-text">Fazit zur einseitigen Synchronisation</p>
-</ol>
-</div>
-</section>
-<section id="base_problem" class="slide" data-step-count=0>
-<div id="base_problem-page_number" class="label  " data-element-id="23">
-<p class="label-text">4</p>
-</div>
-<div id="base_problem-content" class="flex " data-element-id="43">
-<div id="base_problem-content-label-25" class="label  " data-element-id="25">
-<h1 class="label-header">
-Einseitige Synchronisation: Grundproblem</h1>
-</div>
-<div id="base_problem-content-flex-42" class="flex " data-element-id="42">
-<div id="base_problem-content-flex-42-flex-33" class="flex " data-element-id="33">
-<div id="base_problem-content-flex-42-flex-33--31" class="custom-element TwoIcons  " data-element-id="31">
-<div id="base_problem-content-flex-42-flex-33--body" class="flex " data-element-id="30">
-<div id="base_problem-content-flex-42-flex-33--body--27" class="custom-element Icon  " data-element-id="27">
-<img id="base_problem-content-flex-42-flex-33--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="26"/>
-</div>
-<div id="base_problem-content-flex-42-flex-33--body--29" class="custom-element Icon  " data-element-id="29">
-<img id="base_problem-content-flex-42-flex-33--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="28"/>
-</div>
-</div>
-</div>
-<div id="base_problem-content-flex-42-flex-33-label-32" class="label  " data-element-id="32">
-<p class="label-text">Amanda hat das Licht</p>
-</div>
-</div>
-<div id="base_problem-content-flex-42-flex-41" class="flex " data-element-id="41">
-<div id="base_problem-content-flex-42-flex-41--39" class="custom-element TwoIcons  " data-element-id="39">
-<div id="base_problem-content-flex-42-flex-41--body" class="flex " data-element-id="38">
-<div id="base_problem-content-flex-42-flex-41--body--35" class="custom-element Icon  " data-element-id="35">
-<img id="base_problem-content-flex-42-flex-41--body--icon" class="image  " src="./pros-assets/wait.png" data-element-id="34"/>
-</div>
-<div id="base_problem-content-flex-42-flex-41--body--37" class="custom-element Icon  " data-element-id="37">
-<img id="base_problem-content-flex-42-flex-41--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="36"/>
-</div>
-</div>
-</div>
-<div id="base_problem-content-flex-42-flex-41-label-40" class="label  " data-element-id="40">
-<p class="label-text">Bobbl wartet auf das Licht</p>
-</div>
-</div>
-</div>
-</div>
-</section>
-<section id="continous_checking" class="slide" data-step-count=3>
-<div id="continous_checking-page_number" class="label  " data-element-id="44">
-<p class="label-text">5</p>
-</div>
-<div id="continous_checking-content" class="flex " data-element-id="84">
-<div id="continous_checking-content-label-46" class="label  " data-element-id="46">
-<h1 class="label-header">
-Ständiges Überprüfen</h1>
-</div>
-<div id="continous_checking-content-flex-59" class="flex  invisible" data-element-id="59">
-<div id="continous_checking-content-flex-59--52" class="custom-element TwoIcons  " data-element-id="52">
-<div id="continous_checking-content-flex-59--body" class="flex " data-element-id="51">
-<div id="continous_checking-content-flex-59--body--48" class="custom-element Icon  " data-element-id="48">
-<img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="47"/>
-</div>
-<div id="continous_checking-content-flex-59--body--50" class="custom-element Icon  " data-element-id="50">
-<img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="49"/>
-</div>
-</div>
-</div>
-<div id="continous_checking-content-flex-59--58" class="custom-element TwoIcons  " data-element-id="58">
-<div id="continous_checking-content-flex-59--body" class="flex " data-element-id="57">
-<div id="continous_checking-content-flex-59--body--54" class="custom-element Icon  " data-element-id="54">
-<img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/question_mark.png" data-element-id="53"/>
-</div>
-<div id="continous_checking-content-flex-59--body--56" class="custom-element Icon  " data-element-id="56">
-<img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="55"/>
-</div>
-</div>
-</div>
-</div>
-<div id="continous_checking-content-flex-72" class="flex  invisible" data-element-id="72">
-<div id="continous_checking-content-flex-72--65" class="custom-element TwoIcons  " data-element-id="65">
-<div id="continous_checking-content-flex-72--body" class="flex " data-element-id="64">
-<div id="continous_checking-content-flex-72--body--61" class="custom-element Icon  " data-element-id="61">
-<img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="60"/>
-</div>
-<div id="continous_checking-content-flex-72--body--63" class="custom-element Icon  " data-element-id="63">
-<img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="62"/>
-</div>
-</div>
-</div>
-<div id="continous_checking-content-flex-72--71" class="custom-element TwoIcons  " data-element-id="71">
-<div id="continous_checking-content-flex-72--body" class="flex " data-element-id="70">
-<div id="continous_checking-content-flex-72--body--67" class="custom-element Icon  " data-element-id="67">
-<img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/question_mark.png" data-element-id="66"/>
-</div>
-<div id="continous_checking-content-flex-72--body--69" class="custom-element Icon  " data-element-id="69">
-<img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="68"/>
-</div>
-</div>
-</div>
-</div>
-<div id="continous_checking-content-flex-83" class="flex  invisible" data-element-id="83">
-<div id="continous_checking-content-flex-83-flex-76" class="flex " data-element-id="76">
-<div id="continous_checking-content-flex-83-flex-76--74" class="custom-element Icon  " data-element-id="74">
-<img id="continous_checking-content-flex-83-flex-76--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="73"/>
-</div>
-<div id="continous_checking-content-flex-83-flex-76--75" class="custom-element Empty  " data-element-id="75">
-</div>
-</div>
-<div id="continous_checking-content-flex-83--82" class="custom-element TwoIcons  " data-element-id="82">
-<div id="continous_checking-content-flex-83--body" class="flex " data-element-id="81">
-<div id="continous_checking-content-flex-83--body--78" class="custom-element Icon  " data-element-id="78">
-<img id="continous_checking-content-flex-83--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="77"/>
-</div>
-<div id="continous_checking-content-flex-83--body--80" class="custom-element Icon  " data-element-id="80">
-<img id="continous_checking-content-flex-83--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="79"/>
-</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-<section id="occasional_checking_1" class="slide" data-step-count=3>
-<div id="occasional_checking_1-page_number" class="label  " data-element-id="85">
-<p class="label-text">6</p>
-</div>
-<div id="occasional_checking_1-content" class="flex " data-element-id="127">
-<div id="occasional_checking_1-content-label-87" class="label  " data-element-id="87">
-<h1 class="label-header">
-Getaktetes Überprüfen</h1>
-</div>
-<div id="occasional_checking_1-content-flex-100" class="flex  invisible" data-element-id="100">
-<div id="occasional_checking_1-content-flex-100--93" class="custom-element TwoIcons  " data-element-id="93">
-<div id="occasional_checking_1-content-flex-100--body" class="flex " data-element-id="92">
-<div id="occasional_checking_1-content-flex-100--body--89" class="custom-element Icon  " data-element-id="89">
-<img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="88"/>
-</div>
-<div id="occasional_checking_1-content-flex-100--body--91" class="custom-element Icon  " data-element-id="91">
-<img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="90"/>
-</div>
-</div>
-</div>
-<div id="occasional_checking_1-content-flex-100--99" class="custom-element TwoIcons  " data-element-id="99">
-<div id="occasional_checking_1-content-flex-100--body" class="flex " data-element-id="98">
-<div id="occasional_checking_1-content-flex-100--body--95" class="custom-element Icon  " data-element-id="95">
-<img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/question_mark.png" data-element-id="94"/>
-</div>
-<div id="occasional_checking_1-content-flex-100--body--97" class="custom-element Icon  " data-element-id="97">
-<img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="96"/>
-</div>
-</div>
-</div>
-</div>
-<div id="occasional_checking_1-content-flex-113" class="flex  invisible" data-element-id="113">
-<div id="occasional_checking_1-content-flex-113--106" class="custom-element TwoIcons  " data-element-id="106">
-<div id="occasional_checking_1-content-flex-113--body" class="flex " data-element-id="105">
-<div id="occasional_checking_1-content-flex-113--body--102" class="custom-element Icon  " data-element-id="102">
-<img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="101"/>
-</div>
-<div id="occasional_checking_1-content-flex-113--body--104" class="custom-element Icon  " data-element-id="104">
-<img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="103"/>
-</div>
-</div>
-</div>
-<div id="occasional_checking_1-content-flex-113--112" class="custom-element TwoIcons  " data-element-id="112">
-<div id="occasional_checking_1-content-flex-113--body" class="flex " data-element-id="111">
-<div id="occasional_checking_1-content-flex-113--body--108" class="custom-element Icon  " data-element-id="108">
-<img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/wait.png" data-element-id="107"/>
-</div>
-<div id="occasional_checking_1-content-flex-113--body--110" class="custom-element Icon  " data-element-id="110">
-<img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="109"/>
-</div>
-</div>
-</div>
-</div>
-<div id="occasional_checking_1-content-flex-126" class="flex  invisible" data-element-id="126">
-<div id="occasional_checking_1-content-flex-126--119" class="custom-element TwoIcons  " data-element-id="119">
-<div id="occasional_checking_1-content-flex-126--body" class="flex " data-element-id="118">
-<div id="occasional_checking_1-content-flex-126--body--115" class="custom-element Icon  " data-element-id="115">
-<img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="114"/>
-</div>
-<div id="occasional_checking_1-content-flex-126--body--117" class="custom-element Icon  " data-element-id="117">
-<img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="116"/>
-</div>
-</div>
-</div>
-<div id="occasional_checking_1-content-flex-126--125" class="custom-element TwoIcons  " data-element-id="125">
-<div id="occasional_checking_1-content-flex-126--body" class="flex " data-element-id="124">
-<div id="occasional_checking_1-content-flex-126--body--121" class="custom-element Icon  " data-element-id="121">
-<img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/question_mark.png" data-element-id="120"/>
-</div>
-<div id="occasional_checking_1-content-flex-126--body--123" class="custom-element Icon  " data-element-id="123">
-<img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="122"/>
-</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-<section id="occasional_checking_2" class="slide" data-step-count=2>
-<div id="occasional_checking_2-page_number" class="label  " data-element-id="128">
-<p class="label-text">7</p>
-</div>
-<div id="occasional_checking_2-content" class="flex " data-element-id="166">
-<div id="occasional_checking_2-content-label-130" class="label  " data-element-id="130">
-<h1 class="label-header">
-Getaktetes Überprüfen</h1>
-</div>
-<div id="occasional_checking_2-content-flex-143" class="flex " data-element-id="143">
-<div id="occasional_checking_2-content-flex-143--136" class="custom-element TwoIcons  " data-element-id="136">
-<div id="occasional_checking_2-content-flex-143--body" class="flex " data-element-id="135">
-<div id="occasional_checking_2-content-flex-143--body--132" class="custom-element Icon  " data-element-id="132">
-<img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="131"/>
-</div>
-<div id="occasional_checking_2-content-flex-143--body--134" class="custom-element Icon  " data-element-id="134">
-<img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="133"/>
-</div>
-</div>
-</div>
-<div id="occasional_checking_2-content-flex-143--142" class="custom-element TwoIcons  " data-element-id="142">
-<div id="occasional_checking_2-content-flex-143--body" class="flex " data-element-id="141">
-<div id="occasional_checking_2-content-flex-143--body--138" class="custom-element Icon  " data-element-id="138">
-<img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/question_mark.png" data-element-id="137"/>
-</div>
-<div id="occasional_checking_2-content-flex-143--body--140" class="custom-element Icon  " data-element-id="140">
-<img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="139"/>
-</div>
-</div>
-</div>
-</div>
-<div id="occasional_checking_2-content-flex-154" class="flex " data-element-id="154">
-<div id="occasional_checking_2-content-flex-154--145" class="custom-element Icon  " data-element-id="145">
-<img id="occasional_checking_2-content-flex-154--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="144"/>
-</div>
-<div id="occasional_checking_2-content-flex-154--147" class="custom-element Icon  " data-element-id="147">
-<img id="occasional_checking_2-content-flex-154--icon" class="image  " src="./pros-assets/light.png" data-element-id="146"/>
-</div>
-<div id="occasional_checking_2-content-flex-154--153" class="custom-element TwoIcons  " data-element-id="153">
-<div id="occasional_checking_2-content-flex-154--body" class="flex " data-element-id="152">
-<div id="occasional_checking_2-content-flex-154--body--149" class="custom-element Icon  " data-element-id="149">
-<img id="occasional_checking_2-content-flex-154--body--icon" class="image  " src="./pros-assets/wait.png" data-element-id="148"/>
-</div>
-<div id="occasional_checking_2-content-flex-154--body--151" class="custom-element Icon  " data-element-id="151">
-<img id="occasional_checking_2-content-flex-154--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="150"/>
-</div>
-</div>
-</div>
-</div>
-<div id="occasional_checking_2-content-flex-165" class="flex  invisible" data-element-id="165">
-<div id="occasional_checking_2-content-flex-165-flex-158" class="flex " data-element-id="158">
-<div id="occasional_checking_2-content-flex-165-flex-158--156" class="custom-element Icon  " data-element-id="156">
-<img id="occasional_checking_2-content-flex-165-flex-158--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="155"/>
-</div>
-<div id="occasional_checking_2-content-flex-165-flex-158--157" class="custom-element Empty  " data-element-id="157">
-</div>
-</div>
-<div id="occasional_checking_2-content-flex-165--164" class="custom-element TwoIcons  " data-element-id="164">
-<div id="occasional_checking_2-content-flex-165--body" class="flex " data-element-id="163">
-<div id="occasional_checking_2-content-flex-165--body--160" class="custom-element Icon  " data-element-id="160">
-<img id="occasional_checking_2-content-flex-165--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="159"/>
-</div>
-<div id="occasional_checking_2-content-flex-165--body--162" class="custom-element Icon  " data-element-id="162">
-<img id="occasional_checking_2-content-flex-165--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="161"/>
-</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-<section id="checking_when_requested" class="slide" data-step-count=0>
-<div id="checking_when_requested-page_number" class="label  " data-element-id="167">
-<p class="label-text">8</p>
-</div>
-<div id="checking_when_requested-content" class="flex " data-element-id="206">
-<div id="checking_when_requested-content-label-169" class="label  " data-element-id="169">
-<h1 class="label-header">
-Überprüfen auf Anfrage</h1>
-</div>
-<div id="checking_when_requested-content-flex-182" class="flex " data-element-id="182">
-<div id="checking_when_requested-content-flex-182--175" class="custom-element TwoIcons  " data-element-id="175">
-<div id="checking_when_requested-content-flex-182--body" class="flex " data-element-id="174">
-<div id="checking_when_requested-content-flex-182--body--171" class="custom-element Icon  " data-element-id="171">
-<img id="checking_when_requested-content-flex-182--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="170"/>
-</div>
-<div id="checking_when_requested-content-flex-182--body--173" class="custom-element Icon  " data-element-id="173">
-<img id="checking_when_requested-content-flex-182--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="172"/>
-</div>
-</div>
-</div>
-<div id="checking_when_requested-content-flex-182--181" class="custom-element TwoIcons  " data-element-id="181">
-<div id="checking_when_requested-content-flex-182--body" class="flex " data-element-id="180">
-<div id="checking_when_requested-content-flex-182--body--177" class="custom-element Icon  " data-element-id="177">
-<img id="checking_when_requested-content-flex-182--body--icon" class="image  " src="./pros-assets/question_mark.png" data-element-id="176"/>
-</div>
-<div id="checking_when_requested-content-flex-182--body--179" class="custom-element Icon  " data-element-id="179">
-<img id="checking_when_requested-content-flex-182--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="178"/>
-</div>
-</div>
-</div>
-</div>
-<div id="checking_when_requested-content-flex-195" class="flex " data-element-id="195">
-<div id="checking_when_requested-content-flex-195--188" class="custom-element TwoIcons  " data-element-id="188">
-<div id="checking_when_requested-content-flex-195--body" class="flex " data-element-id="187">
-<div id="checking_when_requested-content-flex-195--body--184" class="custom-element Icon  " data-element-id="184">
-<img id="checking_when_requested-content-flex-195--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="183"/>
-</div>
-<div id="checking_when_requested-content-flex-195--body--186" class="custom-element Icon  " data-element-id="186">
-<img id="checking_when_requested-content-flex-195--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="185"/>
-</div>
-</div>
-</div>
-<div id="checking_when_requested-content-flex-195--194" class="custom-element TwoIcons  " data-element-id="194">
-<div id="checking_when_requested-content-flex-195--body" class="flex " data-element-id="193">
-<div id="checking_when_requested-content-flex-195--body--190" class="custom-element Icon  " data-element-id="190">
-<img id="checking_when_requested-content-flex-195--body--icon" class="image  " src="./pros-assets/wait.png" data-element-id="189"/>
-</div>
-<div id="checking_when_requested-content-flex-195--body--192" class="custom-element Icon  " data-element-id="192">
-<img id="checking_when_requested-content-flex-195--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="191"/>
-</div>
-</div>
-</div>
-</div>
-<div id="checking_when_requested-content-flex-205" class="flex " data-element-id="205">
-<div id="checking_when_requested-content-flex-205--196" class="custom-element Empty  " data-element-id="196">
-</div>
-<div id="checking_when_requested-content-flex-205--197" class="custom-element Empty  " data-element-id="197">
-</div>
-<div id="checking_when_requested-content-flex-205--199" class="custom-element Icon  " data-element-id="199">
-<img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="198"/>
-</div>
-<div id="checking_when_requested-content-flex-205--201" class="custom-element Icon  " data-element-id="201">
-<img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/light.png" data-element-id="200"/>
-</div>
-<div id="checking_when_requested-content-flex-205--203" class="custom-element Icon  " data-element-id="203">
-<img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="202"/>
-</div>
-<div id="checking_when_requested-content-flex-205--204" class="custom-element Empty  " data-element-id="204">
-</div>
-</div>
-</div>
-</section>
-<section id="checking_when_requested_without_thread_knowledge" class="slide" data-step-count=0>
-<div id="checking_when_requested_without_thread_knowledge-page_number" class="label  " data-element-id="207">
-<p class="label-text">9</p>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content" class="flex " data-element-id="246">
-<div id="checking_when_requested_without_thread_knowledge-content-label-209" class="label  " data-element-id="209">
-<h1 class="label-header">
-Überprüfen auf Anfrage ohne Kenntnis anderer Threads</h1>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222" class="flex " data-element-id="222">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222--215" class="custom-element TwoIcons  " data-element-id="215">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body" class="flex " data-element-id="214">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--211" class="custom-element Icon  " data-element-id="211">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="210"/>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--213" class="custom-element Icon  " data-element-id="213">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="212"/>
-</div>
-</div>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222--221" class="custom-element TwoIcons  " data-element-id="221">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body" class="flex " data-element-id="220">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--217" class="custom-element Icon  " data-element-id="217">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  " src="./pros-assets/question_mark.png" data-element-id="216"/>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--219" class="custom-element Icon  " data-element-id="219">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="218"/>
-</div>
-</div>
-</div>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235" class="flex " data-element-id="235">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235--228" class="custom-element TwoIcons  " data-element-id="228">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body" class="flex " data-element-id="227">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--224" class="custom-element Icon  " data-element-id="224">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="223"/>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--226" class="custom-element Icon  " data-element-id="226">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  " src="./pros-assets/light.png" data-element-id="225"/>
-</div>
-</div>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235--234" class="custom-element TwoIcons  " data-element-id="234">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body" class="flex " data-element-id="233">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--230" class="custom-element Icon  " data-element-id="230">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  " src="./pros-assets/wait.png" data-element-id="229"/>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--232" class="custom-element Icon  " data-element-id="232">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="231"/>
-</div>
-</div>
-</div>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-245" class="flex " data-element-id="245">
-<div id="checking_when_requested_without_thread_knowledge-content-flex-245--237" class="custom-element Icon  " data-element-id="237">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="236"/>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-245--238" class="custom-element Empty  " data-element-id="238">
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-245--239" class="custom-element Empty  " data-element-id="239">
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-245--241" class="custom-element Icon  " data-element-id="241">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  " src="./pros-assets/light.png" data-element-id="240"/>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-245--243" class="custom-element Icon  " data-element-id="243">
-<img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="242"/>
-</div>
-<div id="checking_when_requested_without_thread_knowledge-content-flex-245--244" class="custom-element Empty  " data-element-id="244">
-</div>
-</div>
-</div>
-</section>
-<section id="resume_one_sided" class="slide" data-step-count=0>
-<div id="resume_one_sided-page_number" class="label  " data-element-id="247">
-<p class="label-text">10</p>
-</div>
-<div id="resume_one_sided-title" class="label  " data-element-id="249">
-<h1 class="label-header">
-Fazit zur einseitigen Synchronisation</h1>
-</div>
-</section>
-<section id="deadlocks" class="slide" data-step-count=0>
-<div id="deadlocks-page_number" class="label  " data-element-id="250">
-<p class="label-text">11</p>
-</div>
-<div id="deadlocks-text" class="label  " data-element-id="252">
-<h1 class="label-header">
-Deadlocks</h1>
-<ol class="label-text">
-  <li>
-<p class="label-text">Grundproblem</p>
-  <li>
-<p class="label-text">Definition eines Deadlocks</p>
-  <li>
-<p class="label-text">Präventive Deadlockverhinderung</p>
-  <li>
-<p class="label-text">Deadlockverhinderung zur Laufzeit</p>
-  <li>
-<p class="label-text">Deadlockerkennung zur Laufzeit</p>
-  <li>
-<p class="label-text">Livelocks</p>
-  <li>
-<p class="label-text">Fazit zu Deadlocks</p>
-</ol>
-</div>
-</section>
-<section id="deadlocks_problem" class="slide" data-step-count=0>
-<div id="deadlocks_problem-page_number" class="label  " data-element-id="253">
-<p class="label-text">12</p>
-</div>
-<div id="deadlocks_problem-title" class="label  " data-element-id="255">
-<h1 class="label-header">
-Deadlocks: Grundproblem</h1>
-</div>
-<div id="deadlocks_problem-base" class="custom-element DeadlockIcons  " data-element-id="264">
-<div id="deadlocks_problem-base-amanda" class="custom-element Icon  " data-element-id="257">
-<img id="deadlocks_problem-base-amanda-icon" class="image  " src="./pros-assets/amanda.png" data-element-id="256"/>
-</div>
-<div id="deadlocks_problem-base-bobbl" class="custom-element Icon  " data-element-id="259">
-<img id="deadlocks_problem-base-bobbl-icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="258"/>
-</div>
-<div id="deadlocks_problem-base-light" class="custom-element Icon  " data-element-id="261">
-<img id="deadlocks_problem-base-light-icon" class="image  " src="./pros-assets/light.png" data-element-id="260"/>
-</div>
-<div id="deadlocks_problem-base-lift" class="custom-element Icon  " data-element-id="263">
-<img id="deadlocks_problem-base-lift-icon" class="image  " src="./pros-assets/lift.png" data-element-id="262"/>
-</div>
-</div>
-<div id="deadlocks_problem-wait_amanda" class="custom-element Icon  " data-element-id="266">
-<img id="deadlocks_problem-wait_amanda-icon" class="image  " src="./pros-assets/wait.png" data-element-id="265"/>
-</div>
-<div id="deadlocks_problem-wait_bobbl" class="custom-element Icon  " data-element-id="268">
-<img id="deadlocks_problem-wait_bobbl-icon" class="image  " src="./pros-assets/wait.png" data-element-id="267"/>
-</div>
-</section>
-<section id="deadlock_definition" class="slide" data-step-count=0>
-<div id="deadlock_definition-page_number" class="label  " data-element-id="269">
-<p class="label-text">13</p>
-</div>
-<div id="deadlock_definition-content" class="label  " data-element-id="271">
-<h1 class="label-header">
-Definition eines Deadlocks</h1>
-<p class="label-text">Benötigte Bedingungen:</p>
-<ol class="label-text">
-  <li>
-<p class="label-text">Bedingung des wechselseitigen Ausschlusses</p>
-  <li>
-<p class="label-text">Belegungs- und Wartebedingung</p>
-  <li>
-<p class="label-text">Ununterbrechbarkeitsbedingung</p>
-  <li>
-<p class="label-text">Zyklische Wartebedingung</p>
-</ol>
-</div>
-</section>
-<section id="deadlock_unique_access" class="slide" data-step-count=0>
-<div id="deadlock_unique_access-page_number" class="label  " data-element-id="272">
-<p class="label-text">14</p>
-</div>
-<div id="deadlock_unique_access-title" class="label  " data-element-id="274">
-<h1 class="label-header">
-Definition eines Deadlocks</h1>
-<ol class="label-text">
-  <li>
-<p class="label-text">Bedingung des wechselseitigen Ausschlusses</p>
-</ol>
-</div>
-<div id="deadlock_unique_access-seperator" class="custom-element Empty  " data-element-id="275">
-</div>
-<div id="deadlock_unique_access-left" class="custom-element DeadlockUniqueAccessYes  " data-element-id="295">
-<div id="deadlock_unique_access-left-content" class="flex " data-element-id="294">
-<div id="deadlock_unique_access-left-content-label-276" class="label  " data-element-id="276">
-<p class="label-text">Möglich</p>
-</div>
-<div id="deadlock_unique_access-left-content-flex-284" class="flex " data-element-id="284">
-<div id="deadlock_unique_access-left-content-flex-284--278" class="custom-element Icon  " data-element-id="278">
-<img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="277"/>
-</div>
-<div id="deadlock_unique_access-left-content-flex-284--279" class="custom-element Empty  " data-element-id="279">
-</div>
-<div id="deadlock_unique_access-left-content-flex-284--281" class="custom-element Icon  " data-element-id="281">
-<img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/light.png" data-element-id="280"/>
-</div>
-<div id="deadlock_unique_access-left-content-flex-284--283" class="custom-element Icon  " data-element-id="283">
-<img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="282"/>
-</div>
-</div>
-<div id="deadlock_unique_access-left-content-label-285" class="label  " data-element-id="285">
-<p class="label-text">oder</p>
-</div>
-<div id="deadlock_unique_access-left-content-flex-293" class="flex " data-element-id="293">
-<div id="deadlock_unique_access-left-content-flex-293--287" class="custom-element Icon  " data-element-id="287">
-<img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="286"/>
-</div>
-<div id="deadlock_unique_access-left-content-flex-293--289" class="custom-element Icon  " data-element-id="289">
-<img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/light.png" data-element-id="288"/>
-</div>
-<div id="deadlock_unique_access-left-content-flex-293--290" class="custom-element Empty  " data-element-id="290">
-</div>
-<div id="deadlock_unique_access-left-content-flex-293--292" class="custom-element Icon  " data-element-id="292">
-<img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="291"/>
-</div>
-</div>
-</div>
-</div>
-<div id="deadlock_unique_access-right" class="custom-element DeadlockUniqueAccessNo  " data-element-id="308">
-<div id="deadlock_unique_access-right-content" class="flex " data-element-id="307">
-<div id="deadlock_unique_access-right-content-label-296" class="label  " data-element-id="296">
-<p class="label-text">Nicht möglich</p>
-</div>
-<div id="deadlock_unique_access-right-content--306" class="custom-element Crossed  " data-element-id="306">
-<div id="deadlock_unique_access-right-content--inner" class="flex " data-element-id="303">
-<div id="deadlock_unique_access-right-content--inner--298" class="custom-element Icon  " data-element-id="298">
-<img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="297"/>
-</div>
-<div id="deadlock_unique_access-right-content--inner--300" class="custom-element Icon  " data-element-id="300">
-<img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/light.png" data-element-id="299"/>
-</div>
-<div id="deadlock_unique_access-right-content--inner--302" class="custom-element Icon  " data-element-id="302">
-<img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="301"/>
-</div>
-</div>
-<div id="deadlock_unique_access-right-content--line1" class="custom-element Empty  " data-element-id="304">
-</div>
-<div id="deadlock_unique_access-right-content--line2" class="custom-element Empty  " data-element-id="305">
-</div>
-</div>
-</div>
-</div>
-</section>
-<section id="deadlock_additional_resources" class="slide" data-step-count=0>
-<div id="deadlock_additional_resources-page_number" class="label  " data-element-id="309">
-<p class="label-text">15</p>
-</div>
-<div id="deadlock_additional_resources-title" class="label  " data-element-id="311">
-<h1 class="label-header">
-Definition eines Deadlocks</h1>
-<ol class="label-text">
-  <li>
-<p class="label-text">Belegungs- und Wartebedingung</p>
-</ol>
-</div>
-<div id="deadlock_additional_resources-left" class="custom-element TwoIcons  " data-element-id="317">
-<div id="deadlock_additional_resources-left-body" class="flex " data-element-id="316">
-<div id="deadlock_additional_resources-left-body--313" class="custom-element Icon  " data-element-id="313">
-<img id="deadlock_additional_resources-left-body--icon" class="image  " src="./pros-assets/lift.png" data-element-id="312"/>
-</div>
-<div id="deadlock_additional_resources-left-body--315" class="custom-element Icon  " data-element-id="315">
-<img id="deadlock_additional_resources-left-body--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="314"/>
-</div>
-</div>
-</div>
-<div id="deadlock_additional_resources-right" class="custom-element Icon  " data-element-id="319">
-<img id="deadlock_additional_resources-right-icon" class="image  " src="./pros-assets/light.png" data-element-id="318"/>
-</div>
-</section>
-<section id="deadlock_no_release" class="slide" data-step-count=0>
-<div id="deadlock_no_release-page_number" class="label  " data-element-id="320">
-<p class="label-text">16</p>
-</div>
-<div id="deadlock_no_release-title" class="label  " data-element-id="322">
-<h1 class="label-header">
-Definition eines Deadlocks</h1>
-<ol class="label-text">
-  <li>
-<p class="label-text">Ununterbrechbarkeitsbedingung</p>
-</ol>
-</div>
-<div id="deadlock_no_release-seperator" class="custom-element Empty  " data-element-id="323">
-</div>
-<div id="deadlock_no_release-left" class="flex " data-element-id="334">
-<div id="deadlock_no_release-left--325" class="custom-element Icon  " data-element-id="325">
-<img id="deadlock_no_release-left--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="324"/>
-</div>
-<div id="deadlock_no_release-left--332" class="custom-element Empty  " data-element-id="332">
-</div>
-<div id="deadlock_no_release-left--333" class="custom-element Empty  " data-element-id="333">
-</div>
-<div id="deadlock_no_release-left--329" class="custom-element Icon  " data-element-id="329">
-<img id="deadlock_no_release-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="328"/>
-</div>
-</div>
-<div id="deadlock_no_release-right" class="custom-element Crossed  " data-element-id="340">
-<div id="deadlock_no_release-right-inner" class="flex " data-element-id="337">
-<div id="deadlock_no_release-right-inner--327" class="custom-element Icon  " data-element-id="327">
-<img id="deadlock_no_release-right-inner--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="326"/>
-</div>
-<div id="deadlock_no_release-right-inner--335" class="custom-element Empty  " data-element-id="335">
-</div>
-<div id="deadlock_no_release-right-inner--336" class="custom-element Empty  " data-element-id="336">
-</div>
-<div id="deadlock_no_release-right-inner--331" class="custom-element Icon  " data-element-id="331">
-<img id="deadlock_no_release-right-inner--icon" class="image  " src="./pros-assets/lift.png" data-element-id="330"/>
-</div>
-</div>
-<div id="deadlock_no_release-right-line1" class="custom-element Empty  " data-element-id="338">
-</div>
-<div id="deadlock_no_release-right-line2" class="custom-element Empty  " data-element-id="339">
-</div>
-</div>
-</section>
-<section id="deadlock_cyclic_wait" class="slide" data-step-count=0>
-<div id="deadlock_cyclic_wait-page_number" class="label  " data-element-id="341">
-<p class="label-text">17</p>
-</div>
-<div id="deadlock_cyclic_wait-title" class="label  " data-element-id="343">
-<h1 class="label-header">
-Definition eines Deadlocks</h1>
-<ol class="label-text">
-  <li>
-<p class="label-text">Zyklische Wartebedingung</p>
-</ol>
-</div>
-<div id="deadlock_cyclic_wait-left" class="flex " data-element-id="348">
-<div id="deadlock_cyclic_wait-left--345" class="custom-element Icon  " data-element-id="345">
-<img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="344"/>
-</div>
-<div id="deadlock_cyclic_wait-left--347" class="custom-element Icon  " data-element-id="347">
-<img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="346"/>
-</div>
-</div>
-<div id="deadlock_cyclic_wait-right" class="flex " data-element-id="353">
-<div id="deadlock_cyclic_wait-right--350" class="custom-element Icon  " data-element-id="350">
-<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/light.png" data-element-id="349"/>
-</div>
-<div id="deadlock_cyclic_wait-right--352" class="custom-element Icon  " data-element-id="352">
-<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="351"/>
-</div>
-</div>
-</section>
-</body></html>
+
+<body onload="init()" onkeydown="keydown(event)">
+  <section id="code" class="slide" data-step-count=0>
+    <div id="code-bg" class="custom-element ImageWithCaption  " data-element-id="2">
+      <img id="code-bg-img" class="image  " src="./pros-assets/code.jpg" data-element-id="0" />
+      <div id="code-bg-lbl" class="label  " data-element-id="1">
+        <p class="label-text">Image by Christopher Kuszajewski from Pixabay</p>
+      </div>
+    </div>
+  </section>
+  <section id="threads" class="slide" data-step-count=0>
+    <div id="threads-bg" class="custom-element ImageWithCaption  " data-element-id="5">
+      <img id="threads-bg-img" class="image  " src="./pros-assets/threads.jpg" data-element-id="3" />
+      <div id="threads-bg-lbl" class="label  " data-element-id="4">
+        <p class="label-text">Bild von Myriams-Fotos auf Pixabay</p>
+      </div>
+    </div>
+  </section>
+  <section id="frozen" class="slide" data-step-count=0>
+    <div id="frozen-bg" class="custom-element ImageWithCaption  " data-element-id="8">
+      <img id="frozen-bg-img" class="image  " src="./pros-assets/frozen.jpg" data-element-id="6" />
+      <div id="frozen-bg-lbl" class="label  " data-element-id="7">
+        <p class="label-text">Bild von adege auf Pixabay</p>
+      </div>
+    </div>
+  </section>
+  <section id="title" class="slide" data-step-count=0>
+    <div id="title-title" class="label  " data-element-id="9">
+      <h1 class="label-header">
+        Einseitige Synchronisation und Deadlocks</h1>
+    </div>
+    <div id="title-subtitle" class="label  " data-element-id="10">
+      <h2 class="label-header">
+        Nach „Parallele Programmierung spielend gelernt mit dem ‚Java-Hamster-Modell‘“ im Proseminar Praktische
+        Informatik</h2>
+    </div>
+  </section>
+  <section id="toc" class="slide" data-step-count=0>
+    <div id="toc-page_number" class="label  " data-element-id="11">
+      <p class="label-text">1</p>
+    </div>
+    <div id="toc-toc" class="label  " data-element-id="13">
+      <h1 class="label-header">
+        Übersicht</h1>
+      <ol class="label-text">
+        <li>
+          <p class="label-text">Übersicht</p>
+        <li>
+          <p class="label-text">Beispiel</p>
+        <li>
+          <p class="label-text">Einseitige Synchronisation</p>
+        <li>
+          <p class="label-text">Deadlocks</p>
+      </ol>
+    </div>
+  </section>
+  <section id="example" class="slide" data-step-count=0>
+    <div id="example-page_number" class="label  " data-element-id="17">
+      <p class="label-text">2</p>
+    </div>
+    <div id="example-bg" class="custom-element ImageWithCaption  " data-element-id="16">
+      <img id="example-bg-img" class="image  " src="./pros-assets/car-repair.jpg" data-element-id="14" />
+      <div id="example-bg-lbl" class="label  " data-element-id="15">
+        <p class="label-text">Bild von emkanicepic auf Pixabay</p>
+      </div>
+    </div>
+    <div id="example-text" class="label  " data-element-id="19">
+      <h1 class="label-header">
+        Beispiel</h1>
+      <ul class="label-text">
+        <li>
+          <p class="label-text">Arbeitsplatz: <span class="emphasis">Autowerkstatt</span></p>
+        <li>
+          <p class="label-text">Angestellte: <span class="emphasis">Amanda</span> und <span
+              class="emphasis">Bobbl</span></p>
+        <li>
+          <p class="label-text">Werkzeuge: <span class="emphasis">Licht</span> und <span
+              class="emphasis">Hebebühne</span></p>
+        <li>
+          <p class="label-text">Zwei Arten von Problemen</p>
+          <ul class="label-text">
+            <li>
+              <p class="label-text">Zugriff der Angestellten auf ein Werkzeug --> Einseitige Synchronisation</p>
+            <li>
+              <p class="label-text">Zugriff der Angestellten auf mehrere Werkzeuge --> Deadlocks</p>
+          </ul>
+      </ul>
+    </div>
+  </section>
+  <section id="one_sided_sync" class="slide" data-step-count=0>
+    <div id="one_sided_sync-page_number" class="label  " data-element-id="20">
+      <p class="label-text">3</p>
+    </div>
+    <div id="one_sided_sync-text" class="label  " data-element-id="22">
+      <h1 class="label-header">
+        Einseitige Synchronisation</h1>
+      <ol class="label-text">
+        <li>
+          <p class="label-text">Grundproblem</p>
+        <li>
+          <p class="label-text">Ständiges Überprüfen</p>
+        <li>
+          <p class="label-text">Getaktetes Überprüfen</p>
+        <li>
+          <p class="label-text">Überprüfen auf Anfrage</p>
+        <li>
+          <p class="label-text">Überprüfen auf Anfrage ohne Kenntnis anderer Threads</p>
+        <li>
+          <p class="label-text">Fazit zur einseitigen Synchronisation</p>
+      </ol>
+    </div>
+  </section>
+  <section id="base_problem" class="slide" data-step-count=0>
+    <div id="base_problem-page_number" class="label  " data-element-id="23">
+      <p class="label-text">4</p>
+    </div>
+    <div id="base_problem-content" class="flex " data-element-id="43">
+      <div id="base_problem-content-label-25" class="label  " data-element-id="25">
+        <h1 class="label-header">
+          Einseitige Synchronisation: Grundproblem</h1>
+      </div>
+      <div id="base_problem-content-flex-42" class="flex " data-element-id="42">
+        <div id="base_problem-content-flex-42-flex-33" class="flex " data-element-id="33">
+          <div id="base_problem-content-flex-42-flex-33--31" class="custom-element TwoIcons  " data-element-id="31">
+            <div id="base_problem-content-flex-42-flex-33--body" class="flex " data-element-id="30">
+              <div id="base_problem-content-flex-42-flex-33--body--27" class="custom-element Icon  "
+                data-element-id="27">
+                <img id="base_problem-content-flex-42-flex-33--body--icon" class="image  "
+                  src="./pros-assets/amanda.png" data-element-id="26" />
+              </div>
+              <div id="base_problem-content-flex-42-flex-33--body--29" class="custom-element Icon  "
+                data-element-id="29">
+                <img id="base_problem-content-flex-42-flex-33--body--icon" class="image  " src="./pros-assets/light.png"
+                  data-element-id="28" />
+              </div>
+            </div>
+          </div>
+          <div id="base_problem-content-flex-42-flex-33-label-32" class="label  " data-element-id="32">
+            <p class="label-text">Amanda hat das Licht</p>
+          </div>
+        </div>
+        <div id="base_problem-content-flex-42-flex-41" class="flex " data-element-id="41">
+          <div id="base_problem-content-flex-42-flex-41--39" class="custom-element TwoIcons  " data-element-id="39">
+            <div id="base_problem-content-flex-42-flex-41--body" class="flex " data-element-id="38">
+              <div id="base_problem-content-flex-42-flex-41--body--35" class="custom-element Icon  "
+                data-element-id="35">
+                <img id="base_problem-content-flex-42-flex-41--body--icon" class="image  " src="./pros-assets/wait.png"
+                  data-element-id="34" />
+              </div>
+              <div id="base_problem-content-flex-42-flex-41--body--37" class="custom-element Icon  "
+                data-element-id="37">
+                <img id="base_problem-content-flex-42-flex-41--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                  data-element-id="36" />
+              </div>
+            </div>
+          </div>
+          <div id="base_problem-content-flex-42-flex-41-label-40" class="label  " data-element-id="40">
+            <p class="label-text">Bobbl wartet auf das Licht</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="continous_checking" class="slide" data-step-count=3>
+    <div id="continous_checking-page_number" class="label  " data-element-id="44">
+      <p class="label-text">5</p>
+    </div>
+    <div id="continous_checking-content" class="flex " data-element-id="84">
+      <div id="continous_checking-content-label-46" class="label  " data-element-id="46">
+        <h1 class="label-header">
+          Ständiges Überprüfen</h1>
+      </div>
+      <div id="continous_checking-content-flex-59" class="flex  invisible" data-element-id="59">
+        <div id="continous_checking-content-flex-59--52" class="custom-element TwoIcons  " data-element-id="52">
+          <div id="continous_checking-content-flex-59--body" class="flex " data-element-id="51">
+            <div id="continous_checking-content-flex-59--body--48" class="custom-element Icon  " data-element-id="48">
+              <img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/amanda.png"
+                data-element-id="47" />
+            </div>
+            <div id="continous_checking-content-flex-59--body--50" class="custom-element Icon  " data-element-id="50">
+              <img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="49" />
+            </div>
+          </div>
+        </div>
+        <div id="continous_checking-content-flex-59--58" class="custom-element TwoIcons  " data-element-id="58">
+          <div id="continous_checking-content-flex-59--body" class="flex " data-element-id="57">
+            <div id="continous_checking-content-flex-59--body--54" class="custom-element Icon  " data-element-id="54">
+              <img id="continous_checking-content-flex-59--body--icon" class="image  "
+                src="./pros-assets/question_mark.png" data-element-id="53" />
+            </div>
+            <div id="continous_checking-content-flex-59--body--56" class="custom-element Icon  " data-element-id="56">
+              <img id="continous_checking-content-flex-59--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="55" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="continous_checking-content-flex-72" class="flex  invisible" data-element-id="72">
+        <div id="continous_checking-content-flex-72--65" class="custom-element TwoIcons  " data-element-id="65">
+          <div id="continous_checking-content-flex-72--body" class="flex " data-element-id="64">
+            <div id="continous_checking-content-flex-72--body--61" class="custom-element Icon  " data-element-id="61">
+              <img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/amanda.png"
+                data-element-id="60" />
+            </div>
+            <div id="continous_checking-content-flex-72--body--63" class="custom-element Icon  " data-element-id="63">
+              <img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="62" />
+            </div>
+          </div>
+        </div>
+        <div id="continous_checking-content-flex-72--71" class="custom-element TwoIcons  " data-element-id="71">
+          <div id="continous_checking-content-flex-72--body" class="flex " data-element-id="70">
+            <div id="continous_checking-content-flex-72--body--67" class="custom-element Icon  " data-element-id="67">
+              <img id="continous_checking-content-flex-72--body--icon" class="image  "
+                src="./pros-assets/question_mark.png" data-element-id="66" />
+            </div>
+            <div id="continous_checking-content-flex-72--body--69" class="custom-element Icon  " data-element-id="69">
+              <img id="continous_checking-content-flex-72--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="68" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="continous_checking-content-flex-83" class="flex  invisible" data-element-id="83">
+        <div id="continous_checking-content-flex-83-flex-76" class="flex " data-element-id="76">
+          <div id="continous_checking-content-flex-83-flex-76--74" class="custom-element Icon  " data-element-id="74">
+            <img id="continous_checking-content-flex-83-flex-76--icon" class="image  " src="./pros-assets/amanda.png"
+              data-element-id="73" />
+          </div>
+          <div id="continous_checking-content-flex-83-flex-76--75" class="custom-element Empty  " data-element-id="75">
+          </div>
+        </div>
+        <div id="continous_checking-content-flex-83--82" class="custom-element TwoIcons  " data-element-id="82">
+          <div id="continous_checking-content-flex-83--body" class="flex " data-element-id="81">
+            <div id="continous_checking-content-flex-83--body--78" class="custom-element Icon  " data-element-id="78">
+              <img id="continous_checking-content-flex-83--body--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="77" />
+            </div>
+            <div id="continous_checking-content-flex-83--body--80" class="custom-element Icon  " data-element-id="80">
+              <img id="continous_checking-content-flex-83--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="79" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="occasional_checking_1" class="slide" data-step-count=3>
+    <div id="occasional_checking_1-page_number" class="label  " data-element-id="85">
+      <p class="label-text">6</p>
+    </div>
+    <div id="occasional_checking_1-content" class="flex " data-element-id="127">
+      <div id="occasional_checking_1-content-label-87" class="label  " data-element-id="87">
+        <h1 class="label-header">
+          Getaktetes Überprüfen</h1>
+      </div>
+      <div id="occasional_checking_1-content-flex-100" class="flex  invisible" data-element-id="100">
+        <div id="occasional_checking_1-content-flex-100--93" class="custom-element TwoIcons  " data-element-id="93">
+          <div id="occasional_checking_1-content-flex-100--body" class="flex " data-element-id="92">
+            <div id="occasional_checking_1-content-flex-100--body--89" class="custom-element Icon  "
+              data-element-id="89">
+              <img id="occasional_checking_1-content-flex-100--body--icon" class="image  "
+                src="./pros-assets/amanda.png" data-element-id="88" />
+            </div>
+            <div id="occasional_checking_1-content-flex-100--body--91" class="custom-element Icon  "
+              data-element-id="91">
+              <img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="90" />
+            </div>
+          </div>
+        </div>
+        <div id="occasional_checking_1-content-flex-100--99" class="custom-element TwoIcons  " data-element-id="99">
+          <div id="occasional_checking_1-content-flex-100--body" class="flex " data-element-id="98">
+            <div id="occasional_checking_1-content-flex-100--body--95" class="custom-element Icon  "
+              data-element-id="95">
+              <img id="occasional_checking_1-content-flex-100--body--icon" class="image  "
+                src="./pros-assets/question_mark.png" data-element-id="94" />
+            </div>
+            <div id="occasional_checking_1-content-flex-100--body--97" class="custom-element Icon  "
+              data-element-id="97">
+              <img id="occasional_checking_1-content-flex-100--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="96" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="occasional_checking_1-content-flex-113" class="flex  invisible" data-element-id="113">
+        <div id="occasional_checking_1-content-flex-113--106" class="custom-element TwoIcons  " data-element-id="106">
+          <div id="occasional_checking_1-content-flex-113--body" class="flex " data-element-id="105">
+            <div id="occasional_checking_1-content-flex-113--body--102" class="custom-element Icon  "
+              data-element-id="102">
+              <img id="occasional_checking_1-content-flex-113--body--icon" class="image  "
+                src="./pros-assets/amanda.png" data-element-id="101" />
+            </div>
+            <div id="occasional_checking_1-content-flex-113--body--104" class="custom-element Icon  "
+              data-element-id="104">
+              <img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="103" />
+            </div>
+          </div>
+        </div>
+        <div id="occasional_checking_1-content-flex-113--112" class="custom-element TwoIcons  " data-element-id="112">
+          <div id="occasional_checking_1-content-flex-113--body" class="flex " data-element-id="111">
+            <div id="occasional_checking_1-content-flex-113--body--108" class="custom-element Icon  "
+              data-element-id="108">
+              <img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/wait.png"
+                data-element-id="107" />
+            </div>
+            <div id="occasional_checking_1-content-flex-113--body--110" class="custom-element Icon  "
+              data-element-id="110">
+              <img id="occasional_checking_1-content-flex-113--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="109" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="occasional_checking_1-content-flex-126" class="flex  invisible" data-element-id="126">
+        <div id="occasional_checking_1-content-flex-126--119" class="custom-element TwoIcons  " data-element-id="119">
+          <div id="occasional_checking_1-content-flex-126--body" class="flex " data-element-id="118">
+            <div id="occasional_checking_1-content-flex-126--body--115" class="custom-element Icon  "
+              data-element-id="115">
+              <img id="occasional_checking_1-content-flex-126--body--icon" class="image  "
+                src="./pros-assets/amanda.png" data-element-id="114" />
+            </div>
+            <div id="occasional_checking_1-content-flex-126--body--117" class="custom-element Icon  "
+              data-element-id="117">
+              <img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="116" />
+            </div>
+          </div>
+        </div>
+        <div id="occasional_checking_1-content-flex-126--125" class="custom-element TwoIcons  " data-element-id="125">
+          <div id="occasional_checking_1-content-flex-126--body" class="flex " data-element-id="124">
+            <div id="occasional_checking_1-content-flex-126--body--121" class="custom-element Icon  "
+              data-element-id="121">
+              <img id="occasional_checking_1-content-flex-126--body--icon" class="image  "
+                src="./pros-assets/question_mark.png" data-element-id="120" />
+            </div>
+            <div id="occasional_checking_1-content-flex-126--body--123" class="custom-element Icon  "
+              data-element-id="123">
+              <img id="occasional_checking_1-content-flex-126--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="122" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="occasional_checking_2" class="slide" data-step-count=2>
+    <div id="occasional_checking_2-page_number" class="label  " data-element-id="128">
+      <p class="label-text">7</p>
+    </div>
+    <div id="occasional_checking_2-content" class="flex " data-element-id="166">
+      <div id="occasional_checking_2-content-label-130" class="label  " data-element-id="130">
+        <h1 class="label-header">
+          Getaktetes Überprüfen</h1>
+      </div>
+      <div id="occasional_checking_2-content-flex-143" class="flex " data-element-id="143">
+        <div id="occasional_checking_2-content-flex-143--136" class="custom-element TwoIcons  " data-element-id="136">
+          <div id="occasional_checking_2-content-flex-143--body" class="flex " data-element-id="135">
+            <div id="occasional_checking_2-content-flex-143--body--132" class="custom-element Icon  "
+              data-element-id="132">
+              <img id="occasional_checking_2-content-flex-143--body--icon" class="image  "
+                src="./pros-assets/amanda.png" data-element-id="131" />
+            </div>
+            <div id="occasional_checking_2-content-flex-143--body--134" class="custom-element Icon  "
+              data-element-id="134">
+              <img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="133" />
+            </div>
+          </div>
+        </div>
+        <div id="occasional_checking_2-content-flex-143--142" class="custom-element TwoIcons  " data-element-id="142">
+          <div id="occasional_checking_2-content-flex-143--body" class="flex " data-element-id="141">
+            <div id="occasional_checking_2-content-flex-143--body--138" class="custom-element Icon  "
+              data-element-id="138">
+              <img id="occasional_checking_2-content-flex-143--body--icon" class="image  "
+                src="./pros-assets/question_mark.png" data-element-id="137" />
+            </div>
+            <div id="occasional_checking_2-content-flex-143--body--140" class="custom-element Icon  "
+              data-element-id="140">
+              <img id="occasional_checking_2-content-flex-143--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="139" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="occasional_checking_2-content-flex-154" class="flex " data-element-id="154">
+        <div id="occasional_checking_2-content-flex-154--145" class="custom-element Icon  " data-element-id="145">
+          <img id="occasional_checking_2-content-flex-154--icon" class="image  " src="./pros-assets/amanda.png"
+            data-element-id="144" />
+        </div>
+        <div id="occasional_checking_2-content-flex-154--147" class="custom-element Icon  " data-element-id="147">
+          <img id="occasional_checking_2-content-flex-154--icon" class="image  " src="./pros-assets/light.png"
+            data-element-id="146" />
+        </div>
+        <div id="occasional_checking_2-content-flex-154--153" class="custom-element TwoIcons  " data-element-id="153">
+          <div id="occasional_checking_2-content-flex-154--body" class="flex " data-element-id="152">
+            <div id="occasional_checking_2-content-flex-154--body--149" class="custom-element Icon  "
+              data-element-id="149">
+              <img id="occasional_checking_2-content-flex-154--body--icon" class="image  " src="./pros-assets/wait.png"
+                data-element-id="148" />
+            </div>
+            <div id="occasional_checking_2-content-flex-154--body--151" class="custom-element Icon  "
+              data-element-id="151">
+              <img id="occasional_checking_2-content-flex-154--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="150" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="occasional_checking_2-content-flex-165" class="flex  invisible" data-element-id="165">
+        <div id="occasional_checking_2-content-flex-165-flex-158" class="flex " data-element-id="158">
+          <div id="occasional_checking_2-content-flex-165-flex-158--156" class="custom-element Icon  "
+            data-element-id="156">
+            <img id="occasional_checking_2-content-flex-165-flex-158--icon" class="image  "
+              src="./pros-assets/amanda.png" data-element-id="155" />
+          </div>
+          <div id="occasional_checking_2-content-flex-165-flex-158--157" class="custom-element Empty  "
+            data-element-id="157">
+          </div>
+        </div>
+        <div id="occasional_checking_2-content-flex-165--164" class="custom-element TwoIcons  " data-element-id="164">
+          <div id="occasional_checking_2-content-flex-165--body" class="flex " data-element-id="163">
+            <div id="occasional_checking_2-content-flex-165--body--160" class="custom-element Icon  "
+              data-element-id="160">
+              <img id="occasional_checking_2-content-flex-165--body--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="159" />
+            </div>
+            <div id="occasional_checking_2-content-flex-165--body--162" class="custom-element Icon  "
+              data-element-id="162">
+              <img id="occasional_checking_2-content-flex-165--body--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="161" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="checking_when_requested" class="slide" data-step-count=0>
+    <div id="checking_when_requested-page_number" class="label  " data-element-id="167">
+      <p class="label-text">8</p>
+    </div>
+    <div id="checking_when_requested-content" class="flex " data-element-id="206">
+      <div id="checking_when_requested-content-label-169" class="label  " data-element-id="169">
+        <h1 class="label-header">
+          Überprüfen auf Anfrage</h1>
+      </div>
+      <div id="checking_when_requested-content-flex-182" class="flex " data-element-id="182">
+        <div id="checking_when_requested-content-flex-182--175" class="custom-element TwoIcons  " data-element-id="175">
+          <div id="checking_when_requested-content-flex-182--body" class="flex " data-element-id="174">
+            <div id="checking_when_requested-content-flex-182--body--171" class="custom-element Icon  "
+              data-element-id="171">
+              <img id="checking_when_requested-content-flex-182--body--icon" class="image  "
+                src="./pros-assets/amanda.png" data-element-id="170" />
+            </div>
+            <div id="checking_when_requested-content-flex-182--body--173" class="custom-element Icon  "
+              data-element-id="173">
+              <img id="checking_when_requested-content-flex-182--body--icon" class="image  "
+                src="./pros-assets/light.png" data-element-id="172" />
+            </div>
+          </div>
+        </div>
+        <div id="checking_when_requested-content-flex-182--181" class="custom-element TwoIcons  " data-element-id="181">
+          <div id="checking_when_requested-content-flex-182--body" class="flex " data-element-id="180">
+            <div id="checking_when_requested-content-flex-182--body--177" class="custom-element Icon  "
+              data-element-id="177">
+              <img id="checking_when_requested-content-flex-182--body--icon" class="image  "
+                src="./pros-assets/question_mark.png" data-element-id="176" />
+            </div>
+            <div id="checking_when_requested-content-flex-182--body--179" class="custom-element Icon  "
+              data-element-id="179">
+              <img id="checking_when_requested-content-flex-182--body--icon" class="image  "
+                src="./pros-assets/bobbl.png" data-element-id="178" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="checking_when_requested-content-flex-195" class="flex " data-element-id="195">
+        <div id="checking_when_requested-content-flex-195--188" class="custom-element TwoIcons  " data-element-id="188">
+          <div id="checking_when_requested-content-flex-195--body" class="flex " data-element-id="187">
+            <div id="checking_when_requested-content-flex-195--body--184" class="custom-element Icon  "
+              data-element-id="184">
+              <img id="checking_when_requested-content-flex-195--body--icon" class="image  "
+                src="./pros-assets/amanda.png" data-element-id="183" />
+            </div>
+            <div id="checking_when_requested-content-flex-195--body--186" class="custom-element Icon  "
+              data-element-id="186">
+              <img id="checking_when_requested-content-flex-195--body--icon" class="image  "
+                src="./pros-assets/light.png" data-element-id="185" />
+            </div>
+          </div>
+        </div>
+        <div id="checking_when_requested-content-flex-195--194" class="custom-element TwoIcons  " data-element-id="194">
+          <div id="checking_when_requested-content-flex-195--body" class="flex " data-element-id="193">
+            <div id="checking_when_requested-content-flex-195--body--190" class="custom-element Icon  "
+              data-element-id="190">
+              <img id="checking_when_requested-content-flex-195--body--icon" class="image  "
+                src="./pros-assets/wait.png" data-element-id="189" />
+            </div>
+            <div id="checking_when_requested-content-flex-195--body--192" class="custom-element Icon  "
+              data-element-id="192">
+              <img id="checking_when_requested-content-flex-195--body--icon" class="image  "
+                src="./pros-assets/bobbl.png" data-element-id="191" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="checking_when_requested-content-flex-205" class="flex " data-element-id="205">
+        <div id="checking_when_requested-content-flex-205--196" class="custom-element Empty  " data-element-id="196">
+        </div>
+        <div id="checking_when_requested-content-flex-205--197" class="custom-element Empty  " data-element-id="197">
+        </div>
+        <div id="checking_when_requested-content-flex-205--199" class="custom-element Icon  " data-element-id="199">
+          <img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/amanda.png"
+            data-element-id="198" />
+        </div>
+        <div id="checking_when_requested-content-flex-205--201" class="custom-element Icon  " data-element-id="201">
+          <img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/light.png"
+            data-element-id="200" />
+        </div>
+        <div id="checking_when_requested-content-flex-205--203" class="custom-element Icon  " data-element-id="203">
+          <img id="checking_when_requested-content-flex-205--icon" class="image  " src="./pros-assets/bobbl.png"
+            data-element-id="202" />
+        </div>
+        <div id="checking_when_requested-content-flex-205--204" class="custom-element Empty  " data-element-id="204">
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="checking_when_requested_without_thread_knowledge" class="slide" data-step-count=0>
+    <div id="checking_when_requested_without_thread_knowledge-page_number" class="label  " data-element-id="207">
+      <p class="label-text">9</p>
+    </div>
+    <div id="checking_when_requested_without_thread_knowledge-content" class="flex " data-element-id="246">
+      <div id="checking_when_requested_without_thread_knowledge-content-label-209" class="label  "
+        data-element-id="209">
+        <h1 class="label-header">
+          Überprüfen auf Anfrage ohne Kenntnis anderer Threads</h1>
+      </div>
+      <div id="checking_when_requested_without_thread_knowledge-content-flex-222" class="flex " data-element-id="222">
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-222--215"
+          class="custom-element TwoIcons  " data-element-id="215">
+          <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body" class="flex "
+            data-element-id="214">
+            <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--211"
+              class="custom-element Icon  " data-element-id="211">
+              <img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  "
+                src="./pros-assets/amanda.png" data-element-id="210" />
+            </div>
+            <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--213"
+              class="custom-element Icon  " data-element-id="213">
+              <img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  "
+                src="./pros-assets/light.png" data-element-id="212" />
+            </div>
+          </div>
+        </div>
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-222--221"
+          class="custom-element TwoIcons  " data-element-id="221">
+          <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body" class="flex "
+            data-element-id="220">
+            <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--217"
+              class="custom-element Icon  " data-element-id="217">
+              <img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  "
+                src="./pros-assets/question_mark.png" data-element-id="216" />
+            </div>
+            <div id="checking_when_requested_without_thread_knowledge-content-flex-222--body--219"
+              class="custom-element Icon  " data-element-id="219">
+              <img id="checking_when_requested_without_thread_knowledge-content-flex-222--body--icon" class="image  "
+                src="./pros-assets/bobbl.png" data-element-id="218" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="checking_when_requested_without_thread_knowledge-content-flex-235" class="flex " data-element-id="235">
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-235--228"
+          class="custom-element TwoIcons  " data-element-id="228">
+          <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body" class="flex "
+            data-element-id="227">
+            <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--224"
+              class="custom-element Icon  " data-element-id="224">
+              <img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  "
+                src="./pros-assets/amanda.png" data-element-id="223" />
+            </div>
+            <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--226"
+              class="custom-element Icon  " data-element-id="226">
+              <img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  "
+                src="./pros-assets/light.png" data-element-id="225" />
+            </div>
+          </div>
+        </div>
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-235--234"
+          class="custom-element TwoIcons  " data-element-id="234">
+          <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body" class="flex "
+            data-element-id="233">
+            <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--230"
+              class="custom-element Icon  " data-element-id="230">
+              <img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  "
+                src="./pros-assets/wait.png" data-element-id="229" />
+            </div>
+            <div id="checking_when_requested_without_thread_knowledge-content-flex-235--body--232"
+              class="custom-element Icon  " data-element-id="232">
+              <img id="checking_when_requested_without_thread_knowledge-content-flex-235--body--icon" class="image  "
+                src="./pros-assets/bobbl.png" data-element-id="231" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="checking_when_requested_without_thread_knowledge-content-flex-245" class="flex " data-element-id="245">
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--237" class="custom-element Icon  "
+          data-element-id="237">
+          <img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  "
+            src="./pros-assets/amanda.png" data-element-id="236" />
+        </div>
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--238" class="custom-element Empty  "
+          data-element-id="238">
+        </div>
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--239" class="custom-element Empty  "
+          data-element-id="239">
+        </div>
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--241" class="custom-element Icon  "
+          data-element-id="241">
+          <img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  "
+            src="./pros-assets/light.png" data-element-id="240" />
+        </div>
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--243" class="custom-element Icon  "
+          data-element-id="243">
+          <img id="checking_when_requested_without_thread_knowledge-content-flex-245--icon" class="image  "
+            src="./pros-assets/bobbl.png" data-element-id="242" />
+        </div>
+        <div id="checking_when_requested_without_thread_knowledge-content-flex-245--244" class="custom-element Empty  "
+          data-element-id="244">
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="resume_one_sided" class="slide" data-step-count=0>
+    <div id="resume_one_sided-page_number" class="label  " data-element-id="247">
+      <p class="label-text">10</p>
+    </div>
+    <div id="resume_one_sided-title" class="label  " data-element-id="249">
+      <h1 class="label-header">
+        Fazit zur einseitigen Synchronisation</h1>
+    </div>
+  </section>
+  <section id="deadlocks" class="slide" data-step-count=0>
+    <div id="deadlocks-page_number" class="label  " data-element-id="250">
+      <p class="label-text">11</p>
+    </div>
+    <div id="deadlocks-text" class="label  " data-element-id="252">
+      <h1 class="label-header">
+        Deadlocks</h1>
+      <ol class="label-text">
+        <li>
+          <p class="label-text">Grundproblem</p>
+        <li>
+          <p class="label-text">Definition eines Deadlocks</p>
+        <li>
+          <p class="label-text">Präventive Deadlockverhinderung</p>
+        <li>
+          <p class="label-text">Deadlockverhinderung zur Laufzeit</p>
+        <li>
+          <p class="label-text">Deadlockerkennung zur Laufzeit</p>
+        <li>
+          <p class="label-text">Livelocks</p>
+        <li>
+          <p class="label-text">Fazit zu Deadlocks</p>
+      </ol>
+    </div>
+  </section>
+  <section id="deadlocks_problem" class="slide" data-step-count=0>
+    <div id="deadlocks_problem-page_number" class="label  " data-element-id="253">
+      <p class="label-text">12</p>
+    </div>
+    <div id="deadlocks_problem-title" class="label  " data-element-id="255">
+      <h1 class="label-header">
+        Deadlocks: Grundproblem</h1>
+    </div>
+    <div id="deadlocks_problem-base" class="custom-element DeadlockIcons  " data-element-id="264">
+      <div id="deadlocks_problem-base-amanda" class="custom-element Icon  " data-element-id="257">
+        <img id="deadlocks_problem-base-amanda-icon" class="image  " src="./pros-assets/amanda.png"
+          data-element-id="256" />
+      </div>
+      <div id="deadlocks_problem-base-bobbl" class="custom-element Icon  " data-element-id="259">
+        <img id="deadlocks_problem-base-bobbl-icon" class="image  " src="./pros-assets/bobbl.png"
+          data-element-id="258" />
+      </div>
+      <div id="deadlocks_problem-base-light" class="custom-element Icon  " data-element-id="261">
+        <img id="deadlocks_problem-base-light-icon" class="image  " src="./pros-assets/light.png"
+          data-element-id="260" />
+      </div>
+      <div id="deadlocks_problem-base-lift" class="custom-element Icon  " data-element-id="263">
+        <img id="deadlocks_problem-base-lift-icon" class="image  " src="./pros-assets/lift.png" data-element-id="262" />
+      </div>
+    </div>
+    <div id="deadlocks_problem-wait_amanda" class="custom-element Icon  " data-element-id="266">
+      <img id="deadlocks_problem-wait_amanda-icon" class="image  " src="./pros-assets/wait.png" data-element-id="265" />
+    </div>
+    <div id="deadlocks_problem-wait_bobbl" class="custom-element Icon  " data-element-id="268">
+      <img id="deadlocks_problem-wait_bobbl-icon" class="image  " src="./pros-assets/wait.png" data-element-id="267" />
+    </div>
+  </section>
+  <section id="deadlock_definition" class="slide" data-step-count=0>
+    <div id="deadlock_definition-page_number" class="label  " data-element-id="269">
+      <p class="label-text">13</p>
+    </div>
+    <div id="deadlock_definition-content" class="label  " data-element-id="271">
+      <h1 class="label-header">
+        Definition eines Deadlocks</h1>
+      <p class="label-text">Benötigte Bedingungen:</p>
+      <ol class="label-text">
+        <li>
+          <p class="label-text">Bedingung des wechselseitigen Ausschlusses</p>
+        <li>
+          <p class="label-text">Belegungs- und Wartebedingung</p>
+        <li>
+          <p class="label-text">Ununterbrechbarkeitsbedingung</p>
+        <li>
+          <p class="label-text">Zyklische Wartebedingung</p>
+      </ol>
+    </div>
+  </section>
+  <section id="deadlock_unique_access" class="slide" data-step-count=0>
+    <div id="deadlock_unique_access-page_number" class="label  " data-element-id="272">
+      <p class="label-text">14</p>
+    </div>
+    <div id="deadlock_unique_access-title" class="label  " data-element-id="274">
+      <h1 class="label-header">
+        Definition eines Deadlocks</h1>
+      <ol class="label-text">
+        <li>
+          <p class="label-text">Bedingung des wechselseitigen Ausschlusses</p>
+      </ol>
+    </div>
+    <div id="deadlock_unique_access-seperator" class="custom-element Empty  " data-element-id="275">
+    </div>
+    <div id="deadlock_unique_access-left" class="custom-element DeadlockUniqueAccessYes  " data-element-id="295">
+      <div id="deadlock_unique_access-left-content" class="flex " data-element-id="294">
+        <div id="deadlock_unique_access-left-content-label-276" class="label  " data-element-id="276">
+          <p class="label-text">Möglich</p>
+        </div>
+        <div id="deadlock_unique_access-left-content-flex-284" class="flex " data-element-id="284">
+          <div id="deadlock_unique_access-left-content-flex-284--278" class="custom-element Icon  "
+            data-element-id="278">
+            <img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/amanda.png"
+              data-element-id="277" />
+          </div>
+          <div id="deadlock_unique_access-left-content-flex-284--279" class="custom-element Empty  "
+            data-element-id="279">
+          </div>
+          <div id="deadlock_unique_access-left-content-flex-284--281" class="custom-element Icon  "
+            data-element-id="281">
+            <img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/light.png"
+              data-element-id="280" />
+          </div>
+          <div id="deadlock_unique_access-left-content-flex-284--283" class="custom-element Icon  "
+            data-element-id="283">
+            <img id="deadlock_unique_access-left-content-flex-284--icon" class="image  " src="./pros-assets/bobbl.png"
+              data-element-id="282" />
+          </div>
+        </div>
+        <div id="deadlock_unique_access-left-content-label-285" class="label  " data-element-id="285">
+          <p class="label-text">oder</p>
+        </div>
+        <div id="deadlock_unique_access-left-content-flex-293" class="flex " data-element-id="293">
+          <div id="deadlock_unique_access-left-content-flex-293--287" class="custom-element Icon  "
+            data-element-id="287">
+            <img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/amanda.png"
+              data-element-id="286" />
+          </div>
+          <div id="deadlock_unique_access-left-content-flex-293--289" class="custom-element Icon  "
+            data-element-id="289">
+            <img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/light.png"
+              data-element-id="288" />
+          </div>
+          <div id="deadlock_unique_access-left-content-flex-293--290" class="custom-element Empty  "
+            data-element-id="290">
+          </div>
+          <div id="deadlock_unique_access-left-content-flex-293--292" class="custom-element Icon  "
+            data-element-id="292">
+            <img id="deadlock_unique_access-left-content-flex-293--icon" class="image  " src="./pros-assets/bobbl.png"
+              data-element-id="291" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="deadlock_unique_access-right" class="custom-element DeadlockUniqueAccessNo  " data-element-id="308">
+      <div id="deadlock_unique_access-right-content" class="flex " data-element-id="307">
+        <div id="deadlock_unique_access-right-content-label-296" class="label  " data-element-id="296">
+          <p class="label-text">Nicht möglich</p>
+        </div>
+        <div id="deadlock_unique_access-right-content--306" class="custom-element Crossed  " data-element-id="306">
+          <div id="deadlock_unique_access-right-content--inner" class="flex " data-element-id="303">
+            <div id="deadlock_unique_access-right-content--inner--298" class="custom-element Icon  "
+              data-element-id="298">
+              <img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/amanda.png"
+                data-element-id="297" />
+            </div>
+            <div id="deadlock_unique_access-right-content--inner--300" class="custom-element Icon  "
+              data-element-id="300">
+              <img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/light.png"
+                data-element-id="299" />
+            </div>
+            <div id="deadlock_unique_access-right-content--inner--302" class="custom-element Icon  "
+              data-element-id="302">
+              <img id="deadlock_unique_access-right-content--inner--icon" class="image  " src="./pros-assets/bobbl.png"
+                data-element-id="301" />
+            </div>
+          </div>
+          <div id="deadlock_unique_access-right-content--line1" class="custom-element Empty  " data-element-id="304">
+          </div>
+          <div id="deadlock_unique_access-right-content--line2" class="custom-element Empty  " data-element-id="305">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="deadlock_additional_resources" class="slide" data-step-count=0>
+    <div id="deadlock_additional_resources-page_number" class="label  " data-element-id="309">
+      <p class="label-text">15</p>
+    </div>
+    <div id="deadlock_additional_resources-title" class="label  " data-element-id="311">
+      <h1 class="label-header">
+        Definition eines Deadlocks</h1>
+      <ol class="label-text">
+        <li>
+          <p class="label-text">Belegungs- und Wartebedingung</p>
+      </ol>
+    </div>
+    <div id="deadlock_additional_resources-left" class="custom-element TwoIcons  " data-element-id="317">
+      <div id="deadlock_additional_resources-left-body" class="flex " data-element-id="316">
+        <div id="deadlock_additional_resources-left-body--313" class="custom-element Icon  " data-element-id="313">
+          <img id="deadlock_additional_resources-left-body--icon" class="image  " src="./pros-assets/lift.png"
+            data-element-id="312" />
+        </div>
+        <div id="deadlock_additional_resources-left-body--315" class="custom-element Icon  " data-element-id="315">
+          <img id="deadlock_additional_resources-left-body--icon" class="image  " src="./pros-assets/amanda.png"
+            data-element-id="314" />
+        </div>
+      </div>
+    </div>
+    <div id="deadlock_additional_resources-right" class="custom-element Icon  " data-element-id="319">
+      <img id="deadlock_additional_resources-right-icon" class="image  " src="./pros-assets/light.png"
+        data-element-id="318" />
+    </div>
+  </section>
+  <section id="deadlock_no_release" class="slide" data-step-count=0>
+    <div id="deadlock_no_release-page_number" class="label  " data-element-id="320">
+      <p class="label-text">16</p>
+    </div>
+    <div id="deadlock_no_release-title" class="label  " data-element-id="322">
+      <h1 class="label-header">
+        Definition eines Deadlocks</h1>
+      <ol class="label-text">
+        <li>
+          <p class="label-text">Ununterbrechbarkeitsbedingung</p>
+      </ol>
+    </div>
+    <div id="deadlock_no_release-seperator" class="custom-element Empty  " data-element-id="323">
+    </div>
+    <div id="deadlock_no_release-left" class="flex " data-element-id="334">
+      <div id="deadlock_no_release-left--325" class="custom-element Icon  " data-element-id="325">
+        <img id="deadlock_no_release-left--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="324" />
+      </div>
+      <div id="deadlock_no_release-left--332" class="custom-element Empty  " data-element-id="332">
+      </div>
+      <div id="deadlock_no_release-left--333" class="custom-element Empty  " data-element-id="333">
+      </div>
+      <div id="deadlock_no_release-left--329" class="custom-element Icon  " data-element-id="329">
+        <img id="deadlock_no_release-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="328" />
+      </div>
+    </div>
+    <div id="deadlock_no_release-right" class="custom-element Crossed  " data-element-id="340">
+      <div id="deadlock_no_release-right-inner" class="flex " data-element-id="337">
+        <div id="deadlock_no_release-right-inner--327" class="custom-element Icon  " data-element-id="327">
+          <img id="deadlock_no_release-right-inner--icon" class="image  " src="./pros-assets/amanda.png"
+            data-element-id="326" />
+        </div>
+        <div id="deadlock_no_release-right-inner--335" class="custom-element Empty  " data-element-id="335">
+        </div>
+        <div id="deadlock_no_release-right-inner--336" class="custom-element Empty  " data-element-id="336">
+        </div>
+        <div id="deadlock_no_release-right-inner--331" class="custom-element Icon  " data-element-id="331">
+          <img id="deadlock_no_release-right-inner--icon" class="image  " src="./pros-assets/lift.png"
+            data-element-id="330" />
+        </div>
+      </div>
+      <div id="deadlock_no_release-right-line1" class="custom-element Empty  " data-element-id="338">
+      </div>
+      <div id="deadlock_no_release-right-line2" class="custom-element Empty  " data-element-id="339">
+      </div>
+    </div>
+  </section>
+  <section id="deadlock_cyclic_wait" class="slide" data-step-count=0>
+    <div id="deadlock_cyclic_wait-page_number" class="label  " data-element-id="341">
+      <p class="label-text">17</p>
+    </div>
+    <div id="deadlock_cyclic_wait-title" class="label  " data-element-id="343">
+      <h1 class="label-header">
+        Definition eines Deadlocks</h1>
+      <ol class="label-text">
+        <li>
+          <p class="label-text">Zyklische Wartebedingung</p>
+      </ol>
+    </div>
+    <div id="deadlock_cyclic_wait-left" class="flex " data-element-id="348">
+      <div id="deadlock_cyclic_wait-left--345" class="custom-element Icon  " data-element-id="345">
+        <img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/amanda.png"
+          data-element-id="344" />
+      </div>
+      <div id="deadlock_cyclic_wait-left--347" class="custom-element Icon  " data-element-id="347">
+        <img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="346" />
+      </div>
+    </div>
+    <div id="deadlock_cyclic_wait-right" class="flex " data-element-id="353">
+      <div id="deadlock_cyclic_wait-right--350" class="custom-element Icon  " data-element-id="350">
+        <img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/light.png"
+          data-element-id="349" />
+      </div>
+      <div id="deadlock_cyclic_wait-right--352" class="custom-element Icon  " data-element-id="352">
+        <img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/bobbl.png"
+          data-element-id="351" />
+      </div>
+    </div>
+  </section>
+</body>
+
+</html>
