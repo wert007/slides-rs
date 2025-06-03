@@ -173,7 +173,14 @@ impl Presentation {
             ExternText::Text(source, text) => (source, text),
         };
         let extern_text = self.extern_texts.entry(placement).or_default();
-        writeln!(extern_text, "<!-- From {source} -->").expect("infallible");
+        match placement {
+            FilePlacement::HtmlHead => {
+                writeln!(extern_text, "<!-- From {source} -->").expect("infallible");
+            }
+            FilePlacement::JavascriptInit | FilePlacement::JavascriptSlideChange => {
+                writeln!(extern_text, "// From {source}").expect("infallible");
+            }
+        }
         writeln!(extern_text, "{text}\n").expect("infallible");
         Ok(())
     }
