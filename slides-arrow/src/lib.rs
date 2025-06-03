@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::atomic::{AtomicBool, AtomicUsize},
-};
+use std::{collections::HashMap, sync::atomic::AtomicBool};
 
 use bindings::{
     component::arrows::{
@@ -12,8 +9,17 @@ use bindings::{
     exports::component::arrows::modules::{self, Guest, GuestModule, Module},
 };
 
-#[allow(warnings)]
-mod bindings;
+const JS_LIBRARY: &'static str = include_str!("connector.js");
+
+// #[allow(warnings)]
+// mod bindings;
+
+mod bindings {
+    wit_bindgen::generate!({
+        // the name of the world in the `*.wit` input file
+        world: "host",
+    });
+}
 
 struct Component;
 
@@ -22,8 +28,7 @@ impl Guest for Component {
 }
 
 struct Arrows {
-    is_library_downloaded: AtomicBool,
-    created_lines: AtomicUsize,
+    is_library_initiated: AtomicBool,
 }
 impl Arrows {
     fn arrow(
@@ -36,25 +41,30 @@ impl Arrows {
         options: HashMap<String, ValueIndex>,
     ) -> Result<(), modules::Error> {
         use std::fmt::Write;
-        let is_library_downloaded = self
-            .is_library_downloaded
+        let is_library_initiated = self
+            .is_library_initiated
             .fetch_update(
                 std::sync::atomic::Ordering::SeqCst,
                 std::sync::atomic::Ordering::SeqCst,
                 |_| Some(true),
             )
             .unwrap();
-        if !is_library_downloaded {
-            slides.download_file("https://raw.githubusercontent.com/wert007/leader-line/refs/heads/master/leader-line.min.js", "pros-assets/leader-line.min.js");
-            slides.add_file_reference("pros-assets/leader-line.min.js");
+        if !is_library_initiated {
             slides.place_text_in_output(
-                "<script src=\"pros-assets/leader-line.min.js\"></script>",
+                &format!("<script>{JS_LIBRARY}</script>"),
                 "arrows module",
                 slides::Placement::HtmlHead,
             );
 
             slides.place_text_in_output(
-                "for (var line of globals.arrows.lines) { line.position(); }",
+                "
+            globals.arrows = new SimpleConnector()",
+                "module arrows import",
+                slides::Placement::JavascriptInit,
+            );
+
+            slides.place_text_in_output(
+                "globals.arrows.updateAll();",
                 "module arrows import",
                 slides::Placement::JavascriptSlideChange,
             );
@@ -79,14 +89,6 @@ impl Arrows {
                     writeln!(options_text, "{key}: {},", value_to_string(&value)?)
                         .expect("infallible");
                 }
-                "start_socket" => {
-                    writeln!(options_text, "startSocket: {},", value_to_string(&value)?)
-                        .expect("Infallible");
-                }
-                "end_socket" => {
-                    writeln!(options_text, "endSocket: {},", value_to_string(&value)?)
-                        .expect("Infallible");
-                }
                 "middle_label" => {
                     writeln!(
                         options_text,
@@ -103,16 +105,10 @@ impl Arrows {
             }
         }
         let parent_option = format!("document.getElementById(\"{namespace}\")");
-        let index = self
-            .created_lines
-            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        if index == 0 {
-            writeln!(text, "globals.arrows = {{ lines: []}}").expect("infallible");
-        }
         writeln!(
             text,
             "
-    globals.arrows.lines[{index}] = new LeaderLine(
+    globals.arrows.connect(
         getElementById({from}),
         getElementById({to}),
         {{
@@ -134,8 +130,7 @@ impl Arrows {
 impl GuestModule for Arrows {
     fn create(_slides: slides::Slides) -> modules::Module {
         Module::new(Self {
-            is_library_downloaded: AtomicBool::new(false),
-            created_lines: AtomicUsize::new(0),
+            is_library_initiated: AtomicBool::new(false),
         })
     }
 

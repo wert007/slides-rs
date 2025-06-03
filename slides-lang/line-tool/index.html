@@ -1,0 +1,142 @@
+<html>
+            <head>
+            <link href="style.css" rel="stylesheet"/>
+            <script src="navigation.js"></script>
+
+            <!-- For Google font! -->
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <script>
+                function init() {
+                    init_navigation();
+
+            
+<!-- From module arrows import -->
+
+            globals.arrows = new SimpleConnector()
+
+<!-- From arrows arrow function -->
+
+    globals.arrows.connect(
+        getElementById(2),
+        getElementById(6),
+        {
+            parent: document.getElementById("deadlocks_problem"),
+            color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+
+
+        }
+
+            function onSlideChange() {
+        <!-- From module arrows import -->
+globals.arrows.updateAll();
+
+
+            }
+        </script>
+            
+<!-- From arrows module -->
+<script>function create_line(options) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('stroke', options.color || 'black');
+    line.setAttribute('stroke-width', options.width || '2');
+    return line;
+}
+
+function create_svg_canvas() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    svg.style.position = "absolute";
+    svg.style.left = "0";
+    svg.style.top = "0";
+    return svg;
+}
+
+class SimpleConnector {
+    constructor() {
+        this.lines = [];
+        window.addEventListener('resize', () => this.updateAll());
+        window.addEventListener('scroll', () => this.updateAll(), true);
+    }
+
+    connect(el1, el2, options = {}) {
+        console.log("options", options);
+        const container = create_svg_canvas();
+        if (options.parent) {
+            options.parent.appendChild(container);
+        } else {
+            document.appendChild(container);
+        }
+        const line = { from: el1, to: el2, line: create_line(options), parent: options.parent };
+        container.appendChild(line.line);
+        this.lines.push(line);
+        this.updateLine(line);
+        return line;
+    }
+
+    updateLine(line) {
+        const pos1 = line.from.getBoundingClientRect();
+        const pos2 = line.to.getBoundingClientRect();
+
+        const parent = line.parent?.getBoundingClientRect() ?? { x: 0, y: 0 };
+
+        const x1 = pos1.left + pos1.width / 2 + window.scrollX - parent.x;
+        const y1 = pos1.top + pos1.height / 2 + window.scrollY - parent.y;
+        const x2 = pos2.left + pos2.width / 2 + window.scrollX - parent.x;
+        const y2 = pos2.top + pos2.height / 2 + window.scrollY - parent.y;
+
+        line.line.setAttribute('x1', x1);
+        line.line.setAttribute('y1', y1);
+        line.line.setAttribute('x2', x2);
+        line.line.setAttribute('y2', y2);
+    }
+
+    updateAll() {
+        for (const l of this.lines) {
+            this.updateLine(l);
+        }
+    }
+}
+
+// // Example usage:
+// document.addEventListener('DOMContentLoaded', () => {
+//   const svg = document.getElementById('connector-svg');
+//   const connector = new SimpleConnector(svg);
+
+//   const el1 = document.getElementById('box1');
+//   const el2 = document.getElementById('box2');
+
+//   connector.connect(el1, el2, { color: 'red', width: 3 });
+// });
+</script>
+
+
+</head>
+            <body onload="init()" onkeydown="keydown(event)">
+<section id="deadlocks_problem" class="slide" data-step-count=0>
+<div id="deadlocks_problem-title" class="label  " data-element-id="0">
+<h1 class="label-header">
+Deadlocks: Grundproblem</h1>
+</div>
+<div id="deadlocks_problem-base" class="custom-element DeadlockIcons  " data-element-id="9">
+<div id="deadlocks_problem-base-amanda" class="custom-element Icon  " data-element-id="2">
+<img id="deadlocks_problem-base-amanda-icon" class="image  " src="./pros-assets/amanda.png" data-element-id="1"/>
+</div>
+<div id="deadlocks_problem-base-bobbl" class="custom-element Icon  " data-element-id="4">
+<img id="deadlocks_problem-base-bobbl-icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="3"/>
+</div>
+<div id="deadlocks_problem-base-light" class="custom-element Icon  " data-element-id="6">
+<img id="deadlocks_problem-base-light-icon" class="image  " src="./pros-assets/light.png" data-element-id="5"/>
+</div>
+<div id="deadlocks_problem-base-lift" class="custom-element Icon  " data-element-id="8">
+<img id="deadlocks_problem-base-lift-icon" class="image  " src="./pros-assets/lift.png" data-element-id="7"/>
+</div>
+</div>
+</section>
+</body></html>

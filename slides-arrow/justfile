@@ -1,0 +1,17 @@
+set shell := ["powershell.exe", "-c"]
+
+build:
+    cargo build --target wasm32-wasip2
+    # # wit-bindgen component build --out-dir out wit/module.wit
+    # wasm-tools component build ..\target\wasm32-wasip1\debug\slides_arrow.wasm -o slides_arrow.wasm
+
+
+pack:
+    just build
+    cp ..\target\wasm32-wasip2\debug\slides_arrow.wasm .
+    -rm ..\slides-lang\slides-modules\arrows.sld.mod.zip
+    zip ..\slides-lang\slides-modules\arrows.sld.mod.zip slides_arrow.wasm
+    -rm slides_arrow.wasm
+
+setup:
+    rustup target add wasm32-wasip2

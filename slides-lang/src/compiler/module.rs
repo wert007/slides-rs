@@ -86,7 +86,7 @@ impl Module {
 }
 
 bindgen!({
-    path: "../slides-arrow/wit/world.wit",
+    path: "../slides-arrow/wit/module.wit",
     // with: {
     //     "wasi": wasmtime_wasi::bindings,
     // }

@@ -1,0 +1,203 @@
+body,
+p,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    background: black;
+    display: flex;
+}
+
+h1 {
+    padding: min(30px, 2%) min(10px, 0.7%);
+    margin: 0;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+ul,
+ol {
+    margin: 0;
+}
+
+.slide {
+    width: calc(min(100dvw, 100dvh * 16 / 9));
+    --slide-width: calc(min(100dvw, 100dvh * 16 / 9));
+    height: calc(min(100dvh, 100dvw * 9 / 16));
+    --slide-height: calc(min(100dvh, 100dvw * 9 / 16));
+    position: relative;
+    padding: 0;
+    margin: auto 0;
+    display: none;
+    overflow: hidden;
+}
+
+.slide.active {
+    display: block;
+}
+
+.label,
+.image,
+.custom-element,
+.grid,
+.flex {
+    position: absolute;
+    overflow: hidden;
+}
+
+.emphasis {
+    font-style: italic;
+}
+
+.strong {
+    font-weight: bold;
+}
+
+.label {
+    font-size: calc(1.0 * min(16 * 4dvh, 9 * 4dvw) / 16);
+    font-weight: normal;
+    color: inherit;
+}
+
+.image {
+    max-width: 100dvw;
+    max-height: 100dvh;
+    object-fit: contain;
+    object-position: center;
+}
+
+.grid {
+    display: grid;
+}
+
+.grid>* {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex>* {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.flex>.label {
+    flex-basis: content;
+}
+
+.horizontal-center {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+
+.invisible {
+    display: none;
+}
+
+#deadlocks_problem {
+    background: rgb(255, 255, 255, 1);
+}
+
+#deadlocks_problem-title {
+    left: calc(0.1 * var(--slide-width));
+    right: calc(0.1 * var(--slide-width));
+    width: calc(+ 100%+ (-0.2 * var(--slide-width)));
+    z-index: 0;
+}
+
+#deadlocks_problem-base {
+    top: calc(0.4 * var(--slide-height));
+    bottom: calc(0.1 * var(--slide-height));
+    height: calc(+ 100%+ (-0.5 * var(--slide-height)));
+    left: calc(0.1 * var(--slide-width));
+    right: calc(0.1 * var(--slide-width));
+    width: calc(+ 100%+ (-0.2 * var(--slide-width)));
+    z-index: 1;
+}
+
+#deadlocks_problem-base-amanda {
+    top: 50%;
+    bottom: unset;
+    left: 0px;
+    right: unset;
+    height: 20%;
+    width: 10%;
+    transform: translate(0%, -50%);
+}
+
+#deadlocks_problem-base-amanda-icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlocks_problem-base-bobbl {
+    top: 50%;
+    bottom: unset;
+    right: 0px;
+    left: unset;
+    height: 20%;
+    width: 10%;
+    transform: translate(0%, -50%);
+}
+
+#deadlocks_problem-base-bobbl-icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlocks_problem-base-light {
+    bottom: 0px;
+    top: unset;
+    left: 50%;
+    right: unset;
+    height: 20%;
+    width: 10%;
+    transform: translate(-50%, 0%);
+}
+
+#deadlocks_problem-base-light-icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlocks_problem-base-lift {
+    top: 0px;
+    bottom: unset;
+    left: 50%;
+    right: unset;
+    height: 20%;
+    width: 10%;
+    transform: translate(-50%, 0%);
+}
+
+#deadlocks_problem-base-lift-icon {
+    height: 100%;
+    width: 100%;
+}
+
