@@ -58,8 +58,8 @@ background = c"white";
     // let position = positionInside(a, 0.0, 0.5);
     // let amanda = base.amanda;
     let options = { color: c"#595959" };
-    arrows.arrow(base.amanda, base.light, options | { from_pos: {x: 0.5, y: 0},line_kind: 'orthogonal'});
-    arrows.arrow(base.amanda, base.lift, options | { from_pos: {x: 0.7, y: 0.2}, to_pos: {x: 0, y: 0.5} });
+    // arrows.arrow(base.amanda, base.light, options | { from_pos: {x: 0.5, y: 0},line_kind: 'orthogonal'});
+    arrows.arrow(base.amanda, base.lift, options | { from_pos: {x: 0.7, y: 0.2}, to_pos: {x: 0, y: 0.5}, label: "I am a arrow!" });
 //     arrows.arrow(base.bobbl, base.light, options | { startSocket: "bottom" });
 //     arrows.arrow(base.bobbl, base.lift, options | { startSocket: "top" });
 //     let wait_amanda =

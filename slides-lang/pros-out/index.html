@@ -22,9 +22,9 @@
         getElementById(261),
         {
             parent: document.getElementById("deadlocks_problem"),
-            path: "grid",
-color: "rgb(89, 89, 89, 1)",
-startSocket: "bottom",
+            color: "rgb(89, 89, 89, 1)",
+from_pos: {x:0.5,y:1,},
+line_kind: "orthogonal",
 
         },
     );
@@ -37,9 +37,9 @@ startSocket: "bottom",
         getElementById(263),
         {
             parent: document.getElementById("deadlocks_problem"),
-            color: "rgb(89, 89, 89, 1)",
-startSocket: "top",
-path: "grid",
+            line_kind: "orthogonal",
+from_pos: {y:0,x:0.5,},
+color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -52,9 +52,9 @@ path: "grid",
         getElementById(261),
         {
             parent: document.getElementById("deadlocks_problem"),
-            path: "grid",
+            from_pos: {y:1,x:0.5,},
 color: "rgb(89, 89, 89, 1)",
-startSocket: "bottom",
+line_kind: "orthogonal",
 
         },
     );
@@ -67,8 +67,8 @@ startSocket: "bottom",
         getElementById(263),
         {
             parent: document.getElementById("deadlocks_problem"),
-            startSocket: "top",
-path: "grid",
+            line_kind: "orthogonal",
+from_pos: {y:0,x:0.5,},
 color: "rgb(89, 89, 89, 1)",
 
         },
@@ -82,8 +82,8 @@ color: "rgb(89, 89, 89, 1)",
         getElementById(319),
         {
             parent: document.getElementById("deadlock_additional_resources"),
-            middleLabel: LeaderLine.captionLabel("fordert zusätzlich an", { classList: 'label'}),
-color: "rgb(89, 89, 89, 1)",
+            color: "rgb(89, 89, 89, 1)",
+middleLabel: LeaderLine.captionLabel("fordert zusätzlich an", { classList: 'label'}),
 
         },
     );
@@ -110,8 +110,40 @@ middleLabel: LeaderLine.captionLabel("gibt zurück", { classList: 'label'}),
         getElementById(331),
         {
             parent: document.getElementById("deadlock_no_release"),
-            middleLabel: LeaderLine.captionLabel("wird entzogen", { classList: 'label'}),
+            color: "rgb(89, 89, 89, 1)",
+middleLabel: LeaderLine.captionLabel("wird entzogen", { classList: 'label'}),
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    globals.arrows.connect(
+        getElementById(345),
+        getElementById(350),
+        {
+            parent: document.getElementById("deadlock_cyclic_wait"),
+            from_pos: {x:0.5,y:0,},
+to_pos: {y:0,x:0.5,},
+middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
 color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+<!-- From arrows arrow function -->
+
+    globals.arrows.connect(
+        getElementById(352),
+        getElementById(347),
+        {
+            parent: document.getElementById("deadlock_cyclic_wait"),
+            color: "rgb(89, 89, 89, 1)",
+from_pos: {y:1,x:0.5,},
+to_pos: {x:0.5,y:1,},
+middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
 
         },
     );
@@ -131,38 +163,153 @@ globals.arrows.updateAll();
             
 <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
 <!-- From arrows module -->
-<script>class SimpleConnector {
+<script>function calculate_orthogonal_connection(start, startRel, end, endRel) {
+    const direction = { x: Math.sign(startRel.x - 0.5), y: Math.sign(startRel.y - 0.5) };
+    const delta = { x: end.x - start.x, y: end.y - start.y };
+    console.log(start, delta, end);
+    if (Math.abs(delta.x) < 0.1 && Math.abs(delta.y) < 0.1) {
+        console.log("ending now!");
+        return [end];
+    }
+    if (direction.x == 0 && direction.y == 0) {
+        if (Math.abs(delta.x) > Math.abs(delta.y)) {
+            direction.x = Math.sign(delta.x);
+        } else {
+            direction.y = Math.sign(delta.y);
+        }
+    }
+    if (direction.x != 0 && direction.y != 0) {
+        if (Math.abs(startRel.x) > Math.abs(startRel.y)) {
+            direction.y = 0;
+        } else {
+            direction.x = 0;
+        }
+    }
+    delta.x = Math.abs(delta.x);
+    delta.y = Math.abs(delta.y);
+    let point = { x: delta.x * direction.x + start.x, y: delta.y * direction.y + start.y };
+    const newDelta = { x: end.x - point.x, y: end.y - point.y };
+    const deltaLength = delta.x * delta.x + delta.y * delta.y;
+    if (deltaLength <= newDelta.x * newDelta.x + newDelta.y * newDelta.y) {
+        const distance = Math.sqrt(deltaLength) * 0.10;
+        point = { x: distance * direction.x + start.x, y: distance * direction.y + start.y };
+    }
+    return [start, ...calculate_orthogonal_connection(point, { x: 0.5, y: 0.5 }, end, endRel)];
+}
+
+function create_line(options, points) {
+    const result = [];
+    switch (options.line_kind ?? 'direct') {
+        case 'direct':
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('stroke', options.color || 'black');
+            line.setAttribute('stroke-width', options.width || '2');
+            result.push(line);
+            break;
+        case 'orthogonal':
+            if (!points) {
+                // Line will be created later
+                break;
+            }
+            for (let i = 0; i < points.length - 1; i++) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('stroke', options.color || 'black');
+                line.setAttribute('stroke-width', options.width || '2');
+                line.setAttribute('x1', points[i].x);
+                line.setAttribute('y1', points[i].y);
+                line.setAttribute('x2', points[i + 1].x);
+                line.setAttribute('y2', points[i + 1].y);
+                result.push(line);
+            }
+            break;
+    }
+    return result;
+}
+
+function create_svg_canvas() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    svg.style.position = "absolute";
+    svg.style.left = "0";
+    svg.style.top = "0";
+    return svg;
+}
+
+class SimpleConnector {
     constructor() {
-        this.global_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.lines = [];
         window.addEventListener('resize', () => this.updateAll());
         window.addEventListener('scroll', () => this.updateAll(), true);
     }
 
-    connect(el1, el2, options = {}) {
-        const container = options.parent ?? this.global_svg;
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('stroke', options.color || 'black');
-        line.setAttribute('stroke-width', options.width || '2');
-        container.appendChild(line);
-        this.lines.push({ el1, el2, line });
-        this.updateLine({ el1, el2, line });
+    connect(from, to, options = {}) {
+        const container = create_svg_canvas();
+        if (options.parent) {
+            options.parent.appendChild(container);
+        } else {
+            document.appendChild(container);
+        }
+        const line = {
+            kind: options.line_kind ?? 'direct',
+            from: { dom: from, pos: options.from_pos ?? { x: 0.5, y: 0.5 } },
+            to: { dom: to, pos: options.to_pos ?? { x: 0.5, y: 0.5 } },
+            dom: create_line(options),
+            parent: options.parent,
+            options,
+            container,
+        };
+        for (const dom of line.dom) {
+            container.appendChild(dom);
+        }
+        this.lines.push(line);
+        this.updateLine(line);
         return line;
     }
 
-    updateLine({ el1, el2, line }) {
-        const pos1 = el1.getBoundingClientRect();
-        const pos2 = el2.getBoundingClientRect();
+    updateLine(line) {
+        const posFrom = line.from.dom.getBoundingClientRect();
+        const posFromRelative = line.from.pos;
+        const posTo = line.to.dom.getBoundingClientRect();
+        const posToRelative = line.to.pos;
 
-        const x1 = pos1.left + pos1.width / 2 + window.scrollX;
-        const y1 = pos1.top + pos1.height / 2 + window.scrollY;
-        const x2 = pos2.left + pos2.width / 2 + window.scrollX;
-        const y2 = pos2.top + pos2.height / 2 + window.scrollY;
+        const parent = line.parent?.getBoundingClientRect() ?? { x: 0, y: 0 };
 
-        line.setAttribute('x1', x1);
-        line.setAttribute('y1', y1);
-        line.setAttribute('x2', x2);
-        line.setAttribute('y2', y2);
+        const x1 = posFrom.left + posFrom.width * posFromRelative.x + window.scrollX - parent.x;
+        const y1 = posFrom.top + posFrom.height * posFromRelative.y + window.scrollY - parent.y;
+        const x2 = posTo.left + posTo.width * posToRelative.x + window.scrollX - parent.x;
+        const y2 = posTo.top + posTo.height * posToRelative.y + window.scrollY - parent.y;
+
+        const start = { x: x1, y: y1 };
+        const end = { x: x2, y: y2 };
+        switch (line.kind) {
+            case 'direct': {
+                line.dom[0].setAttribute('x1', start.x);
+                line.dom[0].setAttribute('y1', start.y);
+                line.dom[0].setAttribute('x2', end.x);
+                line.dom[0].setAttribute('y2', end.y);
+            }
+            case 'orthogonal': {
+                console.log("Calling calculate orthogonal connection!");
+                const points = calculate_orthogonal_connection(start, posFromRelative, end, posToRelative);
+                if (points.length == line.dom.length + 1) {
+                    for (let i = 0; i < points.length - 1; i++) {
+                        line.dom[i].setAttribute('x1', points[i].x);
+                        line.dom[i].setAttribute('y1', points[i].y);
+                        line.dom[i].setAttribute('x2', points[i + 1].x);
+                        line.dom[i].setAttribute('y2', points[i + 1].y);
+                    }
+                } else {
+                    for (const dom of line.dom) {
+                        dom.remove();
+                    }
+                    line.dom = create_line(line.options, points);
+                    for (const dom of line.dom) {
+                        line.container.appendChild(dom);
+                    }
+                }
+            }
+        }
     }
 
     updateAll() {
@@ -934,6 +1081,30 @@ Definition eines Deadlocks</h1>
 <section id="deadlock_cyclic_wait" class="slide" data-step-count=0>
 <div id="deadlock_cyclic_wait-page_number" class="label  " data-element-id="341">
 <p class="label-text">17</p>
+</div>
+<div id="deadlock_cyclic_wait-title" class="label  " data-element-id="343">
+<h1 class="label-header">
+Definition eines Deadlocks</h1>
+<ol class="label-text">
+  <li>
+<p class="label-text">Zyklische Wartebedingung</p>
+</ol>
+</div>
+<div id="deadlock_cyclic_wait-left" class="flex " data-element-id="348">
+<div id="deadlock_cyclic_wait-left--345" class="custom-element Icon  " data-element-id="345">
+<img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/amanda.png" data-element-id="344"/>
+</div>
+<div id="deadlock_cyclic_wait-left--347" class="custom-element Icon  " data-element-id="347">
+<img id="deadlock_cyclic_wait-left--icon" class="image  " src="./pros-assets/lift.png" data-element-id="346"/>
+</div>
+</div>
+<div id="deadlock_cyclic_wait-right" class="flex " data-element-id="353">
+<div id="deadlock_cyclic_wait-right--350" class="custom-element Icon  " data-element-id="350">
+<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/light.png" data-element-id="349"/>
+</div>
+<div id="deadlock_cyclic_wait-right--352" class="custom-element Icon  " data-element-id="352">
+<img id="deadlock_cyclic_wait-right--icon" class="image  " src="./pros-assets/bobbl.png" data-element-id="351"/>
+</div>
 </div>
 </section>
 </body></html>

@@ -1787,6 +1787,65 @@ ol {
     text-align: center;
 }
 
+#deadlock_cyclic_wait-title {
+    top: 0px;
+    bottom: unset;
+    left: 0px;
+    right: 0px;
+    width: 100%;
+    z-index: 0;
+}
+
+#deadlock_cyclic_wait-left {
+    top: 50%;
+    bottom: unset;
+    left: calc(0.1 * var(--slide-width));
+    right: calc(0.6 * var(--slide-width));
+    width: calc(+ 100%+ (-0.7 * var(--slide-width)));
+    height: calc(0.3 * var(--slide-height));
+    transform: translate(0%, -50%);
+    z-index: 1;
+}
+
+#deadlock_cyclic_wait-left {
+    flex-direction: row;
+}
+
+#deadlock_cyclic_wait-left--icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlock_cyclic_wait-left--icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlock_cyclic_wait-right {
+    top: 50%;
+    bottom: unset;
+    left: calc(0.6 * var(--slide-width));
+    right: calc(0.1 * var(--slide-width));
+    width: calc(+ 100%+ (-0.7 * var(--slide-width)));
+    height: calc(0.3 * var(--slide-height));
+    transform: translate(0%, -50%);
+    z-index: 2;
+}
+
+#deadlock_cyclic_wait-right {
+    flex-direction: row;
+}
+
+#deadlock_cyclic_wait-right--icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlock_cyclic_wait-right--icon {
+    height: 100%;
+    width: 100%;
+}
+
 .label .label-text {
     color: rgb(89, 89, 89, 1);
 }

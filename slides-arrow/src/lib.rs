@@ -100,7 +100,7 @@ impl Arrows {
         for (key, value) in options {
             let value = allocator.get(value);
             match key.as_str() {
-                "color" | "width" | "from_pos" | "to_pos" | "line_kind" => {
+                "color" | "width" | "from_pos" | "to_pos" | "line_kind" | "label" => {
                     writeln!(
                         options_text,
                         "{key}: {},",

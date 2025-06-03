@@ -347,11 +347,11 @@ slide deadlocks_problem:
         };
     // let position = positionInside(a, 0.0, 0.5);
     // let amanda = base.amanda;
-    let options = { color: c"#595959", path: "grid" };
-    arrows.arrow(base.amanda, base.light, options | { startSocket: "bottom" });
-    arrows.arrow(base.amanda, base.lift, options | { startSocket: "top" });
-    arrows.arrow(base.bobbl, base.light, options | { startSocket: "bottom" });
-    arrows.arrow(base.bobbl, base.lift, options | { startSocket: "top" });
+    let options = { color: c"#595959", line_kind: "orthogonal" };
+    arrows.arrow(base.amanda, base.light, options | { from_pos: {x: 0.5, y: 1} });
+    arrows.arrow(base.amanda, base.lift, options | { from_pos: {x: 0.5, y: 0}});
+    arrows.arrow(base.bobbl, base.light, options | { from_pos: {x: 0.5, y: 1} });
+    arrows.arrow(base.bobbl, base.lift, options | { from_pos: {x: 0.5, y: 0}});
     let wait_amanda =
         icon('wait') {
             width: 5%,
@@ -528,13 +528,13 @@ slide deadlock_cyclic_wait:
         };
     arrows.arrow(left.children[0],
         right.children[0],
-        {   color: c"#595959", middle_label: "fordert an", start_socket: "top", end_socket: "top" });
+        {   color: c"#595959", middle_label: "fordert an", from_pos: {x: 0.5, y: 0}, to_pos: {x: 0.5, y: 0} });
     arrows.arrow(right.children[1],
         left.children[1],
         {
             color: c"#595959",
             middle_label: "fordert an",
-            start_socket: "bottom",
-            end_socket: "bottom",
+            from_pos: {x: 0.5, y: 1},
+            to_pos: {x: 0.5, y: 1},
         });
 

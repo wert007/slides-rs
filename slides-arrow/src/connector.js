@@ -3,7 +3,6 @@ function calculate_orthogonal_connection(start, startRel, end, endRel) {
     const delta = { x: end.x - start.x, y: end.y - start.y };
     console.log(start, delta, end);
     if (Math.abs(delta.x) < 0.1 && Math.abs(delta.y) < 0.1) {
-        console.log("ending now!");
         return [end];
     }
     if (direction.x == 0 && direction.y == 0) {
@@ -61,6 +60,16 @@ function create_line(options, points) {
     return result;
 }
 
+function create_label(text) {
+    if (text == undefined) return undefined;
+    const dom = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    dom.textContent = text;
+    dom.setAttribute('text-anchor', 'middle');
+    dom.style['transform-box'] = 'border-box';
+    dom.style['transform-origin'] = 'center';
+    return dom;
+}
+
 function create_svg_canvas() {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.style.width = "100%";
@@ -90,6 +99,7 @@ class SimpleConnector {
             from: { dom: from, pos: options.from_pos ?? { x: 0.5, y: 0.5 } },
             to: { dom: to, pos: options.to_pos ?? { x: 0.5, y: 0.5 } },
             dom: create_line(options),
+            label_dom: create_label(options.label),
             parent: options.parent,
             options,
             container,
@@ -97,12 +107,16 @@ class SimpleConnector {
         for (const dom of line.dom) {
             container.appendChild(dom);
         }
+        if (line.label_dom) {
+            container.appendChild(line.label_dom);
+        }
         this.lines.push(line);
         this.updateLine(line);
         return line;
     }
 
     updateLine(line) {
+        console.log("line", line);
         const posFrom = line.from.dom.getBoundingClientRect();
         const posFromRelative = line.from.pos;
         const posTo = line.to.dom.getBoundingClientRect();
@@ -123,9 +137,18 @@ class SimpleConnector {
                 line.dom[0].setAttribute('y1', start.y);
                 line.dom[0].setAttribute('x2', end.x);
                 line.dom[0].setAttribute('y2', end.y);
+                if (line.label_dom) {
+                    line.label_dom.setAttribute('x', (start.x + end.x) / 2);
+                    line.label_dom.setAttribute('y', (start.y + end.y) / 2);
+                    const deltaX = x2 - x1;
+                    const deltaY = y2 - y1;
+                    const rotation = Math.atan2(deltaY, deltaX);
+                    line.label_dom.style.rotate = `${rotation}rad`;
+                    line.label_dom.style.translate = `0px -7px`;
+                }
+                break;
             }
             case 'orthogonal': {
-                console.log("Calling calculate orthogonal connection!");
                 const points = calculate_orthogonal_connection(start, posFromRelative, end, posToRelative);
                 if (points.length == line.dom.length + 1) {
                     for (let i = 0; i < points.length - 1; i++) {
@@ -143,6 +166,7 @@ class SimpleConnector {
                         line.container.appendChild(dom);
                     }
                 }
+                break;
             }
         }
     }
@@ -153,14 +177,3 @@ class SimpleConnector {
         }
     }
 }
-
-// // Example usage:
-// document.addEventListener('DOMContentLoaded', () => {
-//   const svg = document.getElementById('connector-svg');
-//   const connector = new SimpleConnector(svg);
-
-//   const el1 = document.getElementById('box1');
-//   const el2 = document.getElementById('box2');
-
-//   connector.connect(el1, el2, { color: 'red', width: 3 });
-// });
