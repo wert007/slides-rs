@@ -1,8 +1,64 @@
-function create_line(options) {
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('stroke', options.color || 'black');
-    line.setAttribute('stroke-width', options.width || '2');
-    return line;
+function calculate_orthogonal_connection(start, startRel, end, endRel) {
+    const direction = { x: Math.sign(startRel.x - 0.5), y: Math.sign(startRel.y - 0.5) };
+    const delta = { x: end.x - start.x, y: end.y - start.y };
+    console.log(start, delta, end);
+    if (Math.abs(delta.x) < 0.1 && Math.abs(delta.y) < 0.1) {
+        console.log("ending now!");
+        return [end];
+    }
+    if (direction.x == 0 && direction.y == 0) {
+        if (Math.abs(delta.x) > Math.abs(delta.y)) {
+            direction.x = Math.sign(delta.x);
+        } else {
+            direction.y = Math.sign(delta.y);
+        }
+    }
+    if (direction.x != 0 && direction.y != 0) {
+        if (Math.abs(startRel.x) > Math.abs(startRel.y)) {
+            direction.y = 0;
+        } else {
+            direction.x = 0;
+        }
+    }
+    delta.x = Math.abs(delta.x);
+    delta.y = Math.abs(delta.y);
+    let point = { x: delta.x * direction.x + start.x, y: delta.y * direction.y + start.y };
+    const newDelta = { x: end.x - point.x, y: end.y - point.y };
+    const deltaLength = delta.x * delta.x + delta.y * delta.y;
+    if (deltaLength <= newDelta.x * newDelta.x + newDelta.y * newDelta.y) {
+        const distance = Math.sqrt(deltaLength) * 0.10;
+        point = { x: distance * direction.x + start.x, y: distance * direction.y + start.y };
+    }
+    return [start, ...calculate_orthogonal_connection(point, { x: 0.5, y: 0.5 }, end, endRel)];
+}
+
+function create_line(options, points) {
+    const result = [];
+    switch (options.line_kind ?? 'direct') {
+        case 'direct':
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('stroke', options.color || 'black');
+            line.setAttribute('stroke-width', options.width || '2');
+            result.push(line);
+            break;
+        case 'orthogonal':
+            if (!points) {
+                // Line will be created later
+                break;
+            }
+            for (let i = 0; i < points.length - 1; i++) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('stroke', options.color || 'black');
+                line.setAttribute('stroke-width', options.width || '2');
+                line.setAttribute('x1', points[i].x);
+                line.setAttribute('y1', points[i].y);
+                line.setAttribute('x2', points[i + 1].x);
+                line.setAttribute('y2', points[i + 1].y);
+                result.push(line);
+            }
+            break;
+    }
+    return result;
 }
 
 function create_svg_canvas() {
@@ -22,36 +78,73 @@ class SimpleConnector {
         window.addEventListener('scroll', () => this.updateAll(), true);
     }
 
-    connect(el1, el2, options = {}) {
-        console.log("options", options);
+    connect(from, to, options = {}) {
         const container = create_svg_canvas();
         if (options.parent) {
             options.parent.appendChild(container);
         } else {
             document.appendChild(container);
         }
-        const line = { from: el1, to: el2, line: create_line(options), parent: options.parent };
-        container.appendChild(line.line);
+        const line = {
+            kind: options.line_kind ?? 'direct',
+            from: { dom: from, pos: options.from_pos ?? { x: 0.5, y: 0.5 } },
+            to: { dom: to, pos: options.to_pos ?? { x: 0.5, y: 0.5 } },
+            dom: create_line(options),
+            parent: options.parent,
+            options,
+            container,
+        };
+        for (const dom of line.dom) {
+            container.appendChild(dom);
+        }
         this.lines.push(line);
         this.updateLine(line);
         return line;
     }
 
     updateLine(line) {
-        const pos1 = line.from.getBoundingClientRect();
-        const pos2 = line.to.getBoundingClientRect();
+        const posFrom = line.from.dom.getBoundingClientRect();
+        const posFromRelative = line.from.pos;
+        const posTo = line.to.dom.getBoundingClientRect();
+        const posToRelative = line.to.pos;
 
         const parent = line.parent?.getBoundingClientRect() ?? { x: 0, y: 0 };
 
-        const x1 = pos1.left + pos1.width / 2 + window.scrollX - parent.x;
-        const y1 = pos1.top + pos1.height / 2 + window.scrollY - parent.y;
-        const x2 = pos2.left + pos2.width / 2 + window.scrollX - parent.x;
-        const y2 = pos2.top + pos2.height / 2 + window.scrollY - parent.y;
+        const x1 = posFrom.left + posFrom.width * posFromRelative.x + window.scrollX - parent.x;
+        const y1 = posFrom.top + posFrom.height * posFromRelative.y + window.scrollY - parent.y;
+        const x2 = posTo.left + posTo.width * posToRelative.x + window.scrollX - parent.x;
+        const y2 = posTo.top + posTo.height * posToRelative.y + window.scrollY - parent.y;
 
-        line.line.setAttribute('x1', x1);
-        line.line.setAttribute('y1', y1);
-        line.line.setAttribute('x2', x2);
-        line.line.setAttribute('y2', y2);
+        const start = { x: x1, y: y1 };
+        const end = { x: x2, y: y2 };
+        switch (line.kind) {
+            case 'direct': {
+                line.dom[0].setAttribute('x1', start.x);
+                line.dom[0].setAttribute('y1', start.y);
+                line.dom[0].setAttribute('x2', end.x);
+                line.dom[0].setAttribute('y2', end.y);
+            }
+            case 'orthogonal': {
+                console.log("Calling calculate orthogonal connection!");
+                const points = calculate_orthogonal_connection(start, posFromRelative, end, posToRelative);
+                if (points.length == line.dom.length + 1) {
+                    for (let i = 0; i < points.length - 1; i++) {
+                        line.dom[i].setAttribute('x1', points[i].x);
+                        line.dom[i].setAttribute('y1', points[i].y);
+                        line.dom[i].setAttribute('x2', points[i + 1].x);
+                        line.dom[i].setAttribute('y2', points[i + 1].y);
+                    }
+                } else {
+                    for (const dom of line.dom) {
+                        dom.remove();
+                    }
+                    line.dom = create_line(line.options, points);
+                    for (const dom of line.dom) {
+                        line.container.appendChild(dom);
+                    }
+                }
+            }
+        }
     }
 
     updateAll() {

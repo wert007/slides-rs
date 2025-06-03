@@ -71,10 +71,25 @@ impl Arrows {
         }
         let mut text = String::new();
         let mut options_text = String::new();
-        fn value_to_string(value: &Value) -> Result<String, modules::Error> {
+        fn value_to_string(
+            value: &Value,
+            allocator: &modules::ValueAllocator,
+        ) -> Result<String, modules::Error> {
             Ok(match value {
                 Value::Int(num) => num.to_string(),
+                Value::Float(num) => num.to_string(),
                 Value::StringType(string) => format!("\"{string}\""),
+                Value::Dict(dict) => {
+                    let mut result: String = "{".into();
+                    for (key, value) in dict {
+                        result.push_str(key);
+                        result.push(':');
+                        result.push_str(&value_to_string(&allocator.get(*value), allocator)?);
+                        result.push(',');
+                    }
+                    result.push('}');
+                    result
+                }
                 _ => {
                     return Err(modules::Error::InternalError(format!(
                         "Value is not supported in options: {value:#?}"
@@ -85,15 +100,19 @@ impl Arrows {
         for (key, value) in options {
             let value = allocator.get(value);
             match key.as_str() {
-                "color" | "path" | "startSocket" | "endSocket" => {
-                    writeln!(options_text, "{key}: {},", value_to_string(&value)?)
-                        .expect("infallible");
+                "color" | "width" | "from_pos" | "to_pos" | "line_kind" => {
+                    writeln!(
+                        options_text,
+                        "{key}: {},",
+                        value_to_string(&value, allocator)?
+                    )
+                    .expect("infallible");
                 }
                 "middle_label" => {
                     writeln!(
                         options_text,
                         "middleLabel: LeaderLine.captionLabel({}, {{ classList: 'label'}}),",
-                        value_to_string(&value)?
+                        value_to_string(&value, allocator)?
                     )
                     .expect("Infallible");
                 }
