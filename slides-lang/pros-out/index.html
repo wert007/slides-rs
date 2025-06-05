@@ -11,14 +11,44 @@
                     init_navigation();
 
             
-<!-- From module arrows import -->
+// From module arrows import
 
             globals.arrows = new SimpleConnector()
 
-<!-- From arrows arrow function -->
+// From arrows arrow function
 
     globals.arrows.connect(
         getElementById(257),
+        getElementById(261),
+        {
+            parent: document.getElementById("deadlocks_problem"),
+            from_pos: {x:0.5,y:1,},
+color: "rgb(89, 89, 89, 1)",
+line_kind: "orthogonal",
+
+        },
+    );
+
+
+// From arrows arrow function
+
+    globals.arrows.connect(
+        getElementById(257),
+        getElementById(263),
+        {
+            parent: document.getElementById("deadlocks_problem"),
+            color: "rgb(89, 89, 89, 1)",
+from_pos: {x:0.5,y:0,},
+line_kind: "orthogonal",
+
+        },
+    );
+
+
+// From arrows arrow function
+
+    globals.arrows.connect(
+        getElementById(259),
         getElementById(261),
         {
             parent: document.getElementById("deadlocks_problem"),
@@ -30,120 +60,92 @@ line_kind: "orthogonal",
     );
 
 
-<!-- From arrows arrow function -->
-
-    globals.arrows.connect(
-        getElementById(257),
-        getElementById(263),
-        {
-            parent: document.getElementById("deadlocks_problem"),
-            line_kind: "orthogonal",
-from_pos: {y:0,x:0.5,},
-color: "rgb(89, 89, 89, 1)",
-
-        },
-    );
-
-
-<!-- From arrows arrow function -->
+// From arrows arrow function
 
     globals.arrows.connect(
         getElementById(259),
-        getElementById(261),
+        getElementById(263),
         {
             parent: document.getElementById("deadlocks_problem"),
-            from_pos: {y:1,x:0.5,},
-color: "rgb(89, 89, 89, 1)",
+            color: "rgb(89, 89, 89, 1)",
+from_pos: {y:0,x:0.5,},
 line_kind: "orthogonal",
 
         },
     );
 
 
-<!-- From arrows arrow function -->
-
-    globals.arrows.connect(
-        getElementById(259),
-        getElementById(263),
-        {
-            parent: document.getElementById("deadlocks_problem"),
-            line_kind: "orthogonal",
-from_pos: {y:0,x:0.5,},
-color: "rgb(89, 89, 89, 1)",
-
-        },
-    );
-
-
-<!-- From arrows arrow function -->
+// From arrows arrow function
 
     globals.arrows.connect(
         getElementById(317),
         getElementById(319),
         {
             parent: document.getElementById("deadlock_additional_resources"),
-            color: "rgb(89, 89, 89, 1)",
-middleLabel: LeaderLine.captionLabel("fordert zusätzlich an", { classList: 'label'}),
-
-        },
-    );
-
-
-<!-- From arrows arrow function -->
-
-    globals.arrows.connect(
-        getElementById(325),
-        getElementById(329),
-        {
-            parent: document.getElementById("deadlock_no_release"),
-            color: "rgb(89, 89, 89, 1)",
-middleLabel: LeaderLine.captionLabel("gibt zurück", { classList: 'label'}),
-
-        },
-    );
-
-
-<!-- From arrows arrow function -->
-
-    globals.arrows.connect(
-        getElementById(327),
-        getElementById(331),
-        {
-            parent: document.getElementById("deadlock_no_release"),
-            color: "rgb(89, 89, 89, 1)",
-middleLabel: LeaderLine.captionLabel("wird entzogen", { classList: 'label'}),
-
-        },
-    );
-
-
-<!-- From arrows arrow function -->
-
-    globals.arrows.connect(
-        getElementById(345),
-        getElementById(350),
-        {
-            parent: document.getElementById("deadlock_cyclic_wait"),
-            from_pos: {x:0.5,y:0,},
-to_pos: {y:0,x:0.5,},
-middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
+            label: "fordert zusätzlich an",
 color: "rgb(89, 89, 89, 1)",
 
         },
     );
 
 
-<!-- From arrows arrow function -->
+// From arrows arrow function
+
+    globals.arrows.connect(
+        getElementById(325),
+        getElementById(329),
+        {
+            parent: document.getElementById("deadlock_no_release"),
+            label: "gibt zurück",
+color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+// From arrows arrow function
+
+    globals.arrows.connect(
+        getElementById(327),
+        getElementById(331),
+        {
+            parent: document.getElementById("deadlock_no_release"),
+            label: "wird entzogen",
+color: "rgb(89, 89, 89, 1)",
+
+        },
+    );
+
+
+// From arrows arrow function
+
+    globals.arrows.connect(
+        getElementById(345),
+        getElementById(350),
+        {
+            parent: document.getElementById("deadlock_cyclic_wait"),
+            color: "rgb(89, 89, 89, 1)",
+line_kind: "orthogonal",
+label: "fordert an",
+to_pos: {x:0.5,y:0,},
+from_pos: {y:0,x:0.5,},
+
+        },
+    );
+
+
+// From arrows arrow function
 
     globals.arrows.connect(
         getElementById(352),
         getElementById(347),
         {
             parent: document.getElementById("deadlock_cyclic_wait"),
-            color: "rgb(89, 89, 89, 1)",
-from_pos: {y:1,x:0.5,},
-to_pos: {x:0.5,y:1,},
-middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
+            line_kind: "orthogonal",
+to_pos: {y:1,x:0.5,},
+color: "rgb(89, 89, 89, 1)",
+label: "fordert an",
+from_pos: {x:0.5,y:1,},
 
         },
     );
@@ -154,7 +156,7 @@ middleLabel: LeaderLine.captionLabel("fordert an", { classList: 'label'}),
         }
 
             function onSlideChange() {
-        <!-- From module arrows import -->
+        // From module arrows import
 globals.arrows.updateAll();
 
 
@@ -163,38 +165,78 @@ globals.arrows.updateAll();
             
 <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
 <!-- From arrows module -->
-<script>function calculate_orthogonal_connection(start, startRel, end, endRel) {
+<script>function calculate_orthogonal_connection(start, startRel, end, endRel, lastWasVertical) {
     const direction = { x: Math.sign(startRel.x - 0.5), y: Math.sign(startRel.y - 0.5) };
     const delta = { x: end.x - start.x, y: end.y - start.y };
     console.log(start, delta, end);
     if (Math.abs(delta.x) < 0.1 && Math.abs(delta.y) < 0.1) {
-        console.log("ending now!");
+
         return [end];
     }
     if (direction.x == 0 && direction.y == 0) {
         if (Math.abs(delta.x) > Math.abs(delta.y)) {
-            direction.x = Math.sign(delta.x);
+            if (lastWasVertical == false) {
+                direction.y = Math.sign(delta.y);
+            } else {
+                direction.x = Math.sign(delta.x);
+            }
         } else {
-            direction.y = Math.sign(delta.y);
+            if (lastWasVertical == true) {
+                direction.x = Math.sign(delta.x);
+            } else {
+                direction.y = Math.sign(delta.y);
+            }
         }
     }
     if (direction.x != 0 && direction.y != 0) {
         if (Math.abs(startRel.x) > Math.abs(startRel.y)) {
-            direction.y = 0;
+            if (lastWasVertical == false) {
+                direction.x = 0;
+            } else {
+                direction.y = 0;
+            }
         } else {
-            direction.x = 0;
+            if (lastWasVertical == true) {
+                direction.y = 0;
+            } else {
+                direction.x = 0;
+            }
         }
     }
-    delta.x = Math.abs(delta.x);
-    delta.y = Math.abs(delta.y);
+    const deltaLength = delta.x * delta.x + delta.y * delta.y;
+    const minDistance = Math.sqrt(deltaLength) * 0.10;
+    delta.x = Math.max(Math.abs(delta.x), minDistance);
+    delta.y = Math.max(Math.abs(delta.y), minDistance);
     let point = { x: delta.x * direction.x + start.x, y: delta.y * direction.y + start.y };
     const newDelta = { x: end.x - point.x, y: end.y - point.y };
-    const deltaLength = delta.x * delta.x + delta.y * delta.y;
     if (deltaLength <= newDelta.x * newDelta.x + newDelta.y * newDelta.y) {
-        const distance = Math.sqrt(deltaLength) * 0.10;
-        point = { x: distance * direction.x + start.x, y: distance * direction.y + start.y };
+        point = { x: minDistance * direction.x + start.x, y: minDistance * direction.y + start.y };
     }
-    return [start, ...calculate_orthogonal_connection(point, { x: 0.5, y: 0.5 }, end, endRel)];
+    const isVertical = direction.y != 0 && direction.x == 0;
+    return [start, ...calculate_orthogonal_connection(point, { x: 0.5, y: 0.5 }, end, endRel, isVertical)];
+}
+
+function get_label_placement_for_orthogonal(points) {
+    let minX = Number.MAX_SAFE_INTEGER;
+    let maxX = Number.MIN_SAFE_INTEGER;
+    let bestDelta = { x: 0, y: 0 };
+    let point = undefined;
+    for (let i = 0; i < points.length - 1; i++) {
+        const delta = {
+            x: points[i + 1].x - points[i].x,
+            y: points[i + 1].y - points[i].y,
+        };
+        if (delta.x == 0) continue;
+        if (minX > points[i].x) minX = points[i].x;
+        if (maxX < points[i].x) maxX = points[i].x;
+        if (minX > points[i + 1].x) minX = points[i + 1].x;
+        if (maxX < points[i + 1].x) maxX = points[i + 1].x;
+        if (delta.x > bestDelta.x) {
+            bestDelta = delta;
+            point = { x: points[i].x + delta.x * 0.5, y: points[i].y + delta.y * 0.5 };
+        }
+    }
+    return point ?? points[0];
 }
 
 function create_line(options, points) {
@@ -226,6 +268,16 @@ function create_line(options, points) {
     return result;
 }
 
+function create_label(text) {
+    if (text == undefined) return undefined;
+    const dom = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    dom.textContent = text;
+    dom.setAttribute('text-anchor', 'middle');
+    dom.style['transform-box'] = 'border-box';
+    dom.style['transform-origin'] = 'center';
+    return dom;
+}
+
 function create_svg_canvas() {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.style.width = "100%";
@@ -255,6 +307,7 @@ class SimpleConnector {
             from: { dom: from, pos: options.from_pos ?? { x: 0.5, y: 0.5 } },
             to: { dom: to, pos: options.to_pos ?? { x: 0.5, y: 0.5 } },
             dom: create_line(options),
+            label_dom: create_label(options.label),
             parent: options.parent,
             options,
             container,
@@ -262,12 +315,16 @@ class SimpleConnector {
         for (const dom of line.dom) {
             container.appendChild(dom);
         }
+        if (line.label_dom) {
+            container.appendChild(line.label_dom);
+        }
         this.lines.push(line);
         this.updateLine(line);
         return line;
     }
 
     updateLine(line) {
+        console.log("line", line);
         const posFrom = line.from.dom.getBoundingClientRect();
         const posFromRelative = line.from.pos;
         const posTo = line.to.dom.getBoundingClientRect();
@@ -288,10 +345,20 @@ class SimpleConnector {
                 line.dom[0].setAttribute('y1', start.y);
                 line.dom[0].setAttribute('x2', end.x);
                 line.dom[0].setAttribute('y2', end.y);
+                if (line.label_dom) {
+                    line.label_dom.setAttribute('x', (start.x + end.x) / 2);
+                    line.label_dom.setAttribute('y', (start.y + end.y) / 2);
+                    const deltaX = x2 - x1;
+                    const deltaY = y2 - y1;
+                    const rotation = Math.atan2(deltaY, deltaX);
+                    line.label_dom.style.rotate = `${rotation}rad`;
+                    line.label_dom.style.translate = `0px -7px`;
+                }
+                break;
             }
             case 'orthogonal': {
-                console.log("Calling calculate orthogonal connection!");
-                const points = calculate_orthogonal_connection(start, posFromRelative, end, posToRelative);
+                const points = calculate_orthogonal_connection(start, posFromRelative, end, posToRelative, undefined);
+                console.log(points, start, end);
                 if (points.length == line.dom.length + 1) {
                     for (let i = 0; i < points.length - 1; i++) {
                         line.dom[i].setAttribute('x1', points[i].x);
@@ -308,6 +375,13 @@ class SimpleConnector {
                         line.container.appendChild(dom);
                     }
                 }
+                if (line.label_dom) {
+                    const point = get_label_placement_for_orthogonal(points);
+                    line.label_dom.setAttribute('x', point.x);
+                    line.label_dom.setAttribute('y', point.y);
+                    line.label_dom.style.translate = `0px -7px`;
+                }
+                break;
             }
         }
     }
@@ -318,17 +392,6 @@ class SimpleConnector {
         }
     }
 }
-
-// // Example usage:
-// document.addEventListener('DOMContentLoaded', () => {
-//   const svg = document.getElementById('connector-svg');
-//   const connector = new SimpleConnector(svg);
-
-//   const el1 = document.getElementById('box1');
-//   const el2 = document.getElementById('box2');
-
-//   connector.connect(el1, el2, { color: 'red', width: 3 });
-// });
 </script>
 
 

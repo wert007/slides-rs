@@ -1,34 +1,75 @@
-function calculate_orthogonal_connection(start, startRel, end, endRel) {
+function calculate_orthogonal_connection(start, startRel, end, endRel, lastWasVertical) {
     const direction = { x: Math.sign(startRel.x - 0.5), y: Math.sign(startRel.y - 0.5) };
     const delta = { x: end.x - start.x, y: end.y - start.y };
     console.log(start, delta, end);
     if (Math.abs(delta.x) < 0.1 && Math.abs(delta.y) < 0.1) {
+
         return [end];
     }
     if (direction.x == 0 && direction.y == 0) {
         if (Math.abs(delta.x) > Math.abs(delta.y)) {
-            direction.x = Math.sign(delta.x);
+            if (lastWasVertical == false) {
+                direction.y = Math.sign(delta.y);
+            } else {
+                direction.x = Math.sign(delta.x);
+            }
         } else {
-            direction.y = Math.sign(delta.y);
+            if (lastWasVertical == true) {
+                direction.x = Math.sign(delta.x);
+            } else {
+                direction.y = Math.sign(delta.y);
+            }
         }
     }
     if (direction.x != 0 && direction.y != 0) {
         if (Math.abs(startRel.x) > Math.abs(startRel.y)) {
-            direction.y = 0;
+            if (lastWasVertical == false) {
+                direction.x = 0;
+            } else {
+                direction.y = 0;
+            }
         } else {
-            direction.x = 0;
+            if (lastWasVertical == true) {
+                direction.y = 0;
+            } else {
+                direction.x = 0;
+            }
         }
     }
-    delta.x = Math.abs(delta.x);
-    delta.y = Math.abs(delta.y);
+    const deltaLength = delta.x * delta.x + delta.y * delta.y;
+    const minDistance = Math.sqrt(deltaLength) * 0.10;
+    delta.x = Math.max(Math.abs(delta.x), minDistance);
+    delta.y = Math.max(Math.abs(delta.y), minDistance);
     let point = { x: delta.x * direction.x + start.x, y: delta.y * direction.y + start.y };
     const newDelta = { x: end.x - point.x, y: end.y - point.y };
-    const deltaLength = delta.x * delta.x + delta.y * delta.y;
     if (deltaLength <= newDelta.x * newDelta.x + newDelta.y * newDelta.y) {
-        const distance = Math.sqrt(deltaLength) * 0.10;
-        point = { x: distance * direction.x + start.x, y: distance * direction.y + start.y };
+        point = { x: minDistance * direction.x + start.x, y: minDistance * direction.y + start.y };
     }
-    return [start, ...calculate_orthogonal_connection(point, { x: 0.5, y: 0.5 }, end, endRel)];
+    const isVertical = direction.y != 0 && direction.x == 0;
+    return [start, ...calculate_orthogonal_connection(point, { x: 0.5, y: 0.5 }, end, endRel, isVertical)];
+}
+
+function get_label_placement_for_orthogonal(points) {
+    let minX = Number.MAX_SAFE_INTEGER;
+    let maxX = Number.MIN_SAFE_INTEGER;
+    let bestDelta = { x: 0, y: 0 };
+    let point = undefined;
+    for (let i = 0; i < points.length - 1; i++) {
+        const delta = {
+            x: points[i + 1].x - points[i].x,
+            y: points[i + 1].y - points[i].y,
+        };
+        if (delta.x == 0) continue;
+        if (minX > points[i].x) minX = points[i].x;
+        if (maxX < points[i].x) maxX = points[i].x;
+        if (minX > points[i + 1].x) minX = points[i + 1].x;
+        if (maxX < points[i + 1].x) maxX = points[i + 1].x;
+        if (delta.x > bestDelta.x) {
+            bestDelta = delta;
+            point = { x: points[i].x + delta.x * 0.5, y: points[i].y + delta.y * 0.5 };
+        }
+    }
+    return point ?? points[0];
 }
 
 function create_line(options, points) {
@@ -149,7 +190,8 @@ class SimpleConnector {
                 break;
             }
             case 'orthogonal': {
-                const points = calculate_orthogonal_connection(start, posFromRelative, end, posToRelative);
+                const points = calculate_orthogonal_connection(start, posFromRelative, end, posToRelative, undefined);
+                console.log(points, start, end);
                 if (points.length == line.dom.length + 1) {
                     for (let i = 0; i < points.length - 1; i++) {
                         line.dom[i].setAttribute('x1', points[i].x);
@@ -165,6 +207,12 @@ class SimpleConnector {
                     for (const dom of line.dom) {
                         line.container.appendChild(dom);
                     }
+                }
+                if (line.label_dom) {
+                    const point = get_label_placement_for_orthogonal(points);
+                    line.label_dom.setAttribute('x', point.x);
+                    line.label_dom.setAttribute('y', point.y);
+                    line.label_dom.style.translate = `0px -7px`;
                 }
                 break;
             }

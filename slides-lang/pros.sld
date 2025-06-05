@@ -469,7 +469,7 @@ slide deadlock_additional_resources:
         };
     let right =
         icon("light") { halign: HAlign.Right, valign: VAlign.Center, width: size, height: size };
-    arrows.arrow(left, right, { color: c"#595959", middle_label: "fordert zusätzlich an" });
+    arrows.arrow(left, right, { color: c"#595959", label: "fordert zusätzlich an" });
 
 slide deadlock_no_release:
     page_number();
@@ -502,8 +502,8 @@ slide deadlock_no_release:
             valign: VAlign.Stretch,
             margin: { left: 0.60sw, right: 0.10sw, top: 0.30sh, bottom: 0.10sh },
         };
-    arrows.arrow(left_amanda, left_lift, { color: c"#595959", middle_label: "gibt zurück" });
-    arrows.arrow(right_amanda, right_lift, { color: c"#595959", middle_label: "wird entzogen" });
+    arrows.arrow(left_amanda, left_lift, { color: c"#595959", label: "gibt zurück" });
+    arrows.arrow(right_amanda, right_lift, { color: c"#595959", label: "wird entzogen" });
 
 slide deadlock_cyclic_wait:
     page_number();
@@ -528,13 +528,14 @@ slide deadlock_cyclic_wait:
         };
     arrows.arrow(left.children[0],
         right.children[0],
-        {   color: c"#595959", middle_label: "fordert an", from_pos: {x: 0.5, y: 0}, to_pos: {x: 0.5, y: 0} });
+        {   color: c"#595959", label: "fordert an", from_pos: {x: 0.5, y: 0}, to_pos: {x: 0.5, y: 0}, line_kind: 'orthogonal' });
     arrows.arrow(right.children[1],
         left.children[1],
         {
             color: c"#595959",
-            middle_label: "fordert an",
+            label: "fordert an",
             from_pos: {x: 0.5, y: 1},
             to_pos: {x: 0.5, y: 1},
+            line_kind: 'orthogonal'
         });
 
