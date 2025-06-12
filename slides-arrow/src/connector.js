@@ -142,19 +142,30 @@ function calculate_positioning(line) {
 function emit_tip(tip, rotation, size, builder) {
     if (tip == undefined) return;
     builder.rotate(rotation);
+    const direction = tip.flip ? -1 : 1;
 
     switch (tip.kind) {
         case 'arrow':
-            builder.line(3 * size, 0);             //    |
-            builder.move(-3 * size, 3 * size);
-            builder.line(3 * size, -3 * size);     //   \
-            builder.line(-3 * size, -3 * size);            //   /
+            if (tip.flip) {
+                builder.move(3 * size, 0);
+            }
+            builder.line(direction * 3 * size, 0);             //    |
+            builder.move(direction * -3 * size, 3 * size);
+            builder.line(direction * 3 * size, -3 * size);     //   \
+            builder.line(direction * -3 * size, -3 * size);            //   /
+            builder.move(0, 3 * size);
             break;
         case 'triangle':
+            if (tip.flip) {
+                builder.move(3 * size, 0);
+            }
             builder.line(0, size * 1.5);
-            builder.line(size * 3, -size * 1.5);
-            builder.line(-size * 3, -size * 1.5);
+            builder.line(direction * size * 3, -size * 1.5);
+            builder.line(direction * -size * 3, -size * 1.5);
             builder.line(0, size * 1.5);
+            if (!tip.flip) {
+                builder.move(3 * size, 0);
+            }
             break;
         case 'circle':
             const radius = 1.5 * size;
@@ -168,15 +179,14 @@ function emit_tip(tip, rotation, size, builder) {
             builder.line(0, -3 * size);
             builder.line(-3 * size, 0);
             builder.line(0, size * 1.5);
-            builder.move(0, 3 * size);
+            builder.move(3 * size, 0);
             break;
         case 'diamond':
-            // builder.line(size * 1.5, 0);
-            // builder.line(0, 3 * size);
-            // builder.line(-3 * size, 0);
-            // builder.line(0, -3 * size);
-            // builder.line(size * 1.5, 0);
-            builder.move(3 * size, 3 * size);
+            builder.line(size * 1.5, size * 1.5);
+            builder.line(size * 1.5, -size * 1.5);
+            builder.line(-size * 1.5, -size * 1.5);
+            builder.line(-size * 1.5, size * 1.5);
+            builder.move(3 * size, 0);
             break;
         case 'none':
             break;
@@ -184,8 +194,6 @@ function emit_tip(tip, rotation, size, builder) {
             throw new Error("")
     }
     builder.rotate(-rotation);
-
-
 }
 
 function turnLineIntoPath(line) {
@@ -260,12 +268,14 @@ function create_svg_canvas() {
     return svg;
 }
 
-const ARROW_TIP = { kind: 'circle', is_filled: false };
+const ARROW_TIP = { kind: 'diamond', is_filled: false, flip: false };
 
 function fill_options_with_default(options) {
     options.width ??= 2;
     options.color ??= 'black';
     options.line_kind ??= 'direct';
+    options.start_tip ??= JSON.parse(JSON.stringify(ARROW_TIP));
+    options.start_tip.flip = !options.start_tip.flip;
     options.end_tip ??= ARROW_TIP;
     options.from_pos ??= { x: 0.5, y: 0.5 };
     options.to_pos ??= { x: 0.5, y: 0.5 };
