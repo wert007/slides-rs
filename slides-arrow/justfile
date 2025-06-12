@@ -2,8 +2,6 @@ set shell := ["powershell.exe", "-c"]
 
 build:
     cargo build --target wasm32-wasip2
-    # # wit-bindgen component build --out-dir out wit/module.wit
-    # wasm-tools component build ..\target\wasm32-wasip1\debug\slides_arrow.wasm -o slides_arrow.wasm
 
 
 pack:
