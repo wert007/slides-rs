@@ -12,6 +12,8 @@ use bindings::{
     exports::component::arrows::modules::{self, Guest, GuestModule, Module},
 };
 
+use crate::bindings::component::arrows::types::TypeIndex;
+
 const JS_LIBRARY: &'static str = include_str!("connector.js");
 
 // #[allow(warnings)]
@@ -192,16 +194,17 @@ impl GuestModule for Arrows {
             [("x".into(), float), ("y".into(), float)].to_vec(),
         )));
         let color = types.allocate(&Type::Color);
+        let create_optional = |base: TypeIndex| types.allocate(&Type::Optional(base));
         let line_options = types.allocate(&Type::Struct((
             "LineOptions".into(),
             [
-                ("width".into(), float),
-                ("color".into(), color),
-                ("kind".into(), line_kind),
-                ("starttip".into(), line_tip),
-                ("endtip".into(), line_tip),
-                ("relative_pos_start".into(), point),
-                ("relative_pos_end".into(), point),
+                ("width".into(), create_optional(float)),
+                ("color".into(), create_optional(color)),
+                ("kind".into(), create_optional(line_kind)),
+                ("starttip".into(), create_optional(line_tip)),
+                ("endtip".into(), create_optional(line_tip)),
+                ("relative_pos_start".into(), create_optional(point)),
+                ("relative_pos_end".into(), create_optional(point)),
             ]
             .to_vec(),
         )));

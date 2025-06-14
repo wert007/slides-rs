@@ -1040,9 +1040,12 @@ fn bind_array_access(
     );
     let base_type = context.type_interner.resolve(base.type_);
     let Some(type_) = base_type.try_as_array_ref() else {
-        context
-            .diagnostics
-            .report_cannot_convert(&Type::Array(TypeId::ERROR), base_type, location);
+        context.diagnostics.report_cannot_convert(
+            &context.type_interner,
+            &Type::Array(TypeId::ERROR),
+            base_type,
+            location,
+        );
         return BoundNode::error(location);
     };
     BoundNode::array_access(location, base, index, *type_)
@@ -1150,9 +1153,12 @@ fn bind_array(
         if let Some(type_) = type_.try_as_array_ref() {
             inner_type = *type_;
         } else {
-            context
-                .diagnostics
-                .report_cannot_convert(&Type::Array(TypeId::ERROR), type_, location);
+            context.diagnostics.report_cannot_convert(
+                &context.type_interner,
+                &Type::Array(TypeId::ERROR),
+                type_,
+                location,
+            );
         }
     }
     for (entry, _) in array.entries {
@@ -1763,6 +1769,7 @@ fn bind_conversion(
                 for field in fields {
                     if field.type_ != style_unit_type {
                         context.diagnostics.report_cannot_convert(
+                            &context.type_interner,
                             context.type_interner.resolve(field.type_),
                             &Type::StyleUnit,
                             field.definition,
@@ -1773,6 +1780,7 @@ fn bind_conversion(
                         .contains(&context.string_interner.resolve_variable(field.id))
                     {
                         context.diagnostics.report_cannot_convert(
+                            &context.type_interner,
                             from,
                             &Type::StyleUnit,
                             field.definition,
@@ -1782,6 +1790,41 @@ fn bind_conversion(
                 }
             }
             [Type::TypedDict(_), Type::DynamicDict] => {}
+            [Type::DynamicDict, Type::TypedDict(_)] => {
+                eprintln!("TODO: Dynamic Dicts cannot be converted to typed dicts!");
+                return BoundNode::error(base.location);
+            }
+            [Type::TypedDict(a), Type::TypedDict(b)] => {
+                let mut missing_entries = vec![];
+                for entry in b {
+                    if context
+                        .type_interner
+                        .resolve(entry.type_)
+                        .try_as_optional_ref()
+                        .is_some()
+                    {
+                        continue;
+                    }
+                    if !a.iter().any(|e| e.id == entry.id && e.type_ == entry.type_) {
+                        missing_entries.push(entry);
+                    }
+                }
+                if !missing_entries.is_empty() {
+                    let missing_entries = missing_entries
+                        .into_iter()
+                        .map(|v| {
+                            format!(
+                                "{}: {}",
+                                context.string_interner.resolve_variable(v.id),
+                                context.type_interner.id_to_simple_string(v.type_)
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    eprintln!("TODO: Dict is missing required fields! {missing_entries}");
+                    return BoundNode::error(base.location);
+                }
+            }
             [Type::Color, Type::Background] => {}
             [
                 Type::Label | Type::Image | Type::CustomElement(_, _) | Type::Grid | Type::Flex,
@@ -1794,9 +1837,12 @@ fn bind_conversion(
                 return BoundNode::error(base.location);
             }
             [from, to] => {
-                context
-                    .diagnostics
-                    .report_cannot_convert(from, to, base.location);
+                context.diagnostics.report_cannot_convert(
+                    &context.type_interner,
+                    from,
+                    to,
+                    base.location,
+                );
                 return BoundNode::error(base.location);
             }
         },
@@ -1812,9 +1858,12 @@ fn bind_conversion(
             Type::Float | Type::Integer | Type::Path => {}
             Type::String => return base,
             from => {
-                context
-                    .diagnostics
-                    .report_cannot_convert(from, &Type::String, base.location);
+                context.diagnostics.report_cannot_convert(
+                    &context.type_interner,
+                    from,
+                    &Type::String,
+                    base.location,
+                );
                 return BoundNode::error(base.location);
             }
         },

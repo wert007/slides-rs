@@ -5,7 +5,7 @@ use super::{
     lexer::Token,
 };
 
-use crate::{Context, Files, Location};
+use crate::{Context, Files, Location, compiler::binder::typing::TypeInterner};
 
 #[derive(Debug)]
 pub struct Diagnostic {
@@ -139,9 +139,17 @@ impl Diagnostics {
         self.report_error(format!("No variable named {variable} found"), location);
     }
 
-    pub(crate) fn report_cannot_convert(&mut self, from: &Type, target: &Type, location: Location) {
+    pub(crate) fn report_cannot_convert(
+        &mut self,
+        type_interner: &TypeInterner,
+        from: &Type,
+        target: &Type,
+        location: Location,
+    ) {
+        let from = type_interner.to_simple_string(from);
+        let target = type_interner.to_simple_string(target);
         self.report_error(
-            format!("Cannot convert type {from:?} to type {target:?}"),
+            format!("Cannot convert type {from} to type {target}"),
             location,
         );
     }

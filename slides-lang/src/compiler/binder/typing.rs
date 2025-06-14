@@ -185,6 +185,28 @@ impl TypeInterner {
                 }
                 self.get_or_intern(Type::TypedDict(entries))
             }
+            crate::compiler::module::component::arrows::types::Type::Array(type_index) => {
+                let type_ = type_allocator.get(*type_index);
+                let inner = self.convert_module_type(
+                    type_index.clone().into(),
+                    type_,
+                    type_allocator,
+                    string_interner,
+                    new_types_mapping,
+                );
+                self.get_or_intern(Type::Array(inner))
+            }
+            crate::compiler::module::component::arrows::types::Type::Optional(type_index) => {
+                let type_ = type_allocator.get(*type_index);
+                let inner = self.convert_module_type(
+                    type_index.clone().into(),
+                    type_,
+                    type_allocator,
+                    string_interner,
+                    new_types_mapping,
+                );
+                self.get_or_intern(Type::Optional(inner))
+            }
         };
         let index = HostTypeIndex {
             relocateable: type_id.0,
@@ -192,6 +214,58 @@ impl TypeInterner {
         };
         new_types_mapping.insert(index, type_.clone());
         type_id
+    }
+
+    pub fn id_to_simple_string(&self, id: TypeId) -> String {
+        let type_ = self.resolve(id);
+        self.to_simple_string(type_)
+    }
+
+    pub(crate) fn to_simple_string(&self, t: &Type) -> String {
+        match t {
+            Type::Error => unreachable!(),
+            Type::Void => "void".into(),
+            Type::Float => "float".into(),
+            Type::Integer => "int".into(),
+            Type::Bool => "bool".into(),
+            Type::String => "string".into(),
+            Type::TypedDict(_) | Type::DynamicDict => "dict".into(),
+            Type::Path => "Path".into(),
+            Type::Styling => "Style".into(),
+            Type::Background => "Background".into(),
+            Type::Color => "Color".into(),
+            Type::ObjectFit => "ObjectFit".into(),
+            Type::HAlign => "HAlign".into(),
+            Type::VAlign => "VAlign".into(),
+            Type::TextAlign => "TextAlign".into(),
+            Type::Font => "Font".into(),
+            Type::StyleUnit => "StyleUnit".into(),
+            Type::Function(_function_type) => "function".into(),
+            Type::Slide => "Slide".into(),
+            Type::Element => "Element".into(),
+            Type::Label => "Label".into(),
+            Type::Grid => "Grid".into(),
+            Type::Flex => "Flex".into(),
+            Type::GridEntry => "GridEntry".into(),
+            Type::Image => "Image".into(),
+            Type::Thickness => "Thickness".into(),
+            Type::Enum(name) => name.clone(),
+            Type::EnumDefinition(base, _) => self.to_simple_string(base),
+            Type::CustomElement(name, _) => name.clone(),
+            Type::Array(type_id) => {
+                let name = self.id_to_simple_string(*type_id);
+                format!("{name}[]")
+            }
+            Type::Optional(type_id) => {
+                let name = self.id_to_simple_string(*type_id);
+                format!("{name}?")
+            }
+            Type::Filter => "Filter".into(),
+            Type::TextStyling => "TextStyling".into(),
+            Type::Animation => "Animation".into(),
+            Type::Position => "Position".into(),
+            Type::Module(_) => "module".into(),
+        }
     }
 }
 
@@ -231,6 +305,7 @@ pub enum Type {
     EnumDefinition(Box<Type>, Vec<String>),
     CustomElement(String, HashMap<String, TypeId>),
     Array(TypeId),
+    Optional(TypeId),
     Filter,
     TextStyling,
     Animation,
@@ -342,6 +417,7 @@ impl Type {
                         | Type::Function(_)
                         | Type::CustomElement(..)
                         | Type::Array(_)
+                        | Type::Optional(_)
                         | Type::TypedDict(_)
                         | Type::Module(_)
                 )

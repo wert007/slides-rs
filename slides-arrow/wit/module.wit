@@ -24,6 +24,8 @@ interface types {
         %enum(string),
         enum-definition(tuple<type-index, list<string>>),
         struct(tuple<string, list<tuple<string, type-index>>>),
+        array(type-index),
+        optional(type-index),
     }
 
     record function {

@@ -795,6 +795,10 @@ fn evaluate_conversion(
             value::Value::Dict(dict) => value::Value::Dict(dict),
             _ => unreachable!("Impossible conversion"),
         },
+        Type::TypedDict(_) => match base.value {
+            value::Value::Dict(dict) => value::Value::Dict(dict),
+            _ => unreachable!("Impossible conversion"),
+        },
         unknown => todo!("{unknown:?}"),
     };
     Value { value, location }

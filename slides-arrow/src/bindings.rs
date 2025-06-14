@@ -78,6 +78,8 @@ pub mod component {
                 Enum(_rt::String),
                 EnumDefinition((TypeIndex, _rt::Vec<_rt::String>)),
                 Struct((_rt::String, _rt::Vec<(_rt::String, TypeIndex)>)),
+                Array(TypeIndex),
+                Optional(TypeIndex),
             }
             impl ::core::fmt::Debug for Type {
                 fn fmt(
@@ -99,6 +101,10 @@ pub mod component {
                         }
                         Type::Struct(e) => {
                             f.debug_tuple("Type::Struct").field(e).finish()
+                        }
+                        Type::Array(e) => f.debug_tuple("Type::Array").field(e).finish(),
+                        Type::Optional(e) => {
+                            f.debug_tuple("Type::Optional").field(e).finish()
                         }
                     }
                 }
@@ -151,11 +157,11 @@ pub mod component {
                             [::core::mem::MaybeUninit::uninit(); 8],
                         );
                         let (
-                            result11_0,
-                            result11_1,
-                            result11_2,
-                            result11_3,
-                            result11_4,
+                            result13_0,
+                            result13_1,
+                            result13_2,
+                            result13_3,
+                            result13_4,
                         ) = match t {
                             Type::Void => {
                                 (
@@ -331,13 +337,39 @@ pub mod component {
                                 cleanup_list.extend_from_slice(&[(result10, layout10)]);
                                 (10i32, ptr6.cast_mut(), len6, result10, len10)
                             }
+                            Type::Array(e) => {
+                                let TypeIndex {
+                                    index: index11,
+                                    fixed_unique_key: fixed_unique_key11,
+                                } = e;
+                                (
+                                    11i32,
+                                    _rt::as_i32(index11) as *mut u8,
+                                    _rt::as_i32(fixed_unique_key11) as usize,
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                )
+                            }
+                            Type::Optional(e) => {
+                                let TypeIndex {
+                                    index: index12,
+                                    fixed_unique_key: fixed_unique_key12,
+                                } = e;
+                                (
+                                    12i32,
+                                    _rt::as_i32(index12) as *mut u8,
+                                    _rt::as_i32(fixed_unique_key12) as usize,
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                )
+                            }
                         };
-                        let ptr12 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        let ptr14 = ret_area.0.as_mut_ptr().cast::<u8>();
                         #[cfg(target_arch = "wasm32")]
                         #[link(wasm_import_module = "component:arrows/types")]
                         unsafe extern "C" {
                             #[link_name = "[method]type-allocator.allocate"]
-                            fn wit_import13(
+                            fn wit_import15(
                                 _: i32,
                                 _: i32,
                                 _: *mut u8,
@@ -348,7 +380,7 @@ pub mod component {
                             );
                         }
                         #[cfg(not(target_arch = "wasm32"))]
-                        unsafe extern "C" fn wit_import13(
+                        unsafe extern "C" fn wit_import15(
                             _: i32,
                             _: i32,
                             _: *mut u8,
@@ -360,28 +392,28 @@ pub mod component {
                             unreachable!()
                         }
                         unsafe {
-                            wit_import13(
+                            wit_import15(
                                 (self).handle() as i32,
-                                result11_0,
-                                result11_1,
-                                result11_2,
-                                result11_3,
-                                result11_4,
-                                ptr12,
+                                result13_0,
+                                result13_1,
+                                result13_2,
+                                result13_3,
+                                result13_4,
+                                ptr14,
                             )
                         };
-                        let l14 = *ptr12.add(0).cast::<i32>();
-                        let l15 = *ptr12.add(4).cast::<i32>();
-                        let result16 = TypeIndex {
-                            index: l14 as u32,
-                            fixed_unique_key: l15 as u32,
+                        let l16 = *ptr14.add(0).cast::<i32>();
+                        let l17 = *ptr14.add(4).cast::<i32>();
+                        let result18 = TypeIndex {
+                            index: l16 as u32,
+                            fixed_unique_key: l17 as u32,
                         };
                         for (ptr, layout) in cleanup_list {
                             if layout.size() != 0 {
                                 _rt::alloc::dealloc(ptr.cast(), layout);
                             }
                         }
-                        result16
+                        result18
                     }
                 }
             }
@@ -429,7 +461,7 @@ pub mod component {
                             )
                         };
                         let l3 = i32::from(*ptr1.add(0).cast::<u8>());
-                        let v26 = match l3 {
+                        let v30 = match l3 {
                             0 => Type::Void,
                             1 => Type::Color,
                             2 => Type::String,
@@ -439,7 +471,7 @@ pub mod component {
                             6 => Type::Element,
                             7 => Type::Dict,
                             8 => {
-                                let e26 = {
+                                let e30 = {
                                     let l4 = *ptr1
                                         .add(::core::mem::size_of::<*const u8>())
                                         .cast::<*mut u8>();
@@ -454,10 +486,10 @@ pub mod component {
                                     );
                                     _rt::string_lift(bytes6)
                                 };
-                                Type::Enum(e26)
+                                Type::Enum(e30)
                             }
                             9 => {
-                                let e26 = {
+                                let e30 = {
                                     let l7 = *ptr1
                                         .add(::core::mem::size_of::<*const u8>())
                                         .cast::<i32>();
@@ -504,11 +536,10 @@ pub mod component {
                                         result14,
                                     )
                                 };
-                                Type::EnumDefinition(e26)
+                                Type::EnumDefinition(e30)
                             }
-                            n => {
-                                debug_assert_eq!(n, 10, "invalid enum discriminant");
-                                let e26 = {
+                            10 => {
+                                let e30 = {
                                     let l15 = *ptr1
                                         .add(::core::mem::size_of::<*const u8>())
                                         .cast::<*mut u8>();
@@ -567,11 +598,42 @@ pub mod component {
                                     );
                                     (_rt::string_lift(bytes17), result25)
                                 };
-                                Type::Struct(e26)
+                                Type::Struct(e30)
+                            }
+                            11 => {
+                                let e30 = {
+                                    let l26 = *ptr1
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<i32>();
+                                    let l27 = *ptr1
+                                        .add(4 + 1 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<i32>();
+                                    TypeIndex {
+                                        index: l26 as u32,
+                                        fixed_unique_key: l27 as u32,
+                                    }
+                                };
+                                Type::Array(e30)
+                            }
+                            n => {
+                                debug_assert_eq!(n, 12, "invalid enum discriminant");
+                                let e30 = {
+                                    let l28 = *ptr1
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<i32>();
+                                    let l29 = *ptr1
+                                        .add(4 + 1 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<i32>();
+                                    TypeIndex {
+                                        index: l28 as u32,
+                                        fixed_unique_key: l29 as u32,
+                                    }
+                                };
+                                Type::Optional(e30)
                             }
                         };
-                        let result27 = v26;
-                        result27
+                        let result31 = v30;
+                        result31
                     }
                 }
             }
@@ -2248,51 +2310,51 @@ pub(crate) use __export_host_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1976] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xbd\x0e\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1997] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xd2\x0e\x01A\x02\x01\
 A\x0f\x01B\x17\x01r\x02\x05indexy\x10fixed-unique-keyy\x04\0\x0atype-index\x03\0\
 \0\x04\0\x0etype-allocator\x03\x01\x01ps\x01o\x02\x01\x03\x01o\x02s\x01\x01p\x05\
-\x01o\x02s\x06\x01q\x0b\x04void\0\0\x05color\0\0\x06string\0\0\x03int\0\0\x05flo\
+\x01o\x02s\x06\x01q\x0d\x04void\0\0\x05color\0\0\x06string\0\0\x03int\0\0\x05flo\
 at\0\0\x04bool\0\0\x07element\0\0\x04dict\0\0\x04enum\x01s\0\x0fenum-definition\x01\
-\x04\0\x06struct\x01\x07\0\x04\0\x04type\x03\0\x08\x01p\x01\x01r\x03\x04names\x04\
-args\x0a\x0bresult-type\x01\x04\0\x08function\x03\0\x0b\x01i\x02\x01@\0\0\x0d\x04\
-\0\x1d[static]type-allocator.create\x01\x0e\x01h\x02\x01@\x02\x04self\x0f\x01t\x09\
-\0\x01\x04\0\x1f[method]type-allocator.allocate\x01\x10\x01@\x02\x04self\x0f\x01\
-t\x01\0\x09\x04\0\x1a[method]type-allocator.get\x01\x11\x01@\x02\x04self\x0f\x03\
-keyy\0\x01\x04\0![method]type-allocator.get-by-key\x01\x12\x03\0\x16component:ar\
-rows/types\x05\0\x01B\x15\x01r\x01\x05indexy\x04\0\x0bvalue-index\x03\0\0\x04\0\x0f\
-value-allocator\x03\x01\x01r\x02\x01xs\x01ys\x04\0\x08position\x03\0\x03\x01ky\x01\
-r\x04\x02idy\x06parent\x05\x04names\x09namespaces\x04\0\x07element\x03\0\x06\x01\
-o\x02s\x01\x01p\x08\x01p\x01\x01q\x09\x04void\0\0\x0bstring-type\x01s\0\x03int\x01\
-x\0\x05float\x01u\0\x0astyle-unit\x01s\0\x08position\x01\x04\0\x04dict\x01\x09\0\
-\x05array\x01\x0a\0\x07element\x01\x07\0\x04\0\x05value\x03\0\x0b\x01i\x02\x01@\0\
-\0\x0d\x04\0\x1e[static]value-allocator.create\x01\x0e\x01h\x02\x01@\x02\x04self\
-\x0f\x05value\x0c\0\x01\x04\0\x20[method]value-allocator.allocate\x01\x10\x01@\x02\
-\x04self\x0f\x05value\x01\0\x0c\x04\0\x1b[method]value-allocator.get\x01\x11\x03\
-\0\x17component:arrows/values\x05\x01\x02\x03\0\0\x04type\x01B\x0c\x02\x03\x02\x01\
-\x02\x04\0\x04type\x03\0\0\x01m\x03\x09html-head\x0fjavascript-init\x17javascrip\
-t-slide-change\x04\0\x09placement\x03\0\x02\x04\0\x06slides\x03\x01\x01h\x04\x01\
-@\x03\x04self\x05\x03urls\x04paths\x01\0\x04\0\x1c[method]slides.download-file\x01\
-\x06\x01@\x02\x04self\x05\x04paths\x01\0\x04\0![method]slides.add-file-reference\
-\x01\x07\x01@\x04\x04self\x05\x04texts\x06sources\x09placement\x03\x01\0\x04\0#[\
-method]slides.place-text-in-output\x01\x08\x03\0\x17component:arrows/slides\x05\x03\
-\x02\x03\0\0\x08function\x02\x03\0\0\x0etype-allocator\x02\x03\0\x01\x05value\x02\
-\x03\0\x01\x0fvalue-allocator\x02\x03\0\x01\x0bvalue-index\x02\x03\0\x02\x06slid\
-es\x01B!\x02\x03\x02\x01\x02\x04\0\x04type\x03\0\0\x02\x03\x02\x01\x04\x04\0\x08\
-function\x03\0\x02\x02\x03\x02\x01\x05\x04\0\x0etype-allocator\x03\0\x04\x02\x03\
-\x02\x01\x06\x04\0\x05value\x03\0\x06\x02\x03\x02\x01\x07\x04\0\x0fvalue-allocat\
-or\x03\0\x08\x02\x03\x02\x01\x08\x04\0\x0bvalue-index\x03\0\x0a\x02\x03\x02\x01\x09\
-\x04\0\x06slides\x03\0\x0c\x01q\x04\x12function-not-found\0\0\x0cinvalid-type\0\0\
-\x17argument-count-mismatch\0\0\x0einternal-error\x01s\0\x04\0\x05error\x03\0\x0e\
-\x04\0\x06module\x03\x01\x01i\x0d\x01i\x10\x01@\x01\x06slides\x11\0\x12\x04\0\x15\
-[static]module.create\x01\x13\x01h\x10\x01i\x05\x01@\x02\x04self\x14\x05types\x15\
-\x01\0\x04\0\x1d[method]module.register-types\x01\x16\x01p\x03\x01@\x02\x04self\x14\
-\x05types\x15\0\x17\x04\0\"[method]module.available-functions\x01\x18\x01i\x09\x01\
-p\x0b\x01j\x01\x0b\x01\x0f\x01@\x05\x04self\x14\x06slides\x11\x04names\x09alloca\
-tor\x19\x04args\x1a\0\x1b\x04\0\x1c[method]module.call-function\x01\x1c\x04\0\x18\
-component:arrows/modules\x05\x0a\x04\0\x15component:arrows/host\x04\0\x0b\x0a\x01\
-\0\x04host\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070\
-.227.1\x10wit-bindgen-rust\x060.41.0";
+\x04\0\x06struct\x01\x07\0\x05array\x01\x01\0\x08optional\x01\x01\0\x04\0\x04typ\
+e\x03\0\x08\x01p\x01\x01r\x03\x04names\x04args\x0a\x0bresult-type\x01\x04\0\x08f\
+unction\x03\0\x0b\x01i\x02\x01@\0\0\x0d\x04\0\x1d[static]type-allocator.create\x01\
+\x0e\x01h\x02\x01@\x02\x04self\x0f\x01t\x09\0\x01\x04\0\x1f[method]type-allocato\
+r.allocate\x01\x10\x01@\x02\x04self\x0f\x01t\x01\0\x09\x04\0\x1a[method]type-all\
+ocator.get\x01\x11\x01@\x02\x04self\x0f\x03keyy\0\x01\x04\0![method]type-allocat\
+or.get-by-key\x01\x12\x03\0\x16component:arrows/types\x05\0\x01B\x15\x01r\x01\x05\
+indexy\x04\0\x0bvalue-index\x03\0\0\x04\0\x0fvalue-allocator\x03\x01\x01r\x02\x01\
+xs\x01ys\x04\0\x08position\x03\0\x03\x01ky\x01r\x04\x02idy\x06parent\x05\x04name\
+s\x09namespaces\x04\0\x07element\x03\0\x06\x01o\x02s\x01\x01p\x08\x01p\x01\x01q\x09\
+\x04void\0\0\x0bstring-type\x01s\0\x03int\x01x\0\x05float\x01u\0\x0astyle-unit\x01\
+s\0\x08position\x01\x04\0\x04dict\x01\x09\0\x05array\x01\x0a\0\x07element\x01\x07\
+\0\x04\0\x05value\x03\0\x0b\x01i\x02\x01@\0\0\x0d\x04\0\x1e[static]value-allocat\
+or.create\x01\x0e\x01h\x02\x01@\x02\x04self\x0f\x05value\x0c\0\x01\x04\0\x20[met\
+hod]value-allocator.allocate\x01\x10\x01@\x02\x04self\x0f\x05value\x01\0\x0c\x04\
+\0\x1b[method]value-allocator.get\x01\x11\x03\0\x17component:arrows/values\x05\x01\
+\x02\x03\0\0\x04type\x01B\x0c\x02\x03\x02\x01\x02\x04\0\x04type\x03\0\0\x01m\x03\
+\x09html-head\x0fjavascript-init\x17javascript-slide-change\x04\0\x09placement\x03\
+\0\x02\x04\0\x06slides\x03\x01\x01h\x04\x01@\x03\x04self\x05\x03urls\x04paths\x01\
+\0\x04\0\x1c[method]slides.download-file\x01\x06\x01@\x02\x04self\x05\x04paths\x01\
+\0\x04\0![method]slides.add-file-reference\x01\x07\x01@\x04\x04self\x05\x04texts\
+\x06sources\x09placement\x03\x01\0\x04\0#[method]slides.place-text-in-output\x01\
+\x08\x03\0\x17component:arrows/slides\x05\x03\x02\x03\0\0\x08function\x02\x03\0\0\
+\x0etype-allocator\x02\x03\0\x01\x05value\x02\x03\0\x01\x0fvalue-allocator\x02\x03\
+\0\x01\x0bvalue-index\x02\x03\0\x02\x06slides\x01B!\x02\x03\x02\x01\x02\x04\0\x04\
+type\x03\0\0\x02\x03\x02\x01\x04\x04\0\x08function\x03\0\x02\x02\x03\x02\x01\x05\
+\x04\0\x0etype-allocator\x03\0\x04\x02\x03\x02\x01\x06\x04\0\x05value\x03\0\x06\x02\
+\x03\x02\x01\x07\x04\0\x0fvalue-allocator\x03\0\x08\x02\x03\x02\x01\x08\x04\0\x0b\
+value-index\x03\0\x0a\x02\x03\x02\x01\x09\x04\0\x06slides\x03\0\x0c\x01q\x04\x12\
+function-not-found\0\0\x0cinvalid-type\0\0\x17argument-count-mismatch\0\0\x0eint\
+ernal-error\x01s\0\x04\0\x05error\x03\0\x0e\x04\0\x06module\x03\x01\x01i\x0d\x01\
+i\x10\x01@\x01\x06slides\x11\0\x12\x04\0\x15[static]module.create\x01\x13\x01h\x10\
+\x01i\x05\x01@\x02\x04self\x14\x05types\x15\x01\0\x04\0\x1d[method]module.regist\
+er-types\x01\x16\x01p\x03\x01@\x02\x04self\x14\x05types\x15\0\x17\x04\0\"[method\
+]module.available-functions\x01\x18\x01i\x09\x01p\x0b\x01j\x01\x0b\x01\x0f\x01@\x05\
+\x04self\x14\x06slides\x11\x04names\x09allocator\x19\x04args\x1a\0\x1b\x04\0\x1c\
+[method]module.call-function\x01\x1c\x04\0\x18component:arrows/modules\x05\x0a\x04\
+\0\x15component:arrows/host\x04\0\x0b\x0a\x01\0\x04host\x03\0\0\0G\x09producers\x01\
+\x0cprocessed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
