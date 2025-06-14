@@ -15,7 +15,7 @@ use super::{
     evaluator::value,
 };
 
-mod state;
+pub(crate) mod state;
 use state::State;
 // mod wai {
 //     use crate::compiler::binder::Binder as TypeChecker;
@@ -127,6 +127,14 @@ pub fn load_module(
         .module()
         .call_create(&mut store, slides)
         .unwrap();
+    bindings
+        .component_arrows_modules()
+        .module()
+        .call_register_types(&mut store, module, Resource::new_own(0))
+        .unwrap();
+    context
+        .type_interner
+        .add_from_module(store.data_mut().type_allocator_mut());
     let functions = bindings
         .component_arrows_modules()
         .module()
@@ -137,7 +145,6 @@ pub fn load_module(
         this: module,
         bindings,
         engine,
-        store,
         name,
         functions: functions
             .into_iter()
@@ -147,9 +154,11 @@ pub fn load_module(
                     argument_types: f
                         .args
                         .into_iter()
-                        .map(|t| context.type_interner.get_or_intern(t.into()))
+                        .map(|t| unsafe { store.data().type_allocator().find(&t).unwrap() })
                         .collect(),
-                    return_type: context.type_interner.get_or_intern(f.result_type.into()),
+                    return_type: unsafe {
+                        store.data().type_allocator().find(&f.result_type).unwrap()
+                    },
                 };
                 (
                     f.name.clone(),
@@ -160,21 +169,28 @@ pub fn load_module(
                 )
             })
             .collect(),
+        store,
     })
 }
 
-impl From<modules::Type> for typing::Type {
-    fn from(value: modules::Type) -> Self {
-        match value {
-            arrows::types::Type::Void => Self::Void,
-            arrows::types::Type::String => Self::String,
-            arrows::types::Type::Int => Self::Integer,
-            arrows::types::Type::Float => Self::Float,
-            arrows::types::Type::Dict => Self::DynamicDict,
-            arrows::types::Type::Element => Self::Element,
-        }
-    }
-}
+// impl From<modules::Type> for typing::Type {
+//     fn from(value: modules::Type) -> Self {
+//         match value {
+//             arrows::types::Type::Void => Self::Void,
+//             arrows::types::Type::String => Self::String,
+//             arrows::types::Type::Int => Self::Integer,
+//             arrows::types::Type::Float => Self::Float,
+//             arrows::types::Type::Dict => Self::DynamicDict,
+//             arrows::types::Type::Element => Self::Element,
+//             arrows::types::Type::Enum(name) => {
+//                 match name.as_str() {
+//                     _ => todo!("Unknowon enum: {name}"),
+//                 }
+//             },
+//             arrows::types::Type::EnumDefinition(_) => todo!(),
+//         }
+//     }
+// }
 
 impl From<value::Value> for modules::Value {
     fn from(value: value::Value) -> Self {

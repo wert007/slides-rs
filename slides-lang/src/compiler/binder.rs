@@ -265,7 +265,7 @@ impl Scope {
 
         for enum_ in globals::ENUMS {
             let id = string_interner.create_or_get_variable(enum_.name);
-            let type_ = type_interner.get_or_intern(Type::Enum(
+            let type_ = type_interner.get_or_intern(Type::EnumDefinition(
                 Box::new(enum_.type_),
                 enum_
                     .variants

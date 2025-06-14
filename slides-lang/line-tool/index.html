@@ -22,11 +22,11 @@
         getElementById(4),
         {
             parent: document.getElementById("deadlocks_problem"),
-            label: "I am a arrow!",
-color: "rgb(89, 89, 89, 1)",
-to_pos: {y:0,x:0.5,},
-from_pos: {x:0.5,y:0,},
+            to_pos: {x:0.5,y:0,},
 line_kind: "orthogonal",
+label: "I am a arrow!",
+from_pos: {x:0.5,y:0,},
+color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -39,11 +39,11 @@ line_kind: "orthogonal",
         getElementById(17),
         {
             parent: document.getElementById("deadlock_cyclic_wait"),
-            to_pos: {x:0.5,y:0,},
-from_pos: {x:0.5,y:0,},
-line_kind: "orthogonal",
-color: "rgb(89, 89, 89, 1)",
+            color: "rgb(89, 89, 89, 1)",
 label: "fordert an",
+from_pos: {y:0,x:0.5,},
+line_kind: "orthogonal",
+to_pos: {y:0,x:0.5,},
 
         },
     );
@@ -56,11 +56,11 @@ label: "fordert an",
         getElementById(14),
         {
             parent: document.getElementById("deadlock_cyclic_wait"),
-            label: "fordert an",
-color: "rgb(89, 89, 89, 1)",
-from_pos: {y:1,x:0.5,},
+            color: "rgb(89, 89, 89, 1)",
 line_kind: "orthogonal",
+from_pos: {x:0.5,y:1,},
 to_pos: {y:1,x:0.5,},
+label: "fordert an",
 
         },
     );
@@ -275,7 +275,6 @@ function emit_tip(tip, rotation, size, builder) {
             throw new Error("")
     }
     builder.rotate(-rotation);
-
 }
 
 function turnLineIntoPath(line) {

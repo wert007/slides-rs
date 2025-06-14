@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    collections::HashMap,
     path::PathBuf,
     sync::{Arc, RwLock},
 };
@@ -8,12 +8,101 @@ use slides_rs_core::{Position, Presentation, WebRenderable};
 use wasmtime::component::Resource;
 use wasmtime_wasi::{IoView, WasiView};
 
-use crate::compiler::evaluator::value;
+use crate::compiler::{
+    binder::typing::{self, TypeId},
+    evaluator::value,
+};
 
 use super::{
     component::arrows::{self, slides, values},
     exports::component::arrows::modules,
 };
+
+#[derive(Debug)]
+pub struct HostTypeAllocator {
+    pub(crate) types: HashMap<usize, modules::Type>,
+}
+
+fn types_are_equal(a: &modules::Type, b: &modules::Type) -> bool {
+    match (a, b) {
+        (arrows::types::Type::Void, arrows::types::Type::Void)
+        | (arrows::types::Type::String, arrows::types::Type::String)
+        | (arrows::types::Type::Int, arrows::types::Type::Int)
+        | (arrows::types::Type::Float, arrows::types::Type::Float)
+        | (arrows::types::Type::Element, arrows::types::Type::Element)
+        | (arrows::types::Type::Dict, arrows::types::Type::Dict) => true,
+        (arrows::types::Type::Enum(a), arrows::types::Type::Enum(b)) => a == b,
+        (
+            arrows::types::Type::EnumDefinition((a, _)),
+            arrows::types::Type::EnumDefinition((b, _)),
+        ) => a.index == b.index,
+        _ => false,
+    }
+}
+
+impl HostTypeAllocator {
+    fn new() -> Self {
+        Self {
+            types: typing::Type::simple_types()
+                .into_iter()
+                .filter_map(|t| {
+                    Some(match t {
+                        // TODO
+                        typing::Type::Error => modules::Type::Void,
+                        typing::Type::Void => modules::Type::Void,
+                        typing::Type::Float => modules::Type::Float,
+                        typing::Type::Integer => modules::Type::Int,
+                        typing::Type::Bool => return None,
+                        typing::Type::String => modules::Type::String,
+                        typing::Type::DynamicDict => modules::Type::Dict,
+                        typing::Type::Path => return None,
+                        typing::Type::Styling => return None,
+                        typing::Type::Background => return None,
+                        typing::Type::Color => return None,
+                        typing::Type::ObjectFit => return None,
+                        typing::Type::HAlign => return None,
+                        typing::Type::VAlign => return None,
+                        typing::Type::TextAlign => return None,
+                        typing::Type::Font => return None,
+                        typing::Type::StyleUnit => return None,
+                        typing::Type::Slide => return None,
+                        typing::Type::Element => modules::Type::Element,
+                        typing::Type::Label => return None,
+                        typing::Type::Grid => return None,
+                        typing::Type::Flex => return None,
+                        typing::Type::GridEntry => return None,
+                        typing::Type::Image => return None,
+                        typing::Type::Thickness => return None,
+                        typing::Type::Filter => return None,
+                        typing::Type::TextStyling => return None,
+                        typing::Type::Animation => return None,
+                        typing::Type::Position => return None,
+                        t => unreachable!("Not returned by simple types! {t:#?}"),
+                    })
+                })
+                .enumerate()
+                .collect(),
+        }
+    }
+
+    fn allocate(&mut self, t: modules::Type) -> arrows::types::TypeIndex {
+        let index = self.types.len();
+        self.types.insert(index, t);
+        let index = arrows::types::TypeIndex { index: index as _ };
+        index
+    }
+
+    pub(crate) unsafe fn find(&self, t: &modules::Type) -> Option<TypeId> {
+        self.types
+            .iter()
+            .find(|(_, v)| types_are_equal(t, v))
+            .map(|(i, _)| unsafe { TypeId::from_raw(*i) })
+    }
+
+    pub(crate) fn get(&self, index: arrows::types::TypeIndex) -> &modules::Type {
+        &self.types[&(index.index as usize)]
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct HostValueAllocator {
@@ -109,6 +198,7 @@ impl HostValueAllocator {
 
 pub struct State {
     value_allocators: Vec<HostValueAllocator>,
+    type_allocator: HostTypeAllocator,
     wasi_ctx: wasmtime_wasi::WasiCtx,
     wasi_table: wasmtime_wasi::ResourceTable,
     presentation: Arc<RwLock<Presentation>>,
@@ -132,6 +222,7 @@ impl State {
 
     pub fn new(presentation: Arc<RwLock<Presentation>>) -> Self {
         Self {
+            type_allocator: HostTypeAllocator::new(),
             value_allocators: Vec::new(),
             wasi_ctx: wasmtime_wasi::WasiCtxBuilder::new().build(),
             wasi_table: wasmtime_wasi::ResourceTable::default(),
@@ -145,6 +236,14 @@ impl State {
 
     pub fn init_slides(&mut self) -> Resource<arrows::slides::Slides> {
         Resource::new_own(0)
+    }
+
+    pub fn type_allocator(&self) -> &HostTypeAllocator {
+        &self.type_allocator
+    }
+
+    pub fn type_allocator_mut(&mut self) -> &mut HostTypeAllocator {
+        &mut self.type_allocator
     }
 }
 
@@ -179,6 +278,35 @@ impl arrows::values::HostValueAllocator for State {
     fn drop(
         &mut self,
         _rep: wasmtime::component::Resource<arrows::values::ValueAllocator>,
+    ) -> wasmtime::Result<()> {
+        Ok(())
+    }
+}
+
+impl arrows::types::HostTypeAllocator for State {
+    fn create(&mut self) -> wasmtime::component::Resource<arrows::types::TypeAllocator> {
+        Resource::new_own(0)
+    }
+
+    fn allocate(
+        &mut self,
+        _self_: wasmtime::component::Resource<arrows::types::TypeAllocator>,
+        t: arrows::types::Type,
+    ) -> arrows::types::TypeIndex {
+        self.type_allocator.allocate(t)
+    }
+
+    fn get(
+        &mut self,
+        _self_: wasmtime::component::Resource<arrows::types::TypeAllocator>,
+        t: arrows::types::TypeIndex,
+    ) -> arrows::types::Type {
+        self.type_allocator.get(t).clone()
+    }
+
+    fn drop(
+        &mut self,
+        _rep: wasmtime::component::Resource<arrows::types::TypeAllocator>,
     ) -> wasmtime::Result<()> {
         Ok(())
     }

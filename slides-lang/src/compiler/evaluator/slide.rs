@@ -440,7 +440,7 @@ fn evaluate_member_access(
     if let Some((enum_type, _)) = context
         .type_interner
         .resolve(member_access.base.type_)
-        .try_as_enum_ref()
+        .try_as_enum_definition_ref()
     {
         let variant = context.string_interner.resolve(member_access.member);
         let value = match &**enum_type {

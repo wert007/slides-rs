@@ -1,12 +1,24 @@
 package component:arrows;
 interface types {
-    enum %type {
+    record type-index {
+        index: u32,
+    }
+    resource type-allocator {
+        create: static func() -> type-allocator;
+        allocate: func(t: %type) -> type-index;
+        get: func(t: type-index) -> %type;
+    }
+
+
+    variant %type {
         void,
         %string,
         int,
         float,
         element,
         dict,
+        %enum(string),
+        enum-definition(tuple<type-index, list<string>>),
     }
 
     record function {
@@ -52,6 +64,7 @@ interface values {
 }
 
 interface slides {
+    use types.{%type};
     enum placement {
         html-head,
         javascript-init,
@@ -66,7 +79,7 @@ interface slides {
 }
 
 interface modules {
-    use types.{%type, function};
+    use types.{%type, function, type-allocator};
     use values.{value, value-allocator, value-index};
     use slides.{slides};
 
@@ -78,6 +91,7 @@ interface modules {
     }
     resource module {
         create: static func(slides: slides) -> module;
+        register-types: func(types: type-allocator);
         available-functions: func() -> list<function>;
         call-function: func(slides: slides, name: string, allocator: value-allocator, args: list<value-index>) -> result<value-index, error>;
     }

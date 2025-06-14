@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use strum::IntoEnumIterator;
 
-use crate::{ModuleIndex, Modules};
+use crate::{ModuleIndex, Modules, compiler::module::state::HostTypeAllocator};
 
 use super::{ConversionKind, Variable, globals};
 
@@ -40,6 +40,10 @@ impl TypeId {
     pub const STYLE_UNIT: TypeId = TypeId(16);
     pub const ELEMENT: TypeId = TypeId(18);
     pub const ANIMATION: TypeId = TypeId(27);
+
+    pub unsafe fn from_raw(raw: usize) -> Self {
+        Self(raw)
+    }
 }
 
 pub struct TypeInterner {
@@ -85,6 +89,60 @@ impl TypeInterner {
     pub fn resolve_types<const N: usize>(&self, target: [TypeId; N]) -> [&Type; N] {
         target.map(|t| self.types.get(t.0).expect("TypeIds are always valid"))
     }
+
+    pub fn add_from_module(&mut self, type_allocator: &mut HostTypeAllocator) {
+        let mut new_types_mapping = HashMap::with_capacity(type_allocator.types.len());
+        for type_ in type_allocator.types.values() {
+            self.convert_module_type(type_, &type_allocator, &mut new_types_mapping);
+        }
+        type_allocator.types = new_types_mapping;
+    }
+
+    fn convert_module_type(
+        &mut self,
+        type_: &crate::compiler::module::component::arrows::types::Type,
+        type_allocator: &HostTypeAllocator,
+        new_types_mapping: &mut HashMap<
+            usize,
+            crate::compiler::module::component::arrows::types::Type,
+        >,
+    ) -> TypeId {
+        let index = match type_ {
+            crate::compiler::module::component::arrows::types::Type::Void => {
+                self.get_or_intern(Type::Void)
+            }
+            crate::compiler::module::component::arrows::types::Type::String => {
+                self.get_or_intern(Type::String)
+            }
+            crate::compiler::module::component::arrows::types::Type::Int => {
+                self.get_or_intern(Type::Integer)
+            }
+            crate::compiler::module::component::arrows::types::Type::Float => {
+                self.get_or_intern(Type::Float)
+            }
+            crate::compiler::module::component::arrows::types::Type::Element => {
+                self.get_or_intern(Type::Element)
+            }
+            crate::compiler::module::component::arrows::types::Type::Dict => {
+                self.get_or_intern(Type::DynamicDict)
+            }
+            crate::compiler::module::component::arrows::types::Type::Enum(name) => match name {
+                custom => self.get_or_intern(Type::Enum(name.clone())),
+            },
+            crate::compiler::module::component::arrows::types::Type::EnumDefinition((
+                enum_type,
+                variants,
+            )) => {
+                let enum_type = type_allocator.get(*enum_type);
+                let enum_type =
+                    self.convert_module_type(enum_type, type_allocator, new_types_mapping);
+                let enum_type = self.resolve(enum_type).clone();
+                self.get_or_intern(Type::EnumDefinition(Box::new(enum_type), variants.clone()))
+            }
+        };
+        new_types_mapping.insert(index.0, type_.clone());
+        index
+    }
 }
 
 #[derive(
@@ -119,7 +177,8 @@ pub enum Type {
     GridEntry,
     Image,
     Thickness,
-    Enum(Box<Type>, Vec<String>),
+    Enum(String),
+    EnumDefinition(Box<Type>, Vec<String>),
     CustomElement(String, HashMap<String, TypeId>),
     Array(TypeId),
     Filter,
@@ -158,7 +217,7 @@ impl Type {
         if self == &Type::Error {
             return Some(Type::Error);
         }
-        if let Type::Enum(result, variants) = self {
+        if let Type::EnumDefinition(result, variants) = self {
             return if variants.iter().any(|v| v == member) {
                 Some(*result.clone())
             } else {
@@ -228,11 +287,13 @@ impl Type {
             .filter(|t| {
                 !matches!(
                     t,
-                    Type::Enum(..)
+                    Type::EnumDefinition(..)
+                        | Type::Enum(_)
                         | Type::Function(_)
-                        | Type::CustomElement(_, _)
+                        | Type::CustomElement(..)
                         | Type::Array(_)
                         | Type::TypedDict(_)
+                        | Type::Module(_)
                 )
             })
             .collect()

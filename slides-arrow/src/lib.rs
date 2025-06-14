@@ -153,6 +153,17 @@ impl GuestModule for Arrows {
         })
     }
 
+    fn register_types(&self, types: modules::TypeAllocator) -> () {
+        let line_tip = types.allocate(&Type::Enum("LineTip".into()));
+        types.allocate(&Type::EnumDefinition((
+            line_tip,
+            ["Arrow", "Triangle", "Square", "Circle", "None"]
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+        )));
+    }
+
     fn available_functions(&self) -> Vec<modules::Function> {
         vec![modules::Function {
             name: "arrow".into(),

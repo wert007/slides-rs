@@ -11,8 +11,57 @@ pub mod component {
             #[doc(hidden)]
             static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
             use super::super::super::_rt;
-            #[repr(u8)]
-            #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
+            #[repr(C)]
+            #[derive(Clone, Copy)]
+            pub struct TypeIndex {
+                pub index: u32,
+            }
+            impl ::core::fmt::Debug for TypeIndex {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("TypeIndex").field("index", &self.index).finish()
+                }
+            }
+            #[derive(Debug)]
+            #[repr(transparent)]
+            pub struct TypeAllocator {
+                handle: _rt::Resource<TypeAllocator>,
+            }
+            impl TypeAllocator {
+                #[doc(hidden)]
+                pub unsafe fn from_handle(handle: u32) -> Self {
+                    Self {
+                        handle: unsafe { _rt::Resource::from_handle(handle) },
+                    }
+                }
+                #[doc(hidden)]
+                pub fn take_handle(&self) -> u32 {
+                    _rt::Resource::take_handle(&self.handle)
+                }
+                #[doc(hidden)]
+                pub fn handle(&self) -> u32 {
+                    _rt::Resource::handle(&self.handle)
+                }
+            }
+            unsafe impl _rt::WasmResource for TypeAllocator {
+                #[inline]
+                unsafe fn drop(_handle: u32) {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unreachable!();
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        #[link(wasm_import_module = "component:arrows/types")]
+                        unsafe extern "C" {
+                            #[link_name = "[resource-drop]type-allocator"]
+                            fn drop(_: u32);
+                        }
+                        unsafe { drop(_handle) };
+                    }
+                }
+            }
+            #[derive(Clone)]
             pub enum Type {
                 Void,
                 String,
@@ -20,6 +69,8 @@ pub mod component {
                 Float,
                 Element,
                 Dict,
+                Enum(_rt::String),
+                EnumDefinition((TypeIndex, _rt::Vec<_rt::String>)),
             }
             impl ::core::fmt::Debug for Type {
                 fn fmt(
@@ -33,23 +84,10 @@ pub mod component {
                         Type::Float => f.debug_tuple("Type::Float").finish(),
                         Type::Element => f.debug_tuple("Type::Element").finish(),
                         Type::Dict => f.debug_tuple("Type::Dict").finish(),
-                    }
-                }
-            }
-            impl Type {
-                #[doc(hidden)]
-                pub unsafe fn _lift(val: u8) -> Type {
-                    if !cfg!(debug_assertions) {
-                        return ::core::mem::transmute(val);
-                    }
-                    match val {
-                        0 => Type::Void,
-                        1 => Type::String,
-                        2 => Type::Int,
-                        3 => Type::Float,
-                        4 => Type::Element,
-                        5 => Type::Dict,
-                        _ => panic!("invalid enum discriminant"),
+                        Type::Enum(e) => f.debug_tuple("Type::Enum").field(e).finish(),
+                        Type::EnumDefinition(e) => {
+                            f.debug_tuple("Type::EnumDefinition").field(e).finish()
+                        }
                     }
                 }
             }
@@ -69,6 +107,268 @@ pub mod component {
                         .field("args", &self.args)
                         .field("result-type", &self.result_type)
                         .finish()
+                }
+            }
+            impl TypeAllocator {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn create() -> TypeAllocator {
+                    unsafe {
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:arrows/types")]
+                        unsafe extern "C" {
+                            #[link_name = "[static]type-allocator.create"]
+                            fn wit_import0() -> i32;
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import0() -> i32 {
+                            unreachable!()
+                        }
+                        let ret = unsafe { wit_import0() };
+                        unsafe { TypeAllocator::from_handle(ret as u32) }
+                    }
+                }
+            }
+            impl TypeAllocator {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn allocate(&self, t: &Type) -> TypeIndex {
+                    unsafe {
+                        let mut cleanup_list = _rt::Vec::new();
+                        let (result5_0, result5_1, result5_2, result5_3) = match t {
+                            Type::Void => {
+                                (
+                                    0i32,
+                                    ::core::ptr::null_mut(),
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                )
+                            }
+                            Type::String => {
+                                (
+                                    1i32,
+                                    ::core::ptr::null_mut(),
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                )
+                            }
+                            Type::Int => {
+                                (
+                                    2i32,
+                                    ::core::ptr::null_mut(),
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                )
+                            }
+                            Type::Float => {
+                                (
+                                    3i32,
+                                    ::core::ptr::null_mut(),
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                )
+                            }
+                            Type::Element => {
+                                (
+                                    4i32,
+                                    ::core::ptr::null_mut(),
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                )
+                            }
+                            Type::Dict => {
+                                (
+                                    5i32,
+                                    ::core::ptr::null_mut(),
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                )
+                            }
+                            Type::Enum(e) => {
+                                let vec0 = e;
+                                let ptr0 = vec0.as_ptr().cast::<u8>();
+                                let len0 = vec0.len();
+                                (6i32, ptr0.cast_mut(), len0 as *mut u8, 0usize)
+                            }
+                            Type::EnumDefinition(e) => {
+                                let (t1_0, t1_1) = e;
+                                let TypeIndex { index: index2 } = t1_0;
+                                let vec4 = t1_1;
+                                let len4 = vec4.len();
+                                let layout4 = _rt::alloc::Layout::from_size_align_unchecked(
+                                    vec4.len() * (2 * ::core::mem::size_of::<*const u8>()),
+                                    ::core::mem::size_of::<*const u8>(),
+                                );
+                                let result4 = if layout4.size() != 0 {
+                                    let ptr = _rt::alloc::alloc(layout4).cast::<u8>();
+                                    if ptr.is_null() {
+                                        _rt::alloc::handle_alloc_error(layout4);
+                                    }
+                                    ptr
+                                } else {
+                                    ::core::ptr::null_mut()
+                                };
+                                for (i, e) in vec4.into_iter().enumerate() {
+                                    let base = result4
+                                        .add(i * (2 * ::core::mem::size_of::<*const u8>()));
+                                    {
+                                        let vec3 = e;
+                                        let ptr3 = vec3.as_ptr().cast::<u8>();
+                                        let len3 = vec3.len();
+                                        *base
+                                            .add(::core::mem::size_of::<*const u8>())
+                                            .cast::<usize>() = len3;
+                                        *base.add(0).cast::<*mut u8>() = ptr3.cast_mut();
+                                    }
+                                }
+                                cleanup_list.extend_from_slice(&[(result4, layout4)]);
+                                (7i32, _rt::as_i32(index2) as *mut u8, result4, len4)
+                            }
+                        };
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:arrows/types")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]type-allocator.allocate"]
+                            fn wit_import6(
+                                _: i32,
+                                _: i32,
+                                _: *mut u8,
+                                _: *mut u8,
+                                _: usize,
+                            ) -> i32;
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import6(
+                            _: i32,
+                            _: i32,
+                            _: *mut u8,
+                            _: *mut u8,
+                            _: usize,
+                        ) -> i32 {
+                            unreachable!()
+                        }
+                        let ret = unsafe {
+                            wit_import6(
+                                (self).handle() as i32,
+                                result5_0,
+                                result5_1,
+                                result5_2,
+                                result5_3,
+                            )
+                        };
+                        for (ptr, layout) in cleanup_list {
+                            if layout.size() != 0 {
+                                _rt::alloc::dealloc(ptr.cast(), layout);
+                            }
+                        }
+                        TypeIndex { index: ret as u32 }
+                    }
+                }
+            }
+            impl TypeAllocator {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn get(&self, t: TypeIndex) -> Type {
+                    unsafe {
+                        #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                        #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                        struct RetArea(
+                            [::core::mem::MaybeUninit<
+                                u8,
+                            >; 4 * ::core::mem::size_of::<*const u8>()],
+                        );
+                        let mut ret_area = RetArea(
+                            [::core::mem::MaybeUninit::uninit(); 4
+                                * ::core::mem::size_of::<*const u8>()],
+                        );
+                        let TypeIndex { index: index0 } = t;
+                        let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:arrows/types")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]type-allocator.get"]
+                            fn wit_import2(_: i32, _: i32, _: *mut u8);
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import2(_: i32, _: i32, _: *mut u8) {
+                            unreachable!()
+                        }
+                        unsafe {
+                            wit_import2(
+                                (self).handle() as i32,
+                                _rt::as_i32(index0),
+                                ptr1,
+                            )
+                        };
+                        let l3 = i32::from(*ptr1.add(0).cast::<u8>());
+                        let v14 = match l3 {
+                            0 => Type::Void,
+                            1 => Type::String,
+                            2 => Type::Int,
+                            3 => Type::Float,
+                            4 => Type::Element,
+                            5 => Type::Dict,
+                            6 => {
+                                let e14 = {
+                                    let l4 = *ptr1
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l5 = *ptr1
+                                        .add(2 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let len6 = l5;
+                                    let bytes6 = _rt::Vec::from_raw_parts(
+                                        l4.cast(),
+                                        len6,
+                                        len6,
+                                    );
+                                    _rt::string_lift(bytes6)
+                                };
+                                Type::Enum(e14)
+                            }
+                            n => {
+                                debug_assert_eq!(n, 7, "invalid enum discriminant");
+                                let e14 = {
+                                    let l7 = *ptr1
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<i32>();
+                                    let l8 = *ptr1
+                                        .add(2 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l9 = *ptr1
+                                        .add(3 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let base13 = l8;
+                                    let len13 = l9;
+                                    let mut result13 = _rt::Vec::with_capacity(len13);
+                                    for i in 0..len13 {
+                                        let base = base13
+                                            .add(i * (2 * ::core::mem::size_of::<*const u8>()));
+                                        let e13 = {
+                                            let l10 = *base.add(0).cast::<*mut u8>();
+                                            let l11 = *base
+                                                .add(::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>();
+                                            let len12 = l11;
+                                            let bytes12 = _rt::Vec::from_raw_parts(
+                                                l10.cast(),
+                                                len12,
+                                                len12,
+                                            );
+                                            _rt::string_lift(bytes12)
+                                        };
+                                        result13.push(e13);
+                                    }
+                                    _rt::cabi_dealloc(
+                                        base13,
+                                        len13 * (2 * ::core::mem::size_of::<*const u8>()),
+                                        ::core::mem::size_of::<*const u8>(),
+                                    );
+                                    (TypeIndex { index: l7 as u32 }, result13)
+                                };
+                                Type::EnumDefinition(e14)
+                            }
+                        };
+                        let result15 = v14;
+                        result15
+                    }
                 }
             }
         }
@@ -928,6 +1228,7 @@ pub mod exports {
                 static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
                 use super::super::super::super::_rt;
                 pub type Function = super::super::super::super::component::arrows::types::Function;
+                pub type TypeAllocator = super::super::super::super::component::arrows::types::TypeAllocator;
                 pub type ValueAllocator = super::super::super::super::component::arrows::values::ValueAllocator;
                 pub type ValueIndex = super::super::super::super::component::arrows::values::ValueIndex;
                 pub type Slides = super::super::super::super::component::arrows::slides::Slides;
@@ -1106,6 +1407,22 @@ pub mod exports {
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
+                pub unsafe fn _export_method_module_register_types_cabi<T: GuestModule>(
+                    arg0: *mut u8,
+                    arg1: i32,
+                ) {
+                    #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
+                    T::register_types(
+                        unsafe { ModuleBorrow::lift(arg0 as u32 as usize) }.get(),
+                        unsafe {
+                            super::super::super::super::component::arrows::types::TypeAllocator::from_handle(
+                                arg1 as u32,
+                            )
+                        },
+                    );
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
                 pub unsafe fn _export_method_module_available_functions_cabi<
                     T: GuestModule,
                 >(arg0: *mut u8) -> *mut u8 {
@@ -1114,24 +1431,24 @@ pub mod exports {
                         unsafe { ModuleBorrow::lift(arg0 as u32 as usize) }.get(),
                     );
                     let ptr1 = (&raw mut _RET_AREA.0).cast::<u8>();
-                    let vec5 = result0;
-                    let len5 = vec5.len();
-                    let layout5 = _rt::alloc::Layout::from_size_align_unchecked(
-                        vec5.len() * (5 * ::core::mem::size_of::<*const u8>()),
+                    let vec17 = result0;
+                    let len17 = vec17.len();
+                    let layout17 = _rt::alloc::Layout::from_size_align_unchecked(
+                        vec17.len() * (8 * ::core::mem::size_of::<*const u8>()),
                         ::core::mem::size_of::<*const u8>(),
                     );
-                    let result5 = if layout5.size() != 0 {
-                        let ptr = _rt::alloc::alloc(layout5).cast::<u8>();
+                    let result17 = if layout17.size() != 0 {
+                        let ptr = _rt::alloc::alloc(layout17).cast::<u8>();
                         if ptr.is_null() {
-                            _rt::alloc::handle_alloc_error(layout5);
+                            _rt::alloc::handle_alloc_error(layout17);
                         }
                         ptr
                     } else {
                         ::core::ptr::null_mut()
                     };
-                    for (i, e) in vec5.into_iter().enumerate() {
-                        let base = result5
-                            .add(i * (5 * ::core::mem::size_of::<*const u8>()));
+                    for (i, e) in vec17.into_iter().enumerate() {
+                        let base = result17
+                            .add(i * (8 * ::core::mem::size_of::<*const u8>()));
                         {
                             let super::super::super::super::component::arrows::types::Function {
                                 name: name2,
@@ -1146,40 +1463,211 @@ pub mod exports {
                                 .add(::core::mem::size_of::<*const u8>())
                                 .cast::<usize>() = len3;
                             *base.add(0).cast::<*mut u8>() = ptr3.cast_mut();
-                            let vec4 = args2;
-                            let len4 = vec4.len();
-                            let layout4 = _rt::alloc::Layout::from_size_align_unchecked(
-                                vec4.len() * 1,
-                                1,
+                            let vec10 = args2;
+                            let len10 = vec10.len();
+                            let layout10 = _rt::alloc::Layout::from_size_align_unchecked(
+                                vec10.len() * (4 * ::core::mem::size_of::<*const u8>()),
+                                ::core::mem::size_of::<*const u8>(),
                             );
-                            let result4 = if layout4.size() != 0 {
-                                let ptr = _rt::alloc::alloc(layout4).cast::<u8>();
+                            let result10 = if layout10.size() != 0 {
+                                let ptr = _rt::alloc::alloc(layout10).cast::<u8>();
                                 if ptr.is_null() {
-                                    _rt::alloc::handle_alloc_error(layout4);
+                                    _rt::alloc::handle_alloc_error(layout10);
                                 }
                                 ptr
                             } else {
                                 ::core::ptr::null_mut()
                             };
-                            for (i, e) in vec4.into_iter().enumerate() {
-                                let base = result4.add(i * 1);
+                            for (i, e) in vec10.into_iter().enumerate() {
+                                let base = result10
+                                    .add(i * (4 * ::core::mem::size_of::<*const u8>()));
                                 {
-                                    *base.add(0).cast::<u8>() = (e.clone() as i32) as u8;
+                                    use super::super::super::super::component::arrows::types::Type as V9;
+                                    match e {
+                                        V9::Void => {
+                                            *base.add(0).cast::<u8>() = (0i32) as u8;
+                                        }
+                                        V9::String => {
+                                            *base.add(0).cast::<u8>() = (1i32) as u8;
+                                        }
+                                        V9::Int => {
+                                            *base.add(0).cast::<u8>() = (2i32) as u8;
+                                        }
+                                        V9::Float => {
+                                            *base.add(0).cast::<u8>() = (3i32) as u8;
+                                        }
+                                        V9::Element => {
+                                            *base.add(0).cast::<u8>() = (4i32) as u8;
+                                        }
+                                        V9::Dict => {
+                                            *base.add(0).cast::<u8>() = (5i32) as u8;
+                                        }
+                                        V9::Enum(e) => {
+                                            *base.add(0).cast::<u8>() = (6i32) as u8;
+                                            let vec4 = (e.into_bytes()).into_boxed_slice();
+                                            let ptr4 = vec4.as_ptr().cast::<u8>();
+                                            let len4 = vec4.len();
+                                            ::core::mem::forget(vec4);
+                                            *base
+                                                .add(2 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>() = len4;
+                                            *base
+                                                .add(::core::mem::size_of::<*const u8>())
+                                                .cast::<*mut u8>() = ptr4.cast_mut();
+                                        }
+                                        V9::EnumDefinition(e) => {
+                                            *base.add(0).cast::<u8>() = (7i32) as u8;
+                                            let (t5_0, t5_1) = e;
+                                            let super::super::super::super::component::arrows::types::TypeIndex {
+                                                index: index6,
+                                            } = t5_0;
+                                            *base
+                                                .add(::core::mem::size_of::<*const u8>())
+                                                .cast::<i32>() = _rt::as_i32(index6);
+                                            let vec8 = t5_1;
+                                            let len8 = vec8.len();
+                                            let layout8 = _rt::alloc::Layout::from_size_align_unchecked(
+                                                vec8.len() * (2 * ::core::mem::size_of::<*const u8>()),
+                                                ::core::mem::size_of::<*const u8>(),
+                                            );
+                                            let result8 = if layout8.size() != 0 {
+                                                let ptr = _rt::alloc::alloc(layout8).cast::<u8>();
+                                                if ptr.is_null() {
+                                                    _rt::alloc::handle_alloc_error(layout8);
+                                                }
+                                                ptr
+                                            } else {
+                                                ::core::ptr::null_mut()
+                                            };
+                                            for (i, e) in vec8.into_iter().enumerate() {
+                                                let base = result8
+                                                    .add(i * (2 * ::core::mem::size_of::<*const u8>()));
+                                                {
+                                                    let vec7 = (e.into_bytes()).into_boxed_slice();
+                                                    let ptr7 = vec7.as_ptr().cast::<u8>();
+                                                    let len7 = vec7.len();
+                                                    ::core::mem::forget(vec7);
+                                                    *base
+                                                        .add(::core::mem::size_of::<*const u8>())
+                                                        .cast::<usize>() = len7;
+                                                    *base.add(0).cast::<*mut u8>() = ptr7.cast_mut();
+                                                }
+                                            }
+                                            *base
+                                                .add(3 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>() = len8;
+                                            *base
+                                                .add(2 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<*mut u8>() = result8;
+                                        }
+                                    }
                                 }
                             }
                             *base
                                 .add(3 * ::core::mem::size_of::<*const u8>())
-                                .cast::<usize>() = len4;
+                                .cast::<usize>() = len10;
                             *base
                                 .add(2 * ::core::mem::size_of::<*const u8>())
-                                .cast::<*mut u8>() = result4;
-                            *base
-                                .add(4 * ::core::mem::size_of::<*const u8>())
-                                .cast::<u8>() = (result_type2.clone() as i32) as u8;
+                                .cast::<*mut u8>() = result10;
+                            use super::super::super::super::component::arrows::types::Type as V16;
+                            match result_type2 {
+                                V16::Void => {
+                                    *base
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (0i32) as u8;
+                                }
+                                V16::String => {
+                                    *base
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (1i32) as u8;
+                                }
+                                V16::Int => {
+                                    *base
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (2i32) as u8;
+                                }
+                                V16::Float => {
+                                    *base
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (3i32) as u8;
+                                }
+                                V16::Element => {
+                                    *base
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (4i32) as u8;
+                                }
+                                V16::Dict => {
+                                    *base
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (5i32) as u8;
+                                }
+                                V16::Enum(e) => {
+                                    *base
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (6i32) as u8;
+                                    let vec11 = (e.into_bytes()).into_boxed_slice();
+                                    let ptr11 = vec11.as_ptr().cast::<u8>();
+                                    let len11 = vec11.len();
+                                    ::core::mem::forget(vec11);
+                                    *base
+                                        .add(6 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>() = len11;
+                                    *base
+                                        .add(5 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>() = ptr11.cast_mut();
+                                }
+                                V16::EnumDefinition(e) => {
+                                    *base
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (7i32) as u8;
+                                    let (t12_0, t12_1) = e;
+                                    let super::super::super::super::component::arrows::types::TypeIndex {
+                                        index: index13,
+                                    } = t12_0;
+                                    *base
+                                        .add(5 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<i32>() = _rt::as_i32(index13);
+                                    let vec15 = t12_1;
+                                    let len15 = vec15.len();
+                                    let layout15 = _rt::alloc::Layout::from_size_align_unchecked(
+                                        vec15.len() * (2 * ::core::mem::size_of::<*const u8>()),
+                                        ::core::mem::size_of::<*const u8>(),
+                                    );
+                                    let result15 = if layout15.size() != 0 {
+                                        let ptr = _rt::alloc::alloc(layout15).cast::<u8>();
+                                        if ptr.is_null() {
+                                            _rt::alloc::handle_alloc_error(layout15);
+                                        }
+                                        ptr
+                                    } else {
+                                        ::core::ptr::null_mut()
+                                    };
+                                    for (i, e) in vec15.into_iter().enumerate() {
+                                        let base = result15
+                                            .add(i * (2 * ::core::mem::size_of::<*const u8>()));
+                                        {
+                                            let vec14 = (e.into_bytes()).into_boxed_slice();
+                                            let ptr14 = vec14.as_ptr().cast::<u8>();
+                                            let len14 = vec14.len();
+                                            ::core::mem::forget(vec14);
+                                            *base
+                                                .add(::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>() = len14;
+                                            *base.add(0).cast::<*mut u8>() = ptr14.cast_mut();
+                                        }
+                                    }
+                                    *base
+                                        .add(7 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>() = len15;
+                                    *base
+                                        .add(6 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>() = result15;
+                                }
+                            }
                         }
                     }
-                    *ptr1.add(::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-                    *ptr1.add(0).cast::<*mut u8>() = result5;
+                    *ptr1.add(::core::mem::size_of::<*const u8>()).cast::<usize>() = len17;
+                    *ptr1.add(0).cast::<*mut u8>() = result17;
                     ptr1
                 }
                 #[doc(hidden)]
@@ -1191,11 +1679,11 @@ pub mod exports {
                     let l1 = *arg0
                         .add(::core::mem::size_of::<*const u8>())
                         .cast::<usize>();
-                    let base7 = l0;
-                    let len7 = l1;
-                    for i in 0..len7 {
-                        let base = base7
-                            .add(i * (5 * ::core::mem::size_of::<*const u8>()));
+                    let base23 = l0;
+                    let len23 = l1;
+                    for i in 0..len23 {
+                        let base = base23
+                            .add(i * (8 * ::core::mem::size_of::<*const u8>()));
                         {
                             let l2 = *base.add(0).cast::<*mut u8>();
                             let l3 = *base
@@ -1208,14 +1696,116 @@ pub mod exports {
                             let l5 = *base
                                 .add(3 * ::core::mem::size_of::<*const u8>())
                                 .cast::<usize>();
-                            let base6 = l4;
-                            let len6 = l5;
-                            _rt::cabi_dealloc(base6, len6 * 1, 1);
+                            let base14 = l4;
+                            let len14 = l5;
+                            for i in 0..len14 {
+                                let base = base14
+                                    .add(i * (4 * ::core::mem::size_of::<*const u8>()));
+                                {
+                                    let l6 = i32::from(*base.add(0).cast::<u8>());
+                                    match l6 {
+                                        0 => {}
+                                        1 => {}
+                                        2 => {}
+                                        3 => {}
+                                        4 => {}
+                                        5 => {}
+                                        6 => {
+                                            let l7 = *base
+                                                .add(::core::mem::size_of::<*const u8>())
+                                                .cast::<*mut u8>();
+                                            let l8 = *base
+                                                .add(2 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>();
+                                            _rt::cabi_dealloc(l7, l8, 1);
+                                        }
+                                        _ => {
+                                            let l9 = *base
+                                                .add(2 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<*mut u8>();
+                                            let l10 = *base
+                                                .add(3 * ::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>();
+                                            let base13 = l9;
+                                            let len13 = l10;
+                                            for i in 0..len13 {
+                                                let base = base13
+                                                    .add(i * (2 * ::core::mem::size_of::<*const u8>()));
+                                                {
+                                                    let l11 = *base.add(0).cast::<*mut u8>();
+                                                    let l12 = *base
+                                                        .add(::core::mem::size_of::<*const u8>())
+                                                        .cast::<usize>();
+                                                    _rt::cabi_dealloc(l11, l12, 1);
+                                                }
+                                            }
+                                            _rt::cabi_dealloc(
+                                                base13,
+                                                len13 * (2 * ::core::mem::size_of::<*const u8>()),
+                                                ::core::mem::size_of::<*const u8>(),
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                            _rt::cabi_dealloc(
+                                base14,
+                                len14 * (4 * ::core::mem::size_of::<*const u8>()),
+                                ::core::mem::size_of::<*const u8>(),
+                            );
+                            let l15 = i32::from(
+                                *base
+                                    .add(4 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            match l15 {
+                                0 => {}
+                                1 => {}
+                                2 => {}
+                                3 => {}
+                                4 => {}
+                                5 => {}
+                                6 => {
+                                    let l16 = *base
+                                        .add(5 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l17 = *base
+                                        .add(6 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    _rt::cabi_dealloc(l16, l17, 1);
+                                }
+                                _ => {
+                                    let l18 = *base
+                                        .add(6 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l19 = *base
+                                        .add(7 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let base22 = l18;
+                                    let len22 = l19;
+                                    for i in 0..len22 {
+                                        let base = base22
+                                            .add(i * (2 * ::core::mem::size_of::<*const u8>()));
+                                        {
+                                            let l20 = *base.add(0).cast::<*mut u8>();
+                                            let l21 = *base
+                                                .add(::core::mem::size_of::<*const u8>())
+                                                .cast::<usize>();
+                                            _rt::cabi_dealloc(l20, l21, 1);
+                                        }
+                                    }
+                                    _rt::cabi_dealloc(
+                                        base22,
+                                        len22 * (2 * ::core::mem::size_of::<*const u8>()),
+                                        ::core::mem::size_of::<*const u8>(),
+                                    );
+                                }
+                            }
                         }
                     }
                     _rt::cabi_dealloc(
-                        base7,
-                        len7 * (5 * ::core::mem::size_of::<*const u8>()),
+                        base23,
+                        len23 * (8 * ::core::mem::size_of::<*const u8>()),
                         ::core::mem::size_of::<*const u8>(),
                     );
                 }
@@ -1376,6 +1966,7 @@ pub mod exports {
                         }
                     }
                     fn create(slides: Slides) -> Module;
+                    fn register_types(&self, types: TypeAllocator) -> ();
                     fn available_functions(&self) -> _rt::Vec<Function>;
                     fn call_function(
                         &self,
@@ -1393,6 +1984,12 @@ pub mod exports {
                         "C" fn export_static_module_create(arg0 : i32,) -> i32 { unsafe {
                         $($path_to_types)*:: _export_static_module_create_cabi::<<$ty as
                         $($path_to_types)*:: Guest >::Module > (arg0) } } #[unsafe
+                        (export_name =
+                        "component:arrows/modules#[method]module.register-types")] unsafe
+                        extern "C" fn export_method_module_register_types(arg0 : * mut
+                        u8, arg1 : i32,) { unsafe { $($path_to_types)*::
+                        _export_method_module_register_types_cabi::<<$ty as
+                        $($path_to_types)*:: Guest >::Module > (arg0, arg1) } } #[unsafe
                         (export_name =
                         "component:arrows/modules#[method]module.available-functions")]
                         unsafe extern "C" fn
@@ -1449,8 +2046,6 @@ pub mod exports {
 #[rustfmt::skip]
 mod _rt {
     #![allow(dead_code, clippy::all)]
-    pub use alloc_crate::string::String;
-    pub use alloc_crate::vec::Vec;
     use core::fmt;
     use core::marker;
     use core::sync::atomic::{AtomicU32, Ordering::Relaxed};
@@ -1525,46 +2120,8 @@ mod _rt {
             }
         }
     }
-    pub fn as_i64<T: AsI64>(t: T) -> i64 {
-        t.as_i64()
-    }
-    pub trait AsI64 {
-        fn as_i64(self) -> i64;
-    }
-    impl<'a, T: Copy + AsI64> AsI64 for &'a T {
-        fn as_i64(self) -> i64 {
-            (*self).as_i64()
-        }
-    }
-    impl AsI64 for i64 {
-        #[inline]
-        fn as_i64(self) -> i64 {
-            self as i64
-        }
-    }
-    impl AsI64 for u64 {
-        #[inline]
-        fn as_i64(self) -> i64 {
-            self as i64
-        }
-    }
-    pub fn as_f64<T: AsF64>(t: T) -> f64 {
-        t.as_f64()
-    }
-    pub trait AsF64 {
-        fn as_f64(self) -> f64;
-    }
-    impl<'a, T: Copy + AsF64> AsF64 for &'a T {
-        fn as_f64(self) -> f64 {
-            (*self).as_f64()
-        }
-    }
-    impl AsF64 for f64 {
-        #[inline]
-        fn as_f64(self) -> f64 {
-            self as f64
-        }
-    }
+    pub use alloc_crate::string::String;
+    pub use alloc_crate::vec::Vec;
     pub fn as_i32<T: AsI32>(t: T) -> i32 {
         t.as_i32()
     }
@@ -1639,6 +2196,46 @@ mod _rt {
         let layout = alloc::Layout::from_size_align_unchecked(size, align);
         alloc::dealloc(ptr, layout);
     }
+    pub fn as_i64<T: AsI64>(t: T) -> i64 {
+        t.as_i64()
+    }
+    pub trait AsI64 {
+        fn as_i64(self) -> i64;
+    }
+    impl<'a, T: Copy + AsI64> AsI64 for &'a T {
+        fn as_i64(self) -> i64 {
+            (*self).as_i64()
+        }
+    }
+    impl AsI64 for i64 {
+        #[inline]
+        fn as_i64(self) -> i64 {
+            self as i64
+        }
+    }
+    impl AsI64 for u64 {
+        #[inline]
+        fn as_i64(self) -> i64 {
+            self as i64
+        }
+    }
+    pub fn as_f64<T: AsF64>(t: T) -> f64 {
+        t.as_f64()
+    }
+    pub trait AsF64 {
+        fn as_f64(self) -> f64;
+    }
+    impl<'a, T: Copy + AsF64> AsF64 for &'a T {
+        fn as_f64(self) -> f64 {
+            (*self).as_f64()
+        }
+    }
+    impl AsF64 for f64 {
+        #[inline]
+        fn as_f64(self) -> f64 {
+            self as f64
+        }
+    }
     pub unsafe fn invalid_enum_discriminant<T>() -> T {
         if cfg!(debug_assertions) {
             panic!("invalid enum discriminant")
@@ -1689,41 +2286,49 @@ pub(crate) use __export_host_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1513] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xee\x0a\x01A\x02\x01\
-A\x0e\x01B\x05\x01m\x06\x04void\x06string\x03int\x05float\x07element\x04dict\x04\
-\0\x04type\x03\0\0\x01p\x01\x01r\x03\x04names\x04args\x02\x0bresult-type\x01\x04\
-\0\x08function\x03\0\x03\x03\0\x16component:arrows/types\x05\0\x01B\x15\x01r\x01\
-\x05indexy\x04\0\x0bvalue-index\x03\0\0\x04\0\x0fvalue-allocator\x03\x01\x01r\x02\
-\x01xs\x01ys\x04\0\x08position\x03\0\x03\x01ky\x01r\x04\x02idy\x06parent\x05\x04\
-names\x09namespaces\x04\0\x07element\x03\0\x06\x01o\x02s\x01\x01p\x08\x01p\x01\x01\
-q\x09\x04void\0\0\x0bstring-type\x01s\0\x03int\x01x\0\x05float\x01u\0\x0astyle-u\
-nit\x01s\0\x08position\x01\x04\0\x04dict\x01\x09\0\x05array\x01\x0a\0\x07element\
-\x01\x07\0\x04\0\x05value\x03\0\x0b\x01i\x02\x01@\0\0\x0d\x04\0\x1e[static]value\
--allocator.create\x01\x0e\x01h\x02\x01@\x02\x04self\x0f\x05value\x0c\0\x01\x04\0\
-\x20[method]value-allocator.allocate\x01\x10\x01@\x02\x04self\x0f\x05value\x01\0\
-\x0c\x04\0\x1b[method]value-allocator.get\x01\x11\x03\0\x17component:arrows/valu\
-es\x05\x01\x01B\x0a\x01m\x03\x09html-head\x0fjavascript-init\x17javascript-slide\
--change\x04\0\x09placement\x03\0\0\x04\0\x06slides\x03\x01\x01h\x02\x01@\x03\x04\
-self\x03\x03urls\x04paths\x01\0\x04\0\x1c[method]slides.download-file\x01\x04\x01\
-@\x02\x04self\x03\x04paths\x01\0\x04\0![method]slides.add-file-reference\x01\x05\
-\x01@\x04\x04self\x03\x04texts\x06sources\x09placement\x01\x01\0\x04\0#[method]s\
-lides.place-text-in-output\x01\x06\x03\0\x17component:arrows/slides\x05\x02\x02\x03\
-\0\0\x04type\x02\x03\0\0\x08function\x02\x03\0\x01\x05value\x02\x03\0\x01\x0fval\
-ue-allocator\x02\x03\0\x01\x0bvalue-index\x02\x03\0\x02\x06slides\x01B\x1c\x02\x03\
-\x02\x01\x03\x04\0\x04type\x03\0\0\x02\x03\x02\x01\x04\x04\0\x08function\x03\0\x02\
-\x02\x03\x02\x01\x05\x04\0\x05value\x03\0\x04\x02\x03\x02\x01\x06\x04\0\x0fvalue\
--allocator\x03\0\x06\x02\x03\x02\x01\x07\x04\0\x0bvalue-index\x03\0\x08\x02\x03\x02\
-\x01\x08\x04\0\x06slides\x03\0\x0a\x01q\x04\x12function-not-found\0\0\x0cinvalid\
--type\0\0\x17argument-count-mismatch\0\0\x0einternal-error\x01s\0\x04\0\x05error\
-\x03\0\x0c\x04\0\x06module\x03\x01\x01i\x0b\x01i\x0e\x01@\x01\x06slides\x0f\0\x10\
-\x04\0\x15[static]module.create\x01\x11\x01h\x0e\x01p\x03\x01@\x01\x04self\x12\0\
-\x13\x04\0\"[method]module.available-functions\x01\x14\x01i\x07\x01p\x09\x01j\x01\
-\x09\x01\x0d\x01@\x05\x04self\x12\x06slides\x0f\x04names\x09allocator\x15\x04arg\
-s\x16\0\x17\x04\0\x1c[method]module.call-function\x01\x18\x04\0\x18component:arr\
-ows/modules\x05\x09\x04\0\x15component:arrows/host\x04\0\x0b\x0a\x01\0\x04host\x03\
-\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.227.1\x10wit-\
-bindgen-rust\x060.41.0";
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1859] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xc8\x0d\x01A\x02\x01\
+A\x0f\x01B\x12\x01r\x01\x05indexy\x04\0\x0atype-index\x03\0\0\x04\0\x0etype-allo\
+cator\x03\x01\x01ps\x01o\x02\x01\x03\x01q\x08\x04void\0\0\x06string\0\0\x03int\0\
+\0\x05float\0\0\x07element\0\0\x04dict\0\0\x04enum\x01s\0\x0fenum-definition\x01\
+\x04\0\x04\0\x04type\x03\0\x05\x01p\x06\x01r\x03\x04names\x04args\x07\x0bresult-\
+type\x06\x04\0\x08function\x03\0\x08\x01i\x02\x01@\0\0\x0a\x04\0\x1d[static]type\
+-allocator.create\x01\x0b\x01h\x02\x01@\x02\x04self\x0c\x01t\x06\0\x01\x04\0\x1f\
+[method]type-allocator.allocate\x01\x0d\x01@\x02\x04self\x0c\x01t\x01\0\x06\x04\0\
+\x1a[method]type-allocator.get\x01\x0e\x03\0\x16component:arrows/types\x05\0\x01\
+B\x15\x01r\x01\x05indexy\x04\0\x0bvalue-index\x03\0\0\x04\0\x0fvalue-allocator\x03\
+\x01\x01r\x02\x01xs\x01ys\x04\0\x08position\x03\0\x03\x01ky\x01r\x04\x02idy\x06p\
+arent\x05\x04names\x09namespaces\x04\0\x07element\x03\0\x06\x01o\x02s\x01\x01p\x08\
+\x01p\x01\x01q\x09\x04void\0\0\x0bstring-type\x01s\0\x03int\x01x\0\x05float\x01u\
+\0\x0astyle-unit\x01s\0\x08position\x01\x04\0\x04dict\x01\x09\0\x05array\x01\x0a\
+\0\x07element\x01\x07\0\x04\0\x05value\x03\0\x0b\x01i\x02\x01@\0\0\x0d\x04\0\x1e\
+[static]value-allocator.create\x01\x0e\x01h\x02\x01@\x02\x04self\x0f\x05value\x0c\
+\0\x01\x04\0\x20[method]value-allocator.allocate\x01\x10\x01@\x02\x04self\x0f\x05\
+value\x01\0\x0c\x04\0\x1b[method]value-allocator.get\x01\x11\x03\0\x17component:\
+arrows/values\x05\x01\x02\x03\0\0\x04type\x01B\x0c\x02\x03\x02\x01\x02\x04\0\x04\
+type\x03\0\0\x01m\x03\x09html-head\x0fjavascript-init\x17javascript-slide-change\
+\x04\0\x09placement\x03\0\x02\x04\0\x06slides\x03\x01\x01h\x04\x01@\x03\x04self\x05\
+\x03urls\x04paths\x01\0\x04\0\x1c[method]slides.download-file\x01\x06\x01@\x02\x04\
+self\x05\x04paths\x01\0\x04\0![method]slides.add-file-reference\x01\x07\x01@\x04\
+\x04self\x05\x04texts\x06sources\x09placement\x03\x01\0\x04\0#[method]slides.pla\
+ce-text-in-output\x01\x08\x03\0\x17component:arrows/slides\x05\x03\x02\x03\0\0\x08\
+function\x02\x03\0\0\x0etype-allocator\x02\x03\0\x01\x05value\x02\x03\0\x01\x0fv\
+alue-allocator\x02\x03\0\x01\x0bvalue-index\x02\x03\0\x02\x06slides\x01B!\x02\x03\
+\x02\x01\x02\x04\0\x04type\x03\0\0\x02\x03\x02\x01\x04\x04\0\x08function\x03\0\x02\
+\x02\x03\x02\x01\x05\x04\0\x0etype-allocator\x03\0\x04\x02\x03\x02\x01\x06\x04\0\
+\x05value\x03\0\x06\x02\x03\x02\x01\x07\x04\0\x0fvalue-allocator\x03\0\x08\x02\x03\
+\x02\x01\x08\x04\0\x0bvalue-index\x03\0\x0a\x02\x03\x02\x01\x09\x04\0\x06slides\x03\
+\0\x0c\x01q\x04\x12function-not-found\0\0\x0cinvalid-type\0\0\x17argument-count-\
+mismatch\0\0\x0einternal-error\x01s\0\x04\0\x05error\x03\0\x0e\x04\0\x06module\x03\
+\x01\x01i\x0d\x01i\x10\x01@\x01\x06slides\x11\0\x12\x04\0\x15[static]module.crea\
+te\x01\x13\x01h\x10\x01i\x05\x01@\x02\x04self\x14\x05types\x15\x01\0\x04\0\x1d[m\
+ethod]module.register-types\x01\x16\x01p\x03\x01@\x01\x04self\x14\0\x17\x04\0\"[\
+method]module.available-functions\x01\x18\x01i\x09\x01p\x0b\x01j\x01\x0b\x01\x0f\
+\x01@\x05\x04self\x14\x06slides\x11\x04names\x09allocator\x19\x04args\x1a\0\x1b\x04\
+\0\x1c[method]module.call-function\x01\x1c\x04\0\x18component:arrows/modules\x05\
+\x0a\x04\0\x15component:arrows/host\x04\0\x0b\x0a\x01\0\x04host\x03\0\0\0G\x09pr\
+oducers\x01\x0cprocessed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x06\
+0.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
