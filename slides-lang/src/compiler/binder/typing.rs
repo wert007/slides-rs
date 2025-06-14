@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use strum::IntoEnumIterator;
 
-use crate::{ModuleIndex, Modules, compiler::module::state::HostTypeAllocator};
+use crate::{
+    Location, ModuleIndex, Modules, StringInterner,
+    compiler::module::state::{HostTypeAllocator, HostTypeIndex},
+};
 
 use super::{ConversionKind, Variable, globals};
 
@@ -90,24 +93,36 @@ impl TypeInterner {
         target.map(|t| self.types.get(t.0).expect("TypeIds are always valid"))
     }
 
-    pub fn add_from_module(&mut self, type_allocator: &mut HostTypeAllocator) {
+    pub fn add_from_module(
+        &mut self,
+        type_allocator: &mut HostTypeAllocator,
+        string_interner: &mut StringInterner,
+    ) {
         let mut new_types_mapping = HashMap::with_capacity(type_allocator.types.len());
-        for type_ in type_allocator.types.values() {
-            self.convert_module_type(type_, &type_allocator, &mut new_types_mapping);
+        for (index, type_) in &type_allocator.types {
+            self.convert_module_type(
+                *index,
+                type_,
+                &type_allocator,
+                string_interner,
+                &mut new_types_mapping,
+            );
         }
         type_allocator.types = new_types_mapping;
     }
 
     fn convert_module_type(
         &mut self,
+        index: HostTypeIndex,
         type_: &crate::compiler::module::component::arrows::types::Type,
         type_allocator: &HostTypeAllocator,
+        string_interner: &mut StringInterner,
         new_types_mapping: &mut HashMap<
-            usize,
+            HostTypeIndex,
             crate::compiler::module::component::arrows::types::Type,
         >,
     ) -> TypeId {
-        let index = match type_ {
+        let type_id = match type_ {
             crate::compiler::module::component::arrows::types::Type::Void => {
                 self.get_or_intern(Type::Void)
             }
@@ -126,22 +141,57 @@ impl TypeInterner {
             crate::compiler::module::component::arrows::types::Type::Dict => {
                 self.get_or_intern(Type::DynamicDict)
             }
-            crate::compiler::module::component::arrows::types::Type::Enum(name) => match name {
-                custom => self.get_or_intern(Type::Enum(name.clone())),
-            },
+            crate::compiler::module::component::arrows::types::Type::Enum(name) => {
+                self.get_or_intern(Type::Enum(name.clone()))
+            }
             crate::compiler::module::component::arrows::types::Type::EnumDefinition((
-                enum_type,
+                enum_type_index,
                 variants,
             )) => {
-                let enum_type = type_allocator.get(*enum_type);
-                let enum_type =
-                    self.convert_module_type(enum_type, type_allocator, new_types_mapping);
+                let enum_type = type_allocator.get(*enum_type_index);
+                let enum_type = self.convert_module_type(
+                    enum_type_index.clone().into(),
+                    enum_type,
+                    type_allocator,
+                    string_interner,
+                    new_types_mapping,
+                );
                 let enum_type = self.resolve(enum_type).clone();
                 self.get_or_intern(Type::EnumDefinition(Box::new(enum_type), variants.clone()))
             }
+            crate::compiler::module::component::arrows::types::Type::Color => {
+                self.get_or_intern(Type::Color)
+            }
+            crate::compiler::module::component::arrows::types::Type::Bool => {
+                self.get_or_intern(Type::Bool)
+            }
+            crate::compiler::module::component::arrows::types::Type::Struct((name, fields)) => {
+                let mut entries = Vec::with_capacity(fields.len());
+                for (name, type_index) in fields {
+                    let type_ = type_allocator.get(*type_index);
+                    let type_ = self.convert_module_type(
+                        type_index.clone().into(),
+                        type_,
+                        type_allocator,
+                        string_interner,
+                        new_types_mapping,
+                    );
+                    let name = string_interner.create_or_get_variable(name);
+                    entries.push(Variable {
+                        id: name,
+                        definition: Location::zero(),
+                        type_,
+                    });
+                }
+                self.get_or_intern(Type::TypedDict(entries))
+            }
         };
-        new_types_mapping.insert(index.0, type_.clone());
-        index
+        let index = HostTypeIndex {
+            relocateable: type_id.0,
+            fixed: index.fixed,
+        };
+        new_types_mapping.insert(index, type_.clone());
+        type_id
     }
 }
 

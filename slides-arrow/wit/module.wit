@@ -2,29 +2,34 @@ package component:arrows;
 interface types {
     record type-index {
         index: u32,
+        fixed-unique-key: u32,
     }
     resource type-allocator {
         create: static func() -> type-allocator;
         allocate: func(t: %type) -> type-index;
         get: func(t: type-index) -> %type;
+        get-by-key: func(key: u32) -> type-index;
     }
 
 
     variant %type {
         void,
+        color,
         %string,
         int,
         float,
+        %bool,
         element,
         dict,
         %enum(string),
         enum-definition(tuple<type-index, list<string>>),
+        struct(tuple<string, list<tuple<string, type-index>>>),
     }
 
     record function {
         name: string,
-        args: list<%type>,
-        result-type: %type,
+        args: list<type-index>,
+        result-type: type-index,
     }
 }
 
@@ -92,7 +97,7 @@ interface modules {
     resource module {
         create: static func(slides: slides) -> module;
         register-types: func(types: type-allocator);
-        available-functions: func() -> list<function>;
+        available-functions: func(types: type-allocator) -> list<function>;
         call-function: func(slides: slides, name: string, allocator: value-allocator, args: list<value-index>) -> result<value-index, error>;
     }
 }

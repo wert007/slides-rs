@@ -8,7 +8,10 @@ use wasmtime::{
     component::{Component, Linker, Resource, ResourceAny, bindgen},
 };
 
-use crate::{Context, VariableId, compiler::binder::typing::FunctionType};
+use crate::{
+    Context, VariableId,
+    compiler::binder::typing::{FunctionType, TypeId},
+};
 
 use super::{
     binder::{Binder, typing},
@@ -132,13 +135,14 @@ pub fn load_module(
         .module()
         .call_register_types(&mut store, module, Resource::new_own(0))
         .unwrap();
-    context
-        .type_interner
-        .add_from_module(store.data_mut().type_allocator_mut());
+    context.type_interner.add_from_module(
+        store.data_mut().type_allocator_mut(),
+        &mut context.string_interner,
+    );
     let functions = bindings
         .component_arrows_modules()
         .module()
-        .call_available_functions(&mut store, module)
+        .call_available_functions(&mut store, module, Resource::new_own(0))
         .unwrap();
 
     Ok(Module {
@@ -154,11 +158,9 @@ pub fn load_module(
                     argument_types: f
                         .args
                         .into_iter()
-                        .map(|t| unsafe { store.data().type_allocator().find(&t).unwrap() })
+                        .map(|t| unsafe { TypeId::from_raw(t.index as _) })
                         .collect(),
-                    return_type: unsafe {
-                        store.data().type_allocator().find(&f.result_type).unwrap()
-                    },
+                    return_type: unsafe { TypeId::from_raw(f.result_type.index as _) },
                 };
                 (
                     f.name.clone(),

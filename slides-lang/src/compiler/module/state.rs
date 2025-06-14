@@ -18,9 +18,42 @@ use super::{
     exports::component::arrows::modules,
 };
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Default)]
+pub struct HostTypeIndex {
+    pub relocateable: usize,
+    pub fixed: usize,
+}
+
+impl From<arrows::types::TypeIndex> for HostTypeIndex {
+    fn from(value: arrows::types::TypeIndex) -> Self {
+        Self {
+            relocateable: value.index as _,
+            fixed: value.fixed_unique_key as _,
+        }
+    }
+}
+
+impl Into<arrows::types::TypeIndex> for HostTypeIndex {
+    fn into(self) -> arrows::types::TypeIndex {
+        arrows::types::TypeIndex {
+            index: self.relocateable as _,
+            fixed_unique_key: self.fixed as _,
+        }
+    }
+}
+
+impl HostTypeIndex {
+    fn new(index: usize) -> Self {
+        Self {
+            relocateable: index,
+            fixed: index,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct HostTypeAllocator {
-    pub(crate) types: HashMap<usize, modules::Type>,
+    pub(crate) types: HashMap<HostTypeIndex, modules::Type>,
 }
 
 fn types_are_equal(a: &modules::Type, b: &modules::Type) -> bool {
@@ -81,26 +114,38 @@ impl HostTypeAllocator {
                     })
                 })
                 .enumerate()
+                .map(|(i, t)| (HostTypeIndex::new(i), t))
                 .collect(),
         }
     }
 
     fn allocate(&mut self, t: modules::Type) -> arrows::types::TypeIndex {
-        let index = self.types.len();
-        self.types.insert(index, t);
-        let index = arrows::types::TypeIndex { index: index as _ };
-        index
-    }
-
-    pub(crate) unsafe fn find(&self, t: &modules::Type) -> Option<TypeId> {
-        self.types
-            .iter()
-            .find(|(_, v)| types_are_equal(t, v))
-            .map(|(i, _)| unsafe { TypeId::from_raw(*i) })
+        let key = if let Some((key, _)) = self.types.iter().find(|(_, x)| types_are_equal(&t, x)) {
+            *key
+        } else {
+            let index = self.types.len();
+            let key = HostTypeIndex::new(index);
+            self.types.insert(key, t);
+            key
+        };
+        arrows::types::TypeIndex {
+            index: key.relocateable as _,
+            fixed_unique_key: key.fixed as _,
+        }
     }
 
     pub(crate) fn get(&self, index: arrows::types::TypeIndex) -> &modules::Type {
-        &self.types[&(index.index as usize)]
+        let index = index.into();
+        &self.types[&index]
+    }
+
+    pub(crate) fn get_by_fixed(&self, fixed: usize) -> arrows::types::TypeIndex {
+        self.types
+            .keys()
+            .find(|k| k.fixed == fixed)
+            .expect("Should exist")
+            .clone()
+            .into()
     }
 }
 
@@ -309,6 +354,14 @@ impl arrows::types::HostTypeAllocator for State {
         _rep: wasmtime::component::Resource<arrows::types::TypeAllocator>,
     ) -> wasmtime::Result<()> {
         Ok(())
+    }
+
+    fn get_by_key(
+        &mut self,
+        self_: wasmtime::component::Resource<arrows::types::TypeAllocator>,
+        key: u32,
+    ) -> arrows::types::TypeIndex {
+        self.type_allocator.get_by_fixed(key as _)
     }
 }
 

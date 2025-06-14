@@ -59,7 +59,7 @@ slide deadlocks_problem:
     // let amanda = base.amanda;
     let options = { color: c"#595959" };
     // arrows.arrow(base.amanda, base.light, options | { from_pos: {x: 0.5, y: 0},line_kind: 'orthogonal'});
-    arrows.arrow(base.amanda, base.bobbl, options | { from_pos: {x: 0.5, y: 0.0}, to_pos: {x: 0.5, y: 0.0}, label: "I am a arrow!", line_kind: 'orthogonal' });
+    arrows.arrow(base.amanda, base.bobbl, { color: c"#595959", from_pos: {x: 0.5, y: 0.0}, to_pos: {x: 0.5, y: 0.0}, label: "I am a arrow!", line_kind: 'orthogonal' });
 //     arrows.arrow(base.bobbl, base.light, options | { startSocket: "bottom" });
 
 slide deadlock_cyclic_wait:

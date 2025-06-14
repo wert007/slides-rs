@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::atomic::AtomicBool};
+use std::{
+    collections::HashMap,
+    sync::atomic::{AtomicBool, AtomicU32},
+};
 
 use bindings::{
     component::arrows::{
@@ -29,6 +32,7 @@ impl Guest for Component {
 
 struct Arrows {
     is_library_initiated: AtomicBool,
+    line_options_key: AtomicU32,
 }
 impl Arrows {
     fn arrow(
@@ -150,25 +154,74 @@ impl GuestModule for Arrows {
     fn create(_slides: slides::Slides) -> modules::Module {
         Module::new(Self {
             is_library_initiated: AtomicBool::new(false),
+            line_options_key: AtomicU32::default(),
         })
     }
 
     fn register_types(&self, types: modules::TypeAllocator) -> () {
-        let line_tip = types.allocate(&Type::Enum("LineTip".into()));
+        let line_tip_kind = types.allocate(&Type::Enum("LineTip".into()));
         types.allocate(&Type::EnumDefinition((
-            line_tip,
+            line_tip_kind,
             ["Arrow", "Triangle", "Square", "Circle", "None"]
                 .into_iter()
                 .map(Into::into)
                 .collect(),
         )));
+        let boolean = types.allocate(&Type::Bool);
+        let line_tip = types.allocate(&Type::Struct((
+            "TipOptions".into(),
+            [
+                ("kind".into(), line_tip_kind),
+                ("filled".into(), boolean),
+                ("flip".into(), boolean),
+            ]
+            .to_vec(),
+        )));
+
+        let line_kind = types.allocate(&Type::Enum("LineKind".into()));
+        types.allocate(&Type::EnumDefinition((
+            line_kind,
+            ["Direct", "Orthogonal"]
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+        )));
+        let float = types.allocate(&Type::Float);
+        let point = types.allocate(&Type::Struct((
+            "Point".into(),
+            [("x".into(), float), ("y".into(), float)].to_vec(),
+        )));
+        let color = types.allocate(&Type::Color);
+        let line_options = types.allocate(&Type::Struct((
+            "LineOptions".into(),
+            [
+                ("width".into(), float),
+                ("color".into(), color),
+                ("kind".into(), line_kind),
+                ("starttip".into(), line_tip),
+                ("endtip".into(), line_tip),
+                ("relative_pos_start".into(), point),
+                ("relative_pos_end".into(), point),
+            ]
+            .to_vec(),
+        )));
+        self.line_options_key.store(
+            line_options.fixed_unique_key,
+            std::sync::atomic::Ordering::SeqCst,
+        );
     }
 
-    fn available_functions(&self) -> Vec<modules::Function> {
+    fn available_functions(&self, types: modules::TypeAllocator) -> Vec<modules::Function> {
+        let element = types.allocate(&Type::Element);
+        let void = types.allocate(&Type::Void);
+        let options = types.get_by_key(
+            self.line_options_key
+                .load(std::sync::atomic::Ordering::SeqCst),
+        );
         vec![modules::Function {
             name: "arrow".into(),
-            args: vec![Type::Element, Type::Element, Type::Dict],
-            result_type: bindings::component::arrows::types::Type::Void,
+            args: vec![element, element, options],
+            result_type: void,
         }]
     }
 
