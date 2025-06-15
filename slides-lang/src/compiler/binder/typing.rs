@@ -345,8 +345,8 @@ impl TypeInterner {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StructData {
-    name: VariableId,
-    fields: HashMap<VariableId, TypeId>,
+    pub name: VariableId,
+    pub fields: HashMap<VariableId, TypeId>,
 }
 
 impl Default for StructData {

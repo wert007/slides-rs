@@ -120,3 +120,147 @@ ol {
     display: none;
 }
 
+#deadlocks_problem {
+    background: rgb(255, 255, 255, 1);
+}
+
+#deadlocks_problem-title {
+    left: calc(0.1 * var(--slide-width));
+    right: calc(0.1 * var(--slide-width));
+    width: calc(+ 100%+ (-0.2 * var(--slide-width)));
+    z-index: 0;
+}
+
+#deadlocks_problem-base {
+    top: calc(0.4 * var(--slide-height));
+    bottom: calc(0.1 * var(--slide-height));
+    height: calc(+ 100%+ (-0.5 * var(--slide-height)));
+    left: calc(0.1 * var(--slide-width));
+    right: calc(0.1 * var(--slide-width));
+    width: calc(+ 100%+ (-0.2 * var(--slide-width)));
+    z-index: 1;
+}
+
+#deadlocks_problem-base-amanda {
+    top: 50%;
+    bottom: unset;
+    left: 0px;
+    right: unset;
+    height: 20%;
+    width: 10%;
+    transform: translate(0%, -50%);
+}
+
+#deadlocks_problem-base-amanda-icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlocks_problem-base-bobbl {
+    top: 50%;
+    bottom: unset;
+    right: 0px;
+    left: unset;
+    height: 20%;
+    width: 10%;
+    transform: translate(0%, -50%);
+}
+
+#deadlocks_problem-base-bobbl-icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlocks_problem-base-light {
+    bottom: 0px;
+    top: unset;
+    left: 50%;
+    right: unset;
+    height: 20%;
+    width: 10%;
+    transform: translate(-50%, 0%);
+}
+
+#deadlocks_problem-base-light-icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlocks_problem-base-lift {
+    top: 0px;
+    bottom: unset;
+    left: 50%;
+    right: unset;
+    height: 20%;
+    width: 10%;
+    transform: translate(-50%, 0%);
+}
+
+#deadlocks_problem-base-lift-icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlock_cyclic_wait {
+    background: rgb(255, 255, 255, 1);
+}
+
+#deadlock_cyclic_wait-title {
+    top: 0px;
+    bottom: unset;
+    left: 0px;
+    right: 0px;
+    width: 100%;
+    z-index: 0;
+}
+
+#deadlock_cyclic_wait-left {
+    top: 50%;
+    bottom: unset;
+    left: calc(0.1 * var(--slide-width));
+    right: calc(0.6 * var(--slide-width));
+    width: calc(+ 100%+ (-0.7 * var(--slide-width)));
+    height: calc(0.3 * var(--slide-height));
+    transform: translate(0%, -50%);
+    z-index: 1;
+}
+
+#deadlock_cyclic_wait-left {
+    flex-direction: row;
+}
+
+#deadlock_cyclic_wait-left--icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlock_cyclic_wait-left--icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlock_cyclic_wait-right {
+    top: 50%;
+    bottom: unset;
+    left: calc(0.6 * var(--slide-width));
+    right: calc(0.1 * var(--slide-width));
+    width: calc(+ 100%+ (-0.7 * var(--slide-width)));
+    height: calc(0.3 * var(--slide-height));
+    transform: translate(0%, -50%);
+    z-index: 2;
+}
+
+#deadlock_cyclic_wait-right {
+    flex-direction: row;
+}
+
+#deadlock_cyclic_wait-right--icon {
+    height: 100%;
+    width: 100%;
+}
+
+#deadlock_cyclic_wait-right--icon {
+    height: 100%;
+    width: 100%;
+}
+

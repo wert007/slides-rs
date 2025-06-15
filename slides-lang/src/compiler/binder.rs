@@ -1766,6 +1766,49 @@ fn bind_conversion(
     match conversion_kind {
         ConversionKind::Implicit => match context.type_interner.resolve_types([base.type_, target])
         {
+            [_, Type::Optional(to)] if base.type_ == *to => {}
+            [Type::TypedDict(fields), Type::Struct(struct_data)] => {
+                let mut all_fields_assigned: HashMap<_, _> = struct_data
+                    .fields
+                    .iter()
+                    .filter(|(_, t)| {
+                        context
+                            .type_interner
+                            .resolve(**t)
+                            .try_as_optional_ref()
+                            .is_none()
+                    })
+                    .map(|(k, _)| (*k, false))
+                    .collect();
+                for (field_name, field_type) in fields {
+                    *all_fields_assigned.entry(*field_name).or_default() = true;
+                    let from = context.type_interner.resolve(*field_type);
+                    if struct_data.fields.contains_key(field_name) {
+                        let to = context
+                            .type_interner
+                            .resolve(struct_data.fields[field_name]);
+                        // TODO: Bind conversion
+                        // if !from
+                        //     .get_available_conversions(ConversionKind::Implicit)
+                        //     .contains(to)
+                        // {
+                        //     context.diagnostics.report_cannot_convert(
+                        //         &context.type_interner,
+                        //         &context.string_interner,
+                        //         from,
+                        //         to,
+                        //         base.location,
+                        //     );
+                        // }
+                        eprintln!("TOO MANY FIELDS!");
+                    }
+                }
+                if all_fields_assigned.values().any(|v| !v) {
+                    // TODO: Skip optional fields!
+                    eprintln!("MISSING FIELDS!");
+                    return BoundNode::error(base.location);
+                }
+            }
             [from @ Type::TypedDict(fields), Type::Thickness] => {
                 for (name, type_) in fields {
                     if *type_ != style_unit_type {
