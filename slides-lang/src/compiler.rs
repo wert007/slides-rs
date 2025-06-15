@@ -16,6 +16,7 @@ pub struct DebugLang {
     pub parser: bool,
     pub binder: bool,
     pub scopes: bool,
+    pub types: bool,
     pub presentation: bool,
 }
 
@@ -31,13 +32,14 @@ impl FromStr for DebugLang {
             }
             match part.as_str() {
                 "t" | "tok" | "token" | "tokens" => result.tokens = true,
+                "ty" | "typ" | "type" | "types" => result.types = true,
                 "p" | "par" | "parse" | "parser" => result.parser = true,
                 "b" | "bin" | "bind" | "binder" => result.binder = true,
                 "s" | "scop" | "scope" => result.scopes = true,
                 "pres" | "presentation" => result.presentation = true,
                 _unknown_field => {
                     return Err(format!(
-                        "Following parts can be debugged [tokens], [parser], [binder], [scope] or [presentation] you can use shortened names as well and combine multiple by comma"
+                        "Following parts can be debugged [tokens], [parser], [binder], [scope], [types] or [presentation] you can use shortened names as well and combine multiple by comma"
                     ));
                 }
             }

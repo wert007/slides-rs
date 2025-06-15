@@ -964,6 +964,9 @@ fn bind_ast(ast: parser::Ast, context: &mut Context) -> BoundAst {
     for statement in ast.statements {
         statements.push(bind_node(statement, &mut binder, context));
     }
+    if context.debug.types {
+        context.type_interner.debug_types(&context.string_interner);
+    }
     BoundAst { statements }
 }
 
@@ -1042,6 +1045,7 @@ fn bind_array_access(
     let Some(type_) = base_type.try_as_array_ref() else {
         context.diagnostics.report_cannot_convert(
             &context.type_interner,
+            &context.string_interner,
             &Type::Array(TypeId::ERROR),
             base_type,
             location,
@@ -1155,6 +1159,7 @@ fn bind_array(
         } else {
             context.diagnostics.report_cannot_convert(
                 &context.type_interner,
+                &context.string_interner,
                 &Type::Array(TypeId::ERROR),
                 type_,
                 location,
@@ -1582,15 +1587,11 @@ fn bind_dict(
         entries.push((key, value));
     }
     dict.entries = Vec::new();
-    let types: Vec<Variable> = entries
+    let types = entries
         .iter()
         .map(|(n, b)| {
             let variable_id = context.string_interner.create_or_get_variable(&n);
-            Variable {
-                id: variable_id,
-                definition: b.location,
-                type_: b.type_,
-            }
+            (variable_id, b.type_)
         })
         .collect();
     let type_ = context.type_interner.get_or_intern(Type::TypedDict(types));
@@ -1766,26 +1767,28 @@ fn bind_conversion(
         ConversionKind::Implicit => match context.type_interner.resolve_types([base.type_, target])
         {
             [from @ Type::TypedDict(fields), Type::Thickness] => {
-                for field in fields {
-                    if field.type_ != style_unit_type {
+                for (name, type_) in fields {
+                    if *type_ != style_unit_type {
                         context.diagnostics.report_cannot_convert(
                             &context.type_interner,
-                            context.type_interner.resolve(field.type_),
+                            &context.string_interner,
+                            context.type_interner.resolve(*type_),
                             &Type::StyleUnit,
-                            field.definition,
+                            base.location,
                         );
-                        return BoundNode::error(field.definition);
+                        return BoundNode::error(base.location);
                     }
                     if !["top", "bottom", "left", "right"]
-                        .contains(&context.string_interner.resolve_variable(field.id))
+                        .contains(&context.string_interner.resolve_variable(*name))
                     {
                         context.diagnostics.report_cannot_convert(
                             &context.type_interner,
+                            &context.string_interner,
                             from,
                             &Type::StyleUnit,
-                            field.definition,
+                            base.location,
                         );
-                        return BoundNode::error(field.definition);
+                        return BoundNode::error(base.location);
                     }
                 }
             }
@@ -1796,27 +1799,29 @@ fn bind_conversion(
             }
             [Type::TypedDict(a), Type::TypedDict(b)] => {
                 let mut missing_entries = vec![];
-                for entry in b {
+                for (name, type_) in b {
                     if context
                         .type_interner
-                        .resolve(entry.type_)
+                        .resolve(*type_)
                         .try_as_optional_ref()
                         .is_some()
                     {
                         continue;
                     }
-                    if !a.iter().any(|e| e.id == entry.id && e.type_ == entry.type_) {
-                        missing_entries.push(entry);
+                    if !a.iter().any(|(i, t)| *i == *name && *t == *type_) {
+                        missing_entries.push((name, type_));
                     }
                 }
                 if !missing_entries.is_empty() {
                     let missing_entries = missing_entries
                         .into_iter()
-                        .map(|v| {
+                        .map(|(name, type_)| {
                             format!(
                                 "{}: {}",
-                                context.string_interner.resolve_variable(v.id),
-                                context.type_interner.id_to_simple_string(v.type_)
+                                context.string_interner.resolve_variable(*name),
+                                context
+                                    .type_interner
+                                    .id_to_simple_string(*type_, &context.string_interner)
                             )
                         })
                         .collect::<Vec<_>>()
@@ -1839,6 +1844,7 @@ fn bind_conversion(
             [from, to] => {
                 context.diagnostics.report_cannot_convert(
                     &context.type_interner,
+                    &context.string_interner,
                     from,
                     to,
                     base.location,
@@ -1860,6 +1866,7 @@ fn bind_conversion(
             from => {
                 context.diagnostics.report_cannot_convert(
                     &context.type_interner,
+                    &context.string_interner,
                     from,
                     &Type::String,
                     base.location,

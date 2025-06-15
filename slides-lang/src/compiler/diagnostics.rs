@@ -5,7 +5,7 @@ use super::{
     lexer::Token,
 };
 
-use crate::{Context, Files, Location, compiler::binder::typing::TypeInterner};
+use crate::{Files, Location, StringInterner, compiler::binder::typing::TypeInterner};
 
 #[derive(Debug)]
 pub struct Diagnostic {
@@ -142,12 +142,13 @@ impl Diagnostics {
     pub(crate) fn report_cannot_convert(
         &mut self,
         type_interner: &TypeInterner,
+        string_interner: &StringInterner,
         from: &Type,
         target: &Type,
         location: Location,
     ) {
-        let from = type_interner.to_simple_string(from);
-        let target = type_interner.to_simple_string(target);
+        let from = type_interner.to_simple_string(from, string_interner);
+        let target = type_interner.to_simple_string(target, string_interner);
         self.report_error(
             format!("Cannot convert type {from} to type {target}"),
             location,

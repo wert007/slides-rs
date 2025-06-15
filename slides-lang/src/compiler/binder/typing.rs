@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 
 use crate::{
-    Location, ModuleIndex, Modules, StringInterner,
+    ModuleIndex, Modules, StringInterner, VariableId,
     compiler::module::state::{HostTypeAllocator, HostTypeIndex},
 };
 
@@ -93,7 +93,7 @@ impl TypeInterner {
         target.map(|t| self.types.get(t.0).expect("TypeIds are always valid"))
     }
 
-    pub fn add_from_module(
+    pub(crate) fn add_from_module(
         &mut self,
         type_allocator: &mut HostTypeAllocator,
         string_interner: &mut StringInterner,
@@ -166,7 +166,7 @@ impl TypeInterner {
                 self.get_or_intern(Type::Bool)
             }
             crate::compiler::module::component::arrows::types::Type::Struct((name, fields)) => {
-                let mut entries = Vec::with_capacity(fields.len());
+                let mut new_fields = HashMap::with_capacity(fields.len());
                 for (name, type_index) in fields {
                     let type_ = type_allocator.get(*type_index);
                     let type_ = self.convert_module_type(
@@ -177,13 +177,12 @@ impl TypeInterner {
                         new_types_mapping,
                     );
                     let name = string_interner.create_or_get_variable(name);
-                    entries.push(Variable {
-                        id: name,
-                        definition: Location::zero(),
-                        type_,
-                    });
+                    new_fields.insert(name, type_);
                 }
-                self.get_or_intern(Type::TypedDict(entries))
+                self.get_or_intern(Type::Struct(StructData {
+                    name: string_interner.create_or_get_variable(name),
+                    fields: new_fields,
+                }))
             }
             crate::compiler::module::component::arrows::types::Type::Array(type_index) => {
                 let type_ = type_allocator.get(*type_index);
@@ -216,14 +215,18 @@ impl TypeInterner {
         type_id
     }
 
-    pub fn id_to_simple_string(&self, id: TypeId) -> String {
+    pub(crate) fn id_to_simple_string(
+        &self,
+        id: TypeId,
+        string_interner: &StringInterner,
+    ) -> String {
         let type_ = self.resolve(id);
-        self.to_simple_string(type_)
+        self.to_simple_string(type_, string_interner)
     }
 
-    pub(crate) fn to_simple_string(&self, t: &Type) -> String {
+    pub(crate) fn to_simple_string(&self, t: &Type, string_interner: &StringInterner) -> String {
         match t {
-            Type::Error => unreachable!(),
+            Type::Error => "unknown".into(),
             Type::Void => "void".into(),
             Type::Float => "float".into(),
             Type::Integer => "int".into(),
@@ -250,21 +253,107 @@ impl TypeInterner {
             Type::Image => "Image".into(),
             Type::Thickness => "Thickness".into(),
             Type::Enum(name) => name.clone(),
-            Type::EnumDefinition(base, _) => self.to_simple_string(base),
+            Type::EnumDefinition(base, _) => self.to_simple_string(base, string_interner),
             Type::CustomElement(name, _) => name.clone(),
             Type::Array(type_id) => {
-                let name = self.id_to_simple_string(*type_id);
+                let name = self.id_to_simple_string(*type_id, string_interner);
                 format!("{name}[]")
             }
             Type::Optional(type_id) => {
-                let name = self.id_to_simple_string(*type_id);
+                let name = self.id_to_simple_string(*type_id, string_interner);
                 format!("{name}?")
             }
             Type::Filter => "Filter".into(),
             Type::TextStyling => "TextStyling".into(),
             Type::Animation => "Animation".into(),
             Type::Position => "Position".into(),
+            Type::Struct(struct_data) => string_interner.resolve_variable(struct_data.name).into(),
             Type::Module(_) => "module".into(),
+        }
+    }
+
+    pub(crate) fn debug_types(&self, string_interner: &StringInterner) {
+        for (i, t) in self.types.iter().enumerate() {
+            self.debug_type(i, t, string_interner);
+        }
+    }
+
+    fn debug_type(&self, index: usize, type_: &Type, string_interner: &StringInterner) {
+        print!("{index:4}: ");
+        match type_ {
+            Type::TypedDict(variables) => {
+                println!("dict {{",);
+                for (id, type_) in variables {
+                    println!(
+                        "          {}: {},",
+                        string_interner.resolve_variable(*id),
+                        self.id_to_simple_string(*type_, string_interner)
+                    );
+                }
+                print!("      }}");
+            }
+            Type::Function(function_type) => {
+                print!("function (");
+                for (i, argument) in function_type.argument_types.iter().enumerate() {
+                    print!(
+                        "_{i}: {}, ",
+                        self.id_to_simple_string(*argument, string_interner)
+                    );
+                }
+                print!(
+                    ") -> {}",
+                    self.id_to_simple_string(function_type.return_type, string_interner)
+                );
+            }
+            Type::EnumDefinition(name, items) => {
+                println!("enum {} {{", self.to_simple_string(name, string_interner));
+                for item in items {
+                    println!("          {item},");
+                }
+                print!("      }}");
+            }
+            Type::CustomElement(name, fields) => {
+                println!("element {name} {{",);
+                for (name, type_) in fields {
+                    println!(
+                        "          {name}: {},",
+                        self.id_to_simple_string(*type_, string_interner)
+                    );
+                }
+                print!("      }}");
+            }
+            Type::Struct(struct_data) => {
+                println!(
+                    "struct {} {{",
+                    string_interner.resolve_variable(struct_data.name)
+                );
+                for (&name, &type_) in &struct_data.fields {
+                    println!(
+                        "          {}: {},",
+                        string_interner.resolve_variable(name),
+                        self.id_to_simple_string(type_, string_interner)
+                    );
+                }
+                print!("      }}");
+            }
+            Type::Module(module_index) => print!("module {}", module_index.0),
+            _ => print!("{}", self.to_simple_string(type_, string_interner)),
+        }
+        println!();
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StructData {
+    name: VariableId,
+    fields: HashMap<VariableId, TypeId>,
+}
+
+impl Default for StructData {
+    fn default() -> Self {
+        Self {
+            name: VariableId(0),
+            fields: Default::default(),
         }
     }
 }
@@ -282,7 +371,7 @@ pub enum Type {
     String,
     DynamicDict,
     Path,
-    TypedDict(Vec<Variable>),
+    TypedDict(Vec<(VariableId, TypeId)>),
     Styling,
     Background,
     Color,
@@ -304,6 +393,7 @@ pub enum Type {
     Enum(String),
     EnumDefinition(Box<Type>, Vec<String>),
     CustomElement(String, HashMap<String, TypeId>),
+    Struct(StructData),
     Array(TypeId),
     Optional(TypeId),
     Filter,
@@ -417,6 +507,7 @@ impl Type {
                         | Type::Function(_)
                         | Type::CustomElement(..)
                         | Type::Array(_)
+                        | Type::Struct(_)
                         | Type::Optional(_)
                         | Type::TypedDict(_)
                         | Type::Module(_)

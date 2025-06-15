@@ -130,7 +130,7 @@ impl Symbol for VariableId {
     }
 }
 
-struct StringInterner {
+pub struct StringInterner {
     general: string_interner::StringInterner<BucketBackend<SymbolUsize>>,
     variables: string_interner::StringInterner<BucketBackend<VariableId>>,
 }
