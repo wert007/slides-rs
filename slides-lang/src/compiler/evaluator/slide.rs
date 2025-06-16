@@ -7,7 +7,7 @@ use slides_rs_core::{Background, Color, CustomElement, Element, Label, Thickness
 use string_interner::symbol::SymbolUsize;
 
 use crate::compiler::binder::{self, BoundNode, BoundNodeKind, typing::Type};
-use crate::{Context, Location};
+use crate::{Context, Location, VariableId};
 
 use super::{Evaluator, Value, value};
 
@@ -267,7 +267,7 @@ fn evaluate_array(
 }
 
 fn evaluate_dict(
-    dict: Vec<(String, BoundNode)>,
+    dict: Vec<(VariableId, BoundNode)>,
     location: Location,
     // slide: &mut Slide,
     evaluator: &mut Evaluator,
@@ -276,6 +276,7 @@ fn evaluate_dict(
     let mut result = HashMap::new();
     for (member, node) in dict {
         let value = evaluate_expression(node, evaluator, context);
+        let member = context.string_interner.resolve_variable(member).to_owned();
         // TODO: Keep Value location in dicts?
         result.insert(member, value.value);
     }
@@ -803,6 +804,7 @@ fn evaluate_conversion(
             value::Value::Dict(dict) => value::Value::Dict(dict),
             _ => unreachable!("Impossible conversion"),
         },
+        Type::Optional(_) => base.value,
         unknown => todo!("{unknown:?}"),
     };
     Value { value, location }

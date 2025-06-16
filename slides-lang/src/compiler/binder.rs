@@ -190,7 +190,14 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         BoundNodeKind::Dict(items) => {
             println!("Dict:");
             for (name, entry) in items {
-                debug_bound_node(entry, context, format!("{indent}    {name}: "));
+                debug_bound_node(
+                    entry,
+                    context,
+                    format!(
+                        "{indent}    {}: ",
+                        context.string_interner.resolve_variable(*name)
+                    ),
+                );
             }
         }
         BoundNodeKind::Array(items) => {
@@ -628,7 +635,7 @@ pub enum BoundNodeKind {
     Literal(Value),
     SlideStatement(SlideStatement),
     VariableDeclaration(VariableDeclaration),
-    Dict(Vec<(String, BoundNode)>),
+    Dict(Vec<(VariableId, BoundNode)>),
     Array(Vec<BoundNode>),
     MemberAccess(MemberAccess),
     Conversion(Conversion),
@@ -767,7 +774,7 @@ impl BoundNode {
         }
     }
 
-    fn dict(location: Location, entries: Vec<(String, BoundNode)>, type_: TypeId) -> BoundNode {
+    fn dict(location: Location, entries: Vec<(VariableId, BoundNode)>, type_: TypeId) -> BoundNode {
         BoundNode {
             base: None,
             location,
@@ -971,7 +978,7 @@ fn bind_ast(ast: parser::Ast, context: &mut Context) -> BoundAst {
 }
 
 fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) -> BoundNode {
-    match statement.kind {
+    let node = match statement.kind {
         SyntaxNodeKind::StylingStatement(styling_statement) => {
             bind_styling_statement(styling_statement, statement.location, binder, context)
         }
@@ -1021,6 +1028,15 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         }
         SyntaxNodeKind::Binary(binary) => bind_binary(binary, statement.location, binder, context),
         unsupported => unreachable!("Not supported: {}", unsupported.as_ref()),
+    };
+    if let Some(t) = binder.currently_expected_type() {
+        if t != TypeId::ERROR {
+            bind_conversion(node, t, ConversionKind::Implicit, binder, context)
+        } else {
+            node
+        }
+    } else {
+        node
     }
 }
 
@@ -1030,7 +1046,14 @@ fn bind_array_access(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
+    binder.push_expected_type(
+        binder
+            .currently_expected_type()
+            .map(|t| context.type_interner.get_or_intern(Type::Array(t)))
+            .unwrap_or(TypeId::ERROR),
+    );
     let base = bind_node(*array_access.base, binder, context);
+    binder.drop_expected_type();
     binder.push_expected_type(TypeId::INTEGER);
     let index = bind_node(*array_access.index, binder, context);
     binder.drop_expected_type();
@@ -1061,8 +1084,10 @@ fn bind_binary(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
+    binder.push_expected_type(TypeId::ERROR);
     let lhs = bind_node(*binary.lhs, binder, context);
-    binder.push_expected_type(lhs.type_);
+    binder.drop_expected_type();
+    binder.push_expected_type(TypeId::ERROR);
     let rhs = bind_node(*binary.rhs, binder, context);
     binder.drop_expected_type();
     let (lhs, operator, rhs) = bind_binary_operator(lhs, binary.operator, rhs, binder, context);
@@ -1486,8 +1511,10 @@ fn bind_post_initialization(
         ) {
             binder.push_expected_type(target);
             let entry = bind_node(*entry.value, binder, context);
+            binder.drop_expected_type();
             let entry = bind_conversion(entry, target, ConversionKind::Implicit, binder, context);
-            entries.push((member_str.clone(), entry));
+            let member = context.string_interner.create_or_get_variable(&member_str);
+            entries.push((member, entry));
         } else {
             context.diagnostics.report_unknown_member(
                 entry.identifier.location,
@@ -1511,7 +1538,9 @@ fn bind_member_access(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
+    binder.push_expected_type(TypeId::ERROR);
     let mut base = bind_node(*member_access.base, binder, context);
+    binder.drop_expected_type();
     let member = member_access.member.text(&context.loaded_files);
     let member = context.string_interner.create_or_get(member);
     let base_type = context.type_interner.resolve(base.type_).clone();
@@ -1580,20 +1609,26 @@ fn bind_dict(
     let mut entries = Vec::with_capacity(dict.entries.len());
     for (entry, _) in dict.entries {
         let Some(entry) = entry.kind.try_as_dict_entry() else {
-            continue;
+            unreachable!("Parser should only allow dict entries here!");
         };
         let key = entry.identifier.text(&context.loaded_files).to_string();
+        let key = context.string_interner.create_or_get_variable(&key);
+        if let Some(t) = binder.currently_expected_type() {
+            if let Type::Struct(struct_data) = context.type_interner.resolve(t) {
+                let t = struct_data.fields.get(&key).unwrap_or(&TypeId::ERROR);
+                binder.push_expected_type(*t);
+            } else {
+                binder.push_expected_type(TypeId::ERROR);
+            }
+        } else {
+            binder.push_expected_type(TypeId::ERROR);
+        }
         let value = bind_node(*entry.value, binder, context);
+        binder.drop_expected_type();
         entries.push((key, value));
     }
     dict.entries = Vec::new();
-    let types = entries
-        .iter()
-        .map(|(n, b)| {
-            let variable_id = context.string_interner.create_or_get_variable(&n);
-            (variable_id, b.type_)
-        })
-        .collect();
+    let types = entries.iter().map(|(v, b)| (*v, b.type_)).collect();
     let type_ = context.type_interner.get_or_intern(Type::TypedDict(types));
     BoundNode::dict(location, entries, type_)
 }
@@ -1759,7 +1794,7 @@ fn bind_conversion(
     _binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
-    if base.type_ == TypeId::ERROR || base.type_ == target {
+    if base.type_ == TypeId::ERROR || base.type_ == target || target == TypeId::ERROR {
         return base;
     }
     let style_unit_type = context.type_interner.get_or_intern(Type::StyleUnit);
@@ -1782,25 +1817,33 @@ fn bind_conversion(
                     .collect();
                 for (field_name, field_type) in fields {
                     *all_fields_assigned.entry(*field_name).or_default() = true;
-                    let from = context.type_interner.resolve(*field_type);
+                    let from = *field_type;
                     if struct_data.fields.contains_key(field_name) {
-                        let to = context
-                            .type_interner
-                            .resolve(struct_data.fields[field_name]);
+                        let to = struct_data.fields[field_name];
+                        if from != to {
+                            let [from, to] = context.type_interner.resolve_types([from, to]);
+                            context.diagnostics.report_cannot_convert(
+                                &context.type_interner,
+                                &context.string_interner,
+                                from,
+                                to,
+                                base.location,
+                            );
+                        }
                         // TODO: Bind conversion
                         // if !from
                         //     .get_available_conversions(ConversionKind::Implicit)
                         //     .contains(to)
                         // {
-                        //     context.diagnostics.report_cannot_convert(
-                        //         &context.type_interner,
-                        //         &context.string_interner,
-                        //         from,
-                        //         to,
-                        //         base.location,
-                        //     );
+                        //
                         // }
-                        eprintln!("TOO MANY FIELDS!");
+                    } else {
+                        context.diagnostics.report_field_does_not_exist(
+                            base.location,
+                            &context.string_interner,
+                            struct_data,
+                            *field_name,
+                        );
                     }
                 }
                 if all_fields_assigned.values().any(|v| !v) {
@@ -1968,7 +2011,9 @@ fn bind_function_call(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
+    binder.push_expected_type(TypeId::ERROR);
     let base = bind_node(*function_call.base, binder, context);
+    binder.drop_expected_type();
     let mut arguments = Vec::with_capacity(function_call.arguments.len());
     let Some(function_type) = context
         .type_interner

@@ -203,4 +203,32 @@ impl Diagnostics {
             location,
         );
     }
+
+    pub(crate) fn report_field_does_not_exist(
+        &mut self,
+        location: Location,
+        string_interner: &StringInterner,
+        struct_data: &super::binder::typing::StructData,
+        field_name: crate::VariableId,
+    ) {
+        //
+        // let available = struct_data
+        //     .fields
+        //     .keys()
+        //     .map(|k| context.string_interner.resolve_variable(*k))
+        //     .collect::<Vec<_>>()
+        //     .join(", ");
+        // eprintln!(
+        //     "TOO MANY FIELDS! found {}, but these are available: {available}",
+        //     context.string_interner.resolve_variable(*field_name)
+        // );
+        self.report_error(
+            format!(
+                "struct {} has no field named {}.",
+                string_interner.resolve_variable(struct_data.name),
+                string_interner.resolve_variable(field_name)
+            ),
+            location,
+        );
+    }
 }
