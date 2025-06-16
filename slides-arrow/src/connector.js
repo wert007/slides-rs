@@ -130,7 +130,7 @@ function calculate_positioning(line) {
             break;
         }
     }
-    if (line.options.end_tip) {
+    if (line.options.endtip) {
         const tip_size = line.options.width * 3;
         positioning.end.x -= Math.cos(positioning.rotation_end) * tip_size;
         positioning.end.y -= Math.sin(positioning.rotation_end) * tip_size;
@@ -199,7 +199,7 @@ function emit_tip(tip, rotation, size, builder) {
 function turnLineIntoPath(line) {
     const positioning = calculate_positioning(line);
     let builder = new SvgPathCreator(positioning.start.x, positioning.start.y);
-    emit_tip(line.start_tip, positioning.rotation_start, line.options.width, builder);
+    emit_tip(line.starttip, positioning.rotation_start, line.options.width, builder);
     switch (line.kind) {
         case 'direct':
             builder.lineAbsolut(positioning.end.x, positioning.end.y);
@@ -212,7 +212,7 @@ function turnLineIntoPath(line) {
             break;
         default: break;
     }
-    emit_tip(line.end_tip, positioning.rotation_end, line.options.width, builder);
+    emit_tip(line.endtip, positioning.rotation_end, line.options.width, builder);
 
     return builder.toSvgPath();
 }
@@ -268,17 +268,17 @@ function create_svg_canvas() {
     return svg;
 }
 
-const ARROW_TIP = { kind: 'diamond', is_filled: false, flip: false };
+const ARROW_TIP = { kind: 'diamond', filled: false, flip: false };
 
 function fill_options_with_default(options) {
     options.width ??= 2;
     options.color ??= 'black';
-    options.line_kind ??= 'direct';
-    options.start_tip ??= JSON.parse(JSON.stringify(ARROW_TIP));
-    options.start_tip.flip = !options.start_tip.flip;
-    options.end_tip ??= ARROW_TIP;
-    options.from_pos ??= { x: 0.5, y: 0.5 };
-    options.to_pos ??= { x: 0.5, y: 0.5 };
+    options.kind ??= 'direct';
+    options.starttip ??= JSON.parse(JSON.stringify(ARROW_TIP));
+    options.starttip.flip = !options.starttip.flip;
+    options.endtip ??= ARROW_TIP;
+    options.startposrel ??= { x: 0.5, y: 0.5 };
+    options.endposrel ??= { x: 0.5, y: 0.5 };
 }
 
 class SimpleConnector {
@@ -297,15 +297,15 @@ class SimpleConnector {
         }
         fill_options_with_default(options);
         const line = {
-            kind: options.line_kind,
-            from: { dom: from, pos: options.from_pos },
-            to: { dom: to, pos: options.to_pos },
+            kind: options.kind,
+            from: { dom: from, pos: options.startposrel },
+            to: { dom: to, pos: options.endposrel },
             dom: create_line(options),
             label_dom: create_label(options.label),
             parent: options.parent,
             options,
-            start_tip: options.start_tip,
-            end_tip: options.end_tip,
+            starttip: options.starttip,
+            endtip: options.endtip,
             container,
         };
         line.dom.setAttribute('d', turnLineIntoPath(line));
@@ -344,13 +344,13 @@ class SimpleConnector {
         //         const rotation = Math.atan2(deltaY, deltaX);
         //         rotation_start = rotation;
         //         rotation_end = rotation;
-        //         if (line.end_tip) {
-        //             end.x -= line.end_tip.size * Math.cos(rotation);
-        //             end.y -= line.end_tip.size * Math.sin(rotation);
+        //         if (line.endtip) {
+        //             end.x -= line.endtip.size * Math.cos(rotation);
+        //             end.y -= line.endtip.size * Math.sin(rotation);
         //         }
-        //         if (line.start_tip) {
-        //             start.x -= line.start_tip.size * Math.cos(rotation);
-        //             start.y -= line.start_tip.size * Math.sin(rotation);
+        //         if (line.starttip) {
+        //             start.x -= line.starttip.size * Math.cos(rotation);
+        //             start.y -= line.starttip.size * Math.sin(rotation);
         //         }
         //         line.dom[0].setAttribute('x1', start.x);
         //         line.dom[0].setAttribute('y1', start.y);
@@ -373,14 +373,14 @@ class SimpleConnector {
 
         //         rotation_start = Math.atan2(points[1].y - points[0].y, points[1].x - points[0].x);
         //         rotation_end = Math.atan2(points.at(-1).y - points.at(-2).y, points.at(-1).x - points.at(-2).x);
-        //         if (line.end_tip) {
-        //             end.x -= line.end_tip.size * Math.cos(rotation_end);
-        //             end.y -= line.end_tip.size * Math.sin(rotation_end);
+        //         if (line.endtip) {
+        //             end.x -= line.endtip.size * Math.cos(rotation_end);
+        //             end.y -= line.endtip.size * Math.sin(rotation_end);
         //             points[points.length - 1] = end;
         //         }
-        //         if (line.start_tip) {
-        //             start.x -= line.start_tip.size * Math.cos(rotation_start);
-        //             start.y -= line.start_tip.size * Math.sin(rotation_start);
+        //         if (line.starttip) {
+        //             start.x -= line.starttip.size * Math.cos(rotation_start);
+        //             start.y -= line.starttip.size * Math.sin(rotation_start);
         //             points[0] = start;
         //         }
         //         if (points.length == line.dom.length + 1) {
@@ -408,11 +408,11 @@ class SimpleConnector {
         //         break;
         //     }
         // }
-        // if (line.start_tip) {
-        //     set_tip_position(line.start_tip, start, rotation_start, line.options);
+        // if (line.starttip) {
+        //     set_tip_position(line.starttip, start, rotation_start, line.options);
         // }
-        // if (line.end_tip) {
-        //     set_tip_position(line.end_tip, end, rotation_end, line.options);
+        // if (line.endtip) {
+        //     set_tip_position(line.endtip, end, rotation_end, line.options);
         // }
     }
 

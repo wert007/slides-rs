@@ -106,7 +106,8 @@ impl Arrows {
         for (key, value) in options {
             let value = allocator.get(value);
             match key.as_str() {
-                "color" | "width" | "from_pos" | "to_pos" | "line_kind" | "label" => {
+                "width" | "color" | "kind" | "starttip" | "endtip" | "startposrel"
+                | "endposrel" => {
                     writeln!(
                         options_text,
                         "{key}: {},",
@@ -114,14 +115,22 @@ impl Arrows {
                     )
                     .expect("infallible");
                 }
-                "middle_label" => {
-                    writeln!(
-                        options_text,
-                        "middleLabel: LeaderLine.captionLabel({}, {{ classList: 'label'}}),",
-                        value_to_string(&value, allocator)?
-                    )
-                    .expect("Infallible");
-                }
+                // "color" | "width" | "from_pos" | "to_pos" | "line_kind" | "label" => {
+                //     writeln!(
+                //         options_text,
+                //         "{key}: {},",
+                //         value_to_string(&value, allocator)?
+                //     )
+                //     .expect("infallible");
+                // }
+                // "middle_label" => {
+                //     writeln!(
+                //         options_text,
+                //         "middleLabel: LeaderLine.captionLabel({}, {{ classList: 'label'}}),",
+                //         value_to_string(&value, allocator)?
+                //     )
+                //     .expect("Infallible");
+                // }
                 _ => {
                     return Err(modules::Error::InternalError(format!(
                         "Invalid option: {key}"
@@ -203,8 +212,8 @@ impl GuestModule for Arrows {
                 ("kind".into(), create_optional(line_kind)),
                 ("starttip".into(), create_optional(line_tip)),
                 ("endtip".into(), create_optional(line_tip)),
-                ("relative_pos_start".into(), create_optional(point)),
-                ("relative_pos_end".into(), create_optional(point)),
+                ("startposrel".into(), create_optional(point)),
+                ("endposrel".into(), create_optional(point)),
             ]
             .to_vec(),
         )));

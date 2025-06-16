@@ -147,6 +147,8 @@ impl Diagnostics {
         target: &Type,
         location: Location,
     ) {
+        assert_ne!(from, &Type::Error);
+        assert_ne!(target, &Type::Error);
         let from = type_interner.to_simple_string(from, string_interner);
         let target = type_interner.to_simple_string(target, string_interner);
         self.report_error(

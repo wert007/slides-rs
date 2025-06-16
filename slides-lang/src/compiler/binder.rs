@@ -101,11 +101,13 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         }
         BoundNodeKind::ElementStatement(element_statement) => {
             println!(
-                "CustomElement {} for {:?}",
+                "CustomElement {} for {}",
                 context
                     .string_interner
                     .resolve_variable(element_statement.name),
-                context.type_interner.resolve(element_statement.type_)
+                context
+                    .type_interner
+                    .id_to_simple_string(element_statement.type_, &context.string_interner)
             );
             for statement in &element_statement.body {
                 debug_bound_node(statement, context, format!("{indent}    "));
@@ -142,8 +144,10 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         }
         BoundNodeKind::FunctionCall(function_call) => {
             println!(
-                "FunctionCall: {:?}",
-                context.type_interner.resolve(statement.type_)
+                "FunctionCall: {}",
+                context
+                    .type_interner
+                    .id_to_simple_string(statement.type_, &context.string_interner)
             );
             debug_bound_node(&function_call.base, context, format!("{indent}    "));
             for arg in &function_call.arguments {
@@ -152,9 +156,11 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         }
         BoundNodeKind::VariableReference(variable) => {
             println!(
-                "Variable {}: {:?}",
+                "Variable {}: {}",
                 context.string_interner.resolve_variable(variable.id),
-                context.type_interner.resolve(variable.type_)
+                context
+                    .type_interner
+                    .id_to_simple_string(variable.type_, &context.string_interner)
             );
         }
         BoundNodeKind::Literal(value) => {
@@ -173,13 +179,14 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         }
         BoundNodeKind::VariableDeclaration(variable_declaration) => {
             println!(
-                "Variable Declaration {}: {:?}",
+                "Variable Declaration {}: {}",
                 context
                     .string_interner
                     .resolve_variable(variable_declaration.variable),
-                context
-                    .type_interner
-                    .resolve(variable_declaration.value.type_)
+                context.type_interner.id_to_simple_string(
+                    variable_declaration.value.type_,
+                    &context.string_interner
+                )
             );
             debug_bound_node(
                 &variable_declaration.value,
@@ -215,8 +222,10 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
         }
         BoundNodeKind::Conversion(conversion) => {
             println!(
-                "Conversion to {:?} (Kind {:?})",
-                context.type_interner.resolve(statement.type_),
+                "Conversion to {} (Kind {:?})",
+                context
+                    .type_interner
+                    .id_to_simple_string(statement.type_, &context.string_interner),
                 conversion.kind
             );
             debug_bound_node(&conversion.base, context, format!("{indent}    "));
@@ -1613,13 +1622,24 @@ fn bind_dict(
         };
         let key = entry.identifier.text(&context.loaded_files).to_string();
         let key = context.string_interner.create_or_get_variable(&key);
-        if let Some(t) = binder.currently_expected_type() {
-            if let Type::Struct(struct_data) = context.type_interner.resolve(t) {
-                let t = struct_data.fields.get(&key).unwrap_or(&TypeId::ERROR);
-                binder.push_expected_type(*t);
-            } else {
-                binder.push_expected_type(TypeId::ERROR);
-            }
+        if let Some(type_) = binder.currently_expected_type() {
+            let type_ = context.type_interner.resolve(type_);
+            let type_ = match type_ {
+                Type::Struct(struct_data) => {
+                    let t = struct_data.fields.get(&key).unwrap_or(&TypeId::ERROR);
+                    *t
+                }
+                Type::Optional(inner) => {
+                    if let Type::Struct(struct_data) = context.type_interner.resolve(*inner) {
+                        let t = struct_data.fields.get(&key).unwrap_or(&TypeId::ERROR);
+                        *t
+                    } else {
+                        TypeId::ERROR
+                    }
+                }
+                _ => TypeId::ERROR,
+            };
+            binder.push_expected_type(type_);
         } else {
             binder.push_expected_type(TypeId::ERROR);
         }
@@ -1791,16 +1811,24 @@ fn bind_conversion(
     base: BoundNode,
     target: TypeId,
     conversion_kind: ConversionKind,
-    _binder: &mut Binder,
+    binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
     if base.type_ == TypeId::ERROR || base.type_ == target || target == TypeId::ERROR {
         return base;
     }
+    if let Type::Optional(inner) = context.type_interner.resolve(target) {
+        let mut result = bind_conversion(base, *inner, conversion_kind, binder, context);
+        result.type_ = target;
+        return result;
+    }
     let style_unit_type = context.type_interner.get_or_intern(Type::StyleUnit);
     match conversion_kind {
         ConversionKind::Implicit => match context.type_interner.resolve_types([base.type_, target])
         {
+            [Type::Integer, Type::Float] => {
+                eprintln!("Hello!");
+            }
             [_, Type::Optional(to)] if base.type_ == *to => {}
             [Type::TypedDict(fields), Type::Struct(struct_data)] => {
                 let mut all_fields_assigned: HashMap<_, _> = struct_data
@@ -1820,7 +1848,7 @@ fn bind_conversion(
                     let from = *field_type;
                     if struct_data.fields.contains_key(field_name) {
                         let to = struct_data.fields[field_name];
-                        if from != to {
+                        if from != to && from != TypeId::ERROR && to != TypeId::ERROR {
                             let [from, to] = context.type_interner.resolve_types([from, to]);
                             context.diagnostics.report_cannot_convert(
                                 &context.type_interner,
@@ -1830,13 +1858,6 @@ fn bind_conversion(
                                 base.location,
                             );
                         }
-                        // TODO: Bind conversion
-                        // if !from
-                        //     .get_available_conversions(ConversionKind::Implicit)
-                        //     .contains(to)
-                        // {
-                        //
-                        // }
                     } else {
                         context.diagnostics.report_field_does_not_exist(
                             base.location,
