@@ -211,24 +211,42 @@ impl Diagnostics {
         struct_data: &super::binder::typing::StructData,
         field_name: crate::VariableId,
     ) {
-        //
-        // let available = struct_data
-        //     .fields
-        //     .keys()
-        //     .map(|k| context.string_interner.resolve_variable(*k))
-        //     .collect::<Vec<_>>()
-        //     .join(", ");
-        // eprintln!(
-        //     "TOO MANY FIELDS! found {}, but these are available: {available}",
-        //     context.string_interner.resolve_variable(*field_name)
-        // );
-        self.report_error(
+        let field_name = string_interner.resolve_variable(field_name);
+        let diagnostic = self.report_error(
             format!(
                 "struct {} has no field named {}.",
                 string_interner.resolve_variable(struct_data.name),
-                string_interner.resolve_variable(field_name)
+                field_name
             ),
             location,
         );
+        let possible_fields: Vec<_> = struct_data
+            .fields
+            .keys()
+            .map(|v| string_interner.resolve_variable(*v))
+            .filter(|field| {
+                field.split('_').any(|p| field_name.contains(p))
+                    || field_name.split('_').any(|p| field.contains(p))
+                    || field_name.contains(field)
+                    || field.contains(field_name)
+                    || triple_accel::levenshtein(field_name.as_bytes(), field.as_bytes())
+                        < field_name.len() as u32 / 2
+            })
+            .collect();
+        match possible_fields.len() {
+            0 => {}
+            1 => {
+                let field = possible_fields.last().unwrap();
+                diagnostic.add_hint(format!("Did you mean {field}?"), location);
+            }
+            _ => {
+                let first_fields = possible_fields[..possible_fields.len() - 1].join(", ");
+                let last_field = possible_fields.last().unwrap();
+                diagnostic.add_hint(
+                    format!("Did you mean {first_fields} or {last_field}?"),
+                    location,
+                );
+            }
+        }
     }
 }

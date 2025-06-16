@@ -22,6 +22,7 @@ struct-field-names-as-array = { git = "https://github.com/wert007/struct_field_n
 strum = { version = "0.27.1", features = ["derive"] }
 summum-types = "0.1.4"
 thiserror = "2.0.12"
+triple_accel = "0.4.0"
 wasmtime = "32.0.0"
 wasmtime-wasi = "32.0.0"
 zip = "2.6.1"
