@@ -560,7 +560,7 @@ pub enum BoundBinaryOperator {
 }
 
 impl BoundBinaryOperator {
-    fn type_(&self, lhs: TypeId, rhs: TypeId) -> TypeId {
+    fn type_(&self, lhs: TypeId, rhs: TypeId, type_interner: &mut TypeInterner) -> TypeId {
         match (lhs, rhs) {
             (TypeId::ERROR, _) | (_, TypeId::ERROR) => TypeId::ERROR,
             (TypeId::INTEGER, TypeId::INTEGER) => TypeId::INTEGER,
@@ -572,8 +572,21 @@ impl BoundBinaryOperator {
             (TypeId::FLOAT, TypeId::STYLE_UNIT) | (TypeId::STYLE_UNIT, TypeId::FLOAT) => {
                 TypeId::STYLE_UNIT
             }
-            _ => todo!("{lhs:?} {rhs:?}"),
-            // _ => TypeId::ERROR,
+            (lhs, rhs) => {
+                let lhs = type_interner.resolve(lhs);
+                let rhs = type_interner.resolve(rhs);
+                match (lhs, rhs) {
+                    (Type::TypedDict(lhs), Type::TypedDict(rhs)) => {
+                        let entries = lhs
+                            .iter()
+                            .chain(rhs.iter().filter(|(v, _)| !lhs.iter().any(|x| x.0 == *v)))
+                            .cloned()
+                            .collect();
+                        type_interner.get_or_intern(Type::TypedDict(entries))
+                    }
+                    _ => todo!("{lhs:?} {rhs:?}"),
+                }
+            }
         }
     }
 
@@ -909,11 +922,12 @@ impl BoundNode {
         lhs: BoundNode,
         operator: BoundBinaryOperator,
         rhs: BoundNode,
+        type_interner: &mut TypeInterner,
     ) -> BoundNode {
         BoundNode {
             base: None,
             location,
-            type_: operator.type_(lhs.type_, rhs.type_),
+            type_: operator.type_(lhs.type_, rhs.type_, type_interner),
             kind: BoundNodeKind::Binary(Binary {
                 lhs: Box::new(lhs),
                 operator,
@@ -1100,7 +1114,7 @@ fn bind_binary(
     let rhs = bind_node(*binary.rhs, binder, context);
     binder.drop_expected_type();
     let (lhs, operator, rhs) = bind_binary_operator(lhs, binary.operator, rhs, binder, context);
-    BoundNode::binary(location, lhs, operator, rhs)
+    BoundNode::binary(location, lhs, operator, rhs, &mut context.type_interner)
 }
 
 fn bind_binary_operator(
@@ -1164,7 +1178,7 @@ fn bind_binary_operator(
         }
         (Type::TypedDict(_), BoundBinaryOperator::Or, Type::TypedDict(_)) => {
             // TODO: We should not loose type information here
-            (TypeId::DICT, TypeId::DICT)
+            (lhs.type_, rhs.type_)
         }
         _ => {
             context
@@ -1493,7 +1507,9 @@ fn bind_post_initialization(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
+    binder.push_expected_type(TypeId::ERROR);
     let base = bind_node(*post_initialization.expression, binder, context);
+    binder.drop_expected_type();
     let dict_location = post_initialization.dict.location;
     let dict = (*post_initialization.dict)
         .kind
@@ -1761,8 +1777,11 @@ fn bind_string(string: Token, binder: &mut Binder, context: &mut Context) -> Bou
                     length: expression.len(),
                 };
                 offset += expression.len() + 1;
+                binder.push_expected_type(TypeId::ERROR);
+                let base = bind_node_from_source(location, binder, context);
+                binder.drop_expected_type();
                 values.push(bind_conversion(
-                    bind_node_from_source(location, binder, context),
+                    base,
                     TypeId::STRING,
                     ConversionKind::ToString,
                     binder,
@@ -1845,7 +1864,8 @@ fn bind_conversion(
                     let from = *field_type;
                     if struct_data.fields.contains_key(field_name) {
                         let to = struct_data.fields[field_name];
-                        if from != to && from != TypeId::ERROR && to != TypeId::ERROR {
+
+                        if !can_convert_to_type(from, to, binder, context) {
                             let [from, to] = context.type_interner.resolve_types([from, to]);
                             context.diagnostics.report_cannot_convert(
                                 &context.type_interner,
@@ -1980,6 +2000,39 @@ fn bind_conversion(
         },
     }
     BoundNode::conversion(base, target, conversion_kind)
+}
+
+fn can_convert_to_type(from: TypeId, to: TypeId, binder: &mut Binder, context: &Context) -> bool {
+    if from == TypeId::ERROR || to == TypeId::ERROR || from == to {
+        return true;
+    }
+    match context.type_interner.resolve_types([from, to]) {
+        [_, Type::Optional(to)] => can_convert_to_type(from, *to, binder, context),
+        [Type::TypedDict(entries), Type::Struct(struct_data)] => {
+            let necessary_fields: Vec<_> = struct_data
+                .fields
+                .iter()
+                .filter(|x| !matches!(context.type_interner.resolve(*x.1), Type::Optional(_)))
+                .collect();
+            let mut result = true;
+            for (field, type_) in necessary_fields {
+                if let Some(from_field_type) = entries.iter().find(|x| x.0 == *field) {
+                    result |= can_convert_to_type(from_field_type.1, *type_, binder, context);
+                } else {
+                    return false;
+                }
+            }
+            for (field, type_) in entries {
+                if let Some(to_field) = struct_data.fields.get(field) {
+                    result |= can_convert_to_type(*type_, *to_field, binder, context);
+                } else {
+                    return false;
+                }
+            }
+            result
+        }
+        _ => false,
+    }
 }
 
 fn bind_literal(
