@@ -22,11 +22,11 @@
         getElementById(4),
         {
             parent: document.getElementById("deadlocks_problem"),
-            kind: "Orthogonal",
+            color: "rgb(89, 89, 89, 1)",
+endposrel: {x:0.5,y:0,},
+startposrel: {y:0,x:0.5,},
 label: "I am a arrow!",
-color: "rgb(89, 89, 89, 1)",
-endposrel: {y:0,x:0.5,},
-startposrel: {x:0.5,y:0,},
+kind: "Orthogonal",
 
         },
     );
@@ -39,11 +39,11 @@ startposrel: {x:0.5,y:0,},
         getElementById(17),
         {
             parent: document.getElementById("deadlock_cyclic_wait"),
-            color: "rgb(89, 89, 89, 1)",
+            startposrel: {y:0,x:0.5,},
+endposrel: {y:0,x:0.5,},
+color: "rgb(89, 89, 89, 1)",
 label: "fordert an",
 kind: "Orthogonal",
-endposrel: {y:0,x:0.5,},
-startposrel: {x:0.5,y:0,},
 
         },
     );
@@ -58,9 +58,9 @@ startposrel: {x:0.5,y:0,},
             parent: document.getElementById("deadlock_cyclic_wait"),
             color: "rgb(89, 89, 89, 1)",
 endposrel: {y:1,x:0.5,},
-kind: "Orthogonal",
 label: "fordert an",
-startposrel: {y:1,x:0.5,},
+kind: "Orthogonal",
+startposrel: {x:0.5,y:1,},
 
         },
     );
@@ -313,7 +313,7 @@ function get_label_placement_for_orthogonal(points) {
         if (maxX < points[i].x) maxX = points[i].x;
         if (minX > points[i + 1].x) minX = points[i + 1].x;
         if (maxX < points[i + 1].x) maxX = points[i + 1].x;
-        if (delta.x > bestDelta.x) {
+        if (Math.abs(delta.x) > Math.abs(bestDelta.x)) {
             bestDelta = delta;
             point = { x: points[i].x + delta.x * 0.5, y: points[i].y + delta.y * 0.5 };
         }

@@ -37,8 +37,8 @@ startposrel: {x:0.5,y:1,},
         getElementById(263),
         {
             parent: document.getElementById("deadlocks_problem"),
-            kind: "Orthogonal",
-color: "rgb(89, 89, 89, 1)",
+            color: "rgb(89, 89, 89, 1)",
+kind: "Orthogonal",
 startposrel: {x:0.5,y:0,},
 
         },
@@ -53,8 +53,8 @@ startposrel: {x:0.5,y:0,},
         {
             parent: document.getElementById("deadlocks_problem"),
             color: "rgb(89, 89, 89, 1)",
+startposrel: {y:1,x:0.5,},
 kind: "Orthogonal",
-startposrel: {x:0.5,y:1,},
 
         },
     );
@@ -68,8 +68,8 @@ startposrel: {x:0.5,y:1,},
         {
             parent: document.getElementById("deadlocks_problem"),
             color: "rgb(89, 89, 89, 1)",
+startposrel: {y:0,x:0.5,},
 kind: "Orthogonal",
-startposrel: {x:0.5,y:0,},
 
         },
     );
@@ -110,8 +110,8 @@ color: "rgb(89, 89, 89, 1)",
         getElementById(331),
         {
             parent: document.getElementById("deadlock_no_release"),
-            color: "rgb(89, 89, 89, 1)",
-label: "wird entzogen",
+            label: "wird entzogen",
+color: "rgb(89, 89, 89, 1)",
 
         },
     );
@@ -124,11 +124,11 @@ label: "wird entzogen",
         getElementById(350),
         {
             parent: document.getElementById("deadlock_cyclic_wait"),
-            endposrel: {y:0,x:0.5,},
-startposrel: {x:0.5,y:0,},
-kind: "Orthogonal",
+            kind: "Orthogonal",
 color: "rgb(89, 89, 89, 1)",
 label: "fordert an",
+endposrel: {y:0,x:0.5,},
+startposrel: {x:0.5,y:0,},
 
         },
     );
@@ -142,10 +142,10 @@ label: "fordert an",
         {
             parent: document.getElementById("deadlock_cyclic_wait"),
             startposrel: {x:0.5,y:1,},
+label: "fordert an",
 endposrel: {x:0.5,y:1,},
 kind: "Orthogonal",
 color: "rgb(89, 89, 89, 1)",
-label: "fordert an",
 
         },
     );
@@ -399,7 +399,7 @@ function get_label_placement_for_orthogonal(points) {
         if (maxX < points[i].x) maxX = points[i].x;
         if (minX > points[i + 1].x) minX = points[i + 1].x;
         if (maxX < points[i + 1].x) maxX = points[i + 1].x;
-        if (delta.x > bestDelta.x) {
+        if (Math.abs(delta.x) > Math.abs(bestDelta.x)) {
             bestDelta = delta;
             point = { x: points[i].x + delta.x * 0.5, y: points[i].y + delta.y * 0.5 };
         }

@@ -232,7 +232,7 @@ function get_label_placement_for_orthogonal(points) {
         if (maxX < points[i].x) maxX = points[i].x;
         if (minX > points[i + 1].x) minX = points[i + 1].x;
         if (maxX < points[i + 1].x) maxX = points[i + 1].x;
-        if (delta.x > bestDelta.x) {
+        if (Math.abs(delta.x) > Math.abs(bestDelta.x)) {
             bestDelta = delta;
             point = { x: points[i].x + delta.x * 0.5, y: points[i].y + delta.y * 0.5 };
         }
