@@ -35,6 +35,7 @@ pub struct ModuleFunction {
 pub struct Module {
     pub name: VariableId,
     functions: HashMap<String, ModuleFunction>,
+    types: HashMap<String, TypeId>,
     engine: wasmtime::Engine,
     store: wasmtime::Store<State>,
     bindings: Host_,
@@ -52,10 +53,11 @@ impl std::fmt::Debug for Module {
 
 impl Module {
     pub fn try_get_function_by_name(&self, name: &str) -> Option<&ModuleFunction> {
-        self.functions
-            .iter()
-            .find(|(n, _)| *n == name)
-            .map(|(_, t)| t)
+        self.functions.get(name)
+    }
+
+    pub fn try_get_type_by_name(&self, name: &str) -> Option<TypeId> {
+        self.types.get(name).copied()
     }
 
     pub fn try_call_function_by_name(
@@ -139,6 +141,10 @@ pub fn load_module(
         store.data_mut().type_allocator_mut(),
         &mut context.string_interner,
     );
+    let types = store
+        .data()
+        .type_allocator()
+        .get_all_module_types(&context.type_interner, &context.string_interner);
     let functions = bindings
         .component_arrows_modules()
         .module()
@@ -150,6 +156,7 @@ pub fn load_module(
         bindings,
         engine,
         name,
+        types,
         functions: functions
             .into_iter()
             .map(|f| {

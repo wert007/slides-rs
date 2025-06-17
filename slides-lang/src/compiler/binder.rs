@@ -1818,9 +1818,8 @@ fn bind_conversion(
         return base;
     }
     if let Type::Optional(inner) = context.type_interner.resolve(target) {
-        let mut result = bind_conversion(base, *inner, conversion_kind, binder, context);
-        result.type_ = target;
-        return result;
+        let result = bind_conversion(base, *inner, conversion_kind, binder, context);
+        return BoundNode::conversion(result, target, conversion_kind);
     }
     let style_unit_type = context.type_interner.get_or_intern(Type::StyleUnit);
     match conversion_kind {

@@ -60,7 +60,7 @@ slide deadlocks_problem:
     let options = { color: c"#595959" };
     // arrows.arrow(base.amanda, base.light, options | { from_pos: {x: 0.5, y: 0},line_kind: 'orthogonal'});
     arrows.arrow(base.amanda, base.bobbl, { color: c"#595959", startposrel: {x: 0.5, y: 0.0}, endposrel: {x: 0.5, y: 0.0}, label: "I am a arrow!",
-    // kind: 'orthogonal'
+    kind: arrows.LineKind.Orthogonal,
     });
 //     arrows.arrow(base.bobbl, base.light, options | { startSocket: "bottom" });
 
@@ -87,7 +87,7 @@ slide deadlock_cyclic_wait:
         };
     arrows.arrow(left.children[0],
         right.children[0],
-        {   color: c"#595959", label: "fordert an", startposrel: {x: 0.5, y: 0}, endposrel: {x: 0.5, y: 0}, kind: 'orthogonal' });
+        {   color: c"#595959", label: "fordert an", startposrel: {x: 0.5, y: 0}, endposrel: {x: 0.5, y: 0}, kind: arrows.LineKind.Orthogonal });
     arrows.arrow(right.children[1],
         left.children[1],
         {
@@ -95,6 +95,6 @@ slide deadlock_cyclic_wait:
             label: "fordert an",
             startposrel: {x: 0.5, y: 1},
             endposrel: {x: 0.5, y: 1},
-            kind: 'orthogonal',
+            kind: arrows.LineKind.Orthogonal,
         });
 

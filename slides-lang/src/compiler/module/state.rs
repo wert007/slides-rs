@@ -8,9 +8,12 @@ use slides_rs_core::{Position, Presentation, WebRenderable};
 use wasmtime::component::Resource;
 use wasmtime_wasi::{IoView, WasiView};
 
-use crate::compiler::{
-    binder::typing::{self, TypeId},
-    evaluator::value,
+use crate::{
+    StringInterner,
+    compiler::{
+        binder::typing::{self, TypeId, TypeInterner},
+        evaluator::value,
+    },
 };
 
 use super::{
@@ -146,6 +149,19 @@ impl HostTypeAllocator {
             .expect("Should exist")
             .clone()
             .into()
+    }
+
+    pub(crate) fn get_all_module_types(
+        &self,
+        type_interner: &TypeInterner,
+        string_interner: &StringInterner,
+    ) -> HashMap<String, TypeId> {
+        self.types
+            .iter()
+            .filter(|(_, t)| matches!(t, arrows::types::Type::EnumDefinition(..)))
+            .map(|(i, _)| unsafe { TypeId::from_raw(i.relocateable) })
+            .map(|t| (type_interner.id_to_simple_string(t, string_interner), t))
+            .collect()
     }
 }
 

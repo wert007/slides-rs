@@ -7,7 +7,7 @@ use crate::{
     compiler::module::state::{HostTypeAllocator, HostTypeIndex},
 };
 
-use super::{ConversionKind, Variable, globals};
+use super::{ConversionKind, globals};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FunctionType {
@@ -446,11 +446,17 @@ impl Type {
         }
         if let Type::Module(index) = self {
             let module = &modules[*index];
-            return module
+            let function = module
                 .read()
                 .unwrap()
                 .try_get_function_by_name(member)
                 .map(|f| Type::Function(f.type_.clone()));
+            let type_ = module
+                .read()
+                .unwrap()
+                .try_get_type_by_name(member)
+                .map(|t| type_interner.resolve(t).clone());
+            return function.or(type_);
         }
         for m in globals::MEMBERS {
             if self.as_ref() != m.name {
