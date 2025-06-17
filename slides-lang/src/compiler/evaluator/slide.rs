@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::fmt::format;
 use std::sync::{Arc, RwLock};
 use std::{collections::HashMap, path::PathBuf};
 
@@ -91,7 +89,7 @@ fn evaluate_statement(
         | BoundNodeKind::Dict(_)
         | BoundNodeKind::MemberAccess(_)
         | BoundNodeKind::Conversion(_) => {
-            let value = evaluate_expression(statement, evaluator, context);
+            let _value = evaluate_expression(statement, evaluator, context);
             // if let Some(mut element) = value.value.try_convert_to_element() {
             //     if element.parent().is_none() {
             //         element.set_namespace(evaluator.slide.as_ref().unwrap().name());
@@ -453,6 +451,7 @@ fn evaluate_member_access(
                 value::Value::VerticalAlignment(variant.parse().expect("Valid variant"))
             }
             &Type::TextAlign => value::Value::TextAlign(variant.parse().expect("Valid variant")),
+            &Type::Enum(_) => value::Value::String(variant.into()),
             _ => unreachable!("Type {enum_type:?} is not an enum!"),
         };
         Value { value, location }
@@ -736,6 +735,10 @@ fn evaluate_conversion(
         },
         Type::Color => match base.value {
             value::Value::String(text) => value::Value::Color(Color::from_css(&text)),
+            _ => unreachable!("Impossible conversion!"),
+        },
+        Type::Float => match base.value {
+            value::Value::Integer(number) => value::Value::Float(number as _),
             _ => unreachable!("Impossible conversion!"),
         },
         Type::Path => match base.value {

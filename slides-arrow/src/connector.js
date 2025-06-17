@@ -109,7 +109,7 @@ function calculate_positioning(line) {
     const start = { x: x1, y: y1 };
     const end = { x: x2, y: y2 };
     const positioning = { start, end, rotation_start: 0, rotation_end: 0, points: [start, end] };
-    switch (line.kind) {
+    switch (line.kind.toLowerCase()) {
         case 'direct': {
             const deltaX = x2 - x1;
             const deltaY = y2 - y1;
@@ -144,7 +144,7 @@ function emit_tip(tip, rotation, size, builder) {
     builder.rotate(rotation);
     const direction = tip.flip ? -1 : 1;
 
-    switch (tip.kind) {
+    switch (tip.kind.toLowerCase()) {
         case 'arrow':
             if (tip.flip) {
                 builder.move(3 * size, 0);
@@ -200,7 +200,7 @@ function turnLineIntoPath(line) {
     const positioning = calculate_positioning(line);
     let builder = new SvgPathCreator(positioning.start.x, positioning.start.y);
     emit_tip(line.starttip, positioning.rotation_start, line.options.width, builder);
-    switch (line.kind) {
+    switch (line.kind.toLowerCase()) {
         case 'direct':
             builder.lineAbsolut(positioning.end.x, positioning.end.y);
             break;
@@ -268,13 +268,14 @@ function create_svg_canvas() {
     return svg;
 }
 
-const ARROW_TIP = { kind: 'diamond', filled: false, flip: false };
+const ARROW_TIP = { kind: 'arrow', filled: false, flip: false };
+const NO_TIP = { kind: 'none', filled: false, flip: false };
 
 function fill_options_with_default(options) {
     options.width ??= 2;
     options.color ??= 'black';
-    options.kind ??= 'direct';
-    options.starttip ??= JSON.parse(JSON.stringify(ARROW_TIP));
+    options.kind ??= 'Direct';
+    options.starttip ??= { ...NO_TIP };
     options.starttip.flip = !options.starttip.flip;
     options.endtip ??= ARROW_TIP;
     options.startposrel ??= { x: 0.5, y: 0.5 };
@@ -321,99 +322,31 @@ class SimpleConnector {
     updateLine(line) {
         line.dom.setAttribute('d', turnLineIntoPath(line));
 
-        // console.log("line", line);
-        // const posFrom = line.from.dom.getBoundingClientRect();
-        // const posFromRelative = line.from.pos;
-        // const posTo = line.to.dom.getBoundingClientRect();
-        // const posToRelative = line.to.pos;
+        const positioning = calculate_positioning(line);
+        switch (line.kind.toLowerCase()) {
+            case 'direct': {
+                const deltaX = positioning.end.x - positioning.start.x;
+                const deltaY = positioning.end.y - positioning.start.y;
+                const rotation = Math.atan2(deltaY, deltaX);
+                if (line.label_dom) {
+                    line.label_dom.setAttribute('x', (positioning.start.x + positioning.end.x) / 2);
+                    line.label_dom.setAttribute('y', (positioning.start.y + positioning.end.y) / 2);
 
-        // const parent = line.parent?.getBoundingClientRect() ?? { x: 0, y: 0 };
-
-        // const x1 = posFrom.left + posFrom.width * posFromRelative.x + window.scrollX - parent.x;
-        // const y1 = posFrom.top + posFrom.height * posFromRelative.y + window.scrollY - parent.y;
-        // const x2 = posTo.left + posTo.width * posToRelative.x + window.scrollX - parent.x;
-        // const y2 = posTo.top + posTo.height * posToRelative.y + window.scrollY - parent.y;
-
-        // const start = { x: x1, y: y1 };
-        // const end = { x: x2, y: y2 };
-        // let rotation_start, rotation_end;
-        // switch (line.kind) {
-        //     case 'direct': {
-        //         const deltaX = x2 - x1;
-        //         const deltaY = y2 - y1;
-        //         const rotation = Math.atan2(deltaY, deltaX);
-        //         rotation_start = rotation;
-        //         rotation_end = rotation;
-        //         if (line.endtip) {
-        //             end.x -= line.endtip.size * Math.cos(rotation);
-        //             end.y -= line.endtip.size * Math.sin(rotation);
-        //         }
-        //         if (line.starttip) {
-        //             start.x -= line.starttip.size * Math.cos(rotation);
-        //             start.y -= line.starttip.size * Math.sin(rotation);
-        //         }
-        //         line.dom[0].setAttribute('x1', start.x);
-        //         line.dom[0].setAttribute('y1', start.y);
-        //         line.dom[0].setAttribute('x2', end.x);
-        //         line.dom[0].setAttribute('y2', end.y);
-        //         if (line.label_dom) {
-        //             line.label_dom.setAttribute('x', (start.x + end.x) / 2);
-        //             line.label_dom.setAttribute('y', (start.y + end.y) / 2);
-
-        //             line.label_dom.style.rotate = `${rotation}rad`;
-        //             line.label_dom.style.translate = `0px -7px`;
-        //         }
-        //         break;
-        //     }
-        //     case 'orthogonal': {
-        //         const points = calculate_orthogonal_connection(start, posFromRelative, end, posToRelative, undefined);
-        //         if (points.length < 2) {
-        //             break;
-        //         }
-
-        //         rotation_start = Math.atan2(points[1].y - points[0].y, points[1].x - points[0].x);
-        //         rotation_end = Math.atan2(points.at(-1).y - points.at(-2).y, points.at(-1).x - points.at(-2).x);
-        //         if (line.endtip) {
-        //             end.x -= line.endtip.size * Math.cos(rotation_end);
-        //             end.y -= line.endtip.size * Math.sin(rotation_end);
-        //             points[points.length - 1] = end;
-        //         }
-        //         if (line.starttip) {
-        //             start.x -= line.starttip.size * Math.cos(rotation_start);
-        //             start.y -= line.starttip.size * Math.sin(rotation_start);
-        //             points[0] = start;
-        //         }
-        //         if (points.length == line.dom.length + 1) {
-        //             for (let i = 0; i < points.length - 1; i++) {
-        //                 line.dom[i].setAttribute('x1', points[i].x);
-        //                 line.dom[i].setAttribute('y1', points[i].y);
-        //                 line.dom[i].setAttribute('x2', points[i + 1].x);
-        //                 line.dom[i].setAttribute('y2', points[i + 1].y);
-        //             }
-        //         } else {
-        //             for (const dom of line.dom) {
-        //                 dom.remove();
-        //             }
-        //             line.dom = create_line(line.options, points);
-        //             for (const dom of line.dom) {
-        //                 line.container.appendChild(dom);
-        //             }
-        //         }
-        //         if (line.label_dom) {
-        //             const point = get_label_placement_for_orthogonal(points);
-        //             line.label_dom.setAttribute('x', point.x);
-        //             line.label_dom.setAttribute('y', point.y);
-        //             line.label_dom.style.translate = `0px -7px`;
-        //         }
-        //         break;
-        //     }
-        // }
-        // if (line.starttip) {
-        //     set_tip_position(line.starttip, start, rotation_start, line.options);
-        // }
-        // if (line.endtip) {
-        //     set_tip_position(line.endtip, end, rotation_end, line.options);
-        // }
+                    line.label_dom.style.rotate = `${rotation}rad`;
+                    line.label_dom.style.translate = `0px -7px`;
+                }
+                break;
+            }
+            case 'orthogonal': {
+                if (line.label_dom) {
+                    const point = get_label_placement_for_orthogonal(positioning.points);
+                    line.label_dom.setAttribute('x', point.x);
+                    line.label_dom.setAttribute('y', point.y);
+                    line.label_dom.style.translate = `0px -7px`;
+                }
+                break;
+            }
+        }
     }
 
     updateAll() {

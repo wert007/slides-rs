@@ -1825,9 +1825,7 @@ fn bind_conversion(
     match conversion_kind {
         ConversionKind::Implicit => match context.type_interner.resolve_types([base.type_, target])
         {
-            [Type::Integer, Type::Float] => {
-                eprintln!("Hello!");
-            }
+            [Type::Integer, Type::Float] => {}
             [_, Type::Optional(to)] if base.type_ == *to => {}
             [Type::TypedDict(fields), Type::Struct(struct_data)] => {
                 let mut all_fields_assigned: HashMap<_, _> = struct_data

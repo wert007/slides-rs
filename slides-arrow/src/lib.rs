@@ -107,7 +107,7 @@ impl Arrows {
             let value = allocator.get(value);
             match key.as_str() {
                 "width" | "color" | "kind" | "starttip" | "endtip" | "startposrel"
-                | "endposrel" => {
+                | "endposrel" | "label" => {
                     writeln!(
                         options_text,
                         "{key}: {},",
@@ -203,11 +203,13 @@ impl GuestModule for Arrows {
             [("x".into(), float), ("y".into(), float)].to_vec(),
         )));
         let color = types.allocate(&Type::Color);
+        let string = types.allocate(&Type::String);
         let create_optional = |base: TypeIndex| types.allocate(&Type::Optional(base));
         let line_options = types.allocate(&Type::Struct((
             "LineOptions".into(),
             [
                 ("width".into(), create_optional(float)),
+                ("label".into(), create_optional(string)),
                 ("color".into(), create_optional(color)),
                 ("kind".into(), create_optional(line_kind)),
                 ("starttip".into(), create_optional(line_tip)),
