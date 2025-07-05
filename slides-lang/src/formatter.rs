@@ -760,8 +760,13 @@ fn format_variable_declaration<W: Write + fmt::Debug>(
     formatter.emit_token(
         variable_declaration.name,
         &context.loaded_files,
-        TokenConfig::TRAILING_SPACE,
+        TokenConfig::default(),
     )?;
+    if let Some((colon, type_)) = variable_declaration.optional_type_declaration {
+        formatter.emit_token(colon, &context.loaded_files, TokenConfig::TRAILING_SPACE)?;
+        formatter.emit_token(type_, &context.loaded_files, TokenConfig::default())?;
+    }
+    formatter.ensure_space()?;
     formatter.emit_token(
         variable_declaration.equals,
         &context.loaded_files,

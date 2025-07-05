@@ -25,6 +25,7 @@ pub struct ExpressionStatement {
 pub struct VariableDeclaration {
     pub let_keyword: Token,
     pub name: Token,
+    pub optional_type_declaration: Option<(Token, Token)>,
     pub equals: Token,
     pub expression: Box<SyntaxNode>,
     pub semicolon: Token,
@@ -239,6 +240,7 @@ impl SyntaxNode {
     fn variable_declaration(
         let_keyword: Token,
         name: Token,
+        optional_type_declaration: Option<(Token, Token)>,
         equals: Token,
         expression: SyntaxNode,
         semicolon: Token,
@@ -248,6 +250,7 @@ impl SyntaxNode {
             kind: SyntaxNodeKind::VariableDeclaration(VariableDeclaration {
                 let_keyword,
                 name,
+                optional_type_declaration,
                 equals,
                 expression: Box::new(expression),
                 semicolon,
@@ -906,7 +909,7 @@ fn parse_parameter_node(parser: &mut Parser, context: &mut Context) -> SyntaxNod
 
         let identifier = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
         let colon = parser.match_token(TokenKind::SingleChar(':'), &mut context.diagnostics);
-        let type_ = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+        let type_ = parse_type(parser, context);
         let optional_equals = parser.try_match_token(TokenKind::SingleChar('='));
         let optional_initializer = if optional_equals.is_some() {
             Some(parse_expression(parser, context))
@@ -993,11 +996,30 @@ fn parse_assignment_statemnt(parser: &mut Parser, context: &mut Context) -> Synt
 fn parse_variable_declaration(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     let let_keyword = parser.match_token(TokenKind::LetKeyword, &mut context.diagnostics);
     let name = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    dbg!(parser.current_token());
+    let optional_type_declaration = if parser.current_token().kind == TokenKind::SingleChar(':') {
+        let colon_token = parser.next_token();
+        let type_ = parse_type(parser, context);
+        Some((colon_token, type_))
+    } else {
+        None
+    };
     let equals = parser.match_token(TokenKind::SingleChar('='), &mut context.diagnostics);
     let expression = parse_expression(parser, context);
     let semicolon = parser.match_token(TokenKind::SingleChar(';'), &mut context.diagnostics);
 
-    SyntaxNode::variable_declaration(let_keyword, name, equals, expression, semicolon)
+    SyntaxNode::variable_declaration(
+        let_keyword,
+        name,
+        optional_type_declaration,
+        equals,
+        expression,
+        semicolon,
+    )
+}
+
+fn parse_type(parser: &mut Parser, context: &mut Context) -> Token {
+    parser.match_token(TokenKind::Identifier, &mut context.diagnostics)
 }
 
 fn parse_expression(parser: &mut Parser, context: &mut Context) -> SyntaxNode {

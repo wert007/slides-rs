@@ -1735,7 +1735,29 @@ fn bind_variable_declaration(
     binder: &mut Binder,
     context: &mut Context,
 ) -> BoundNode {
+    let pushed_expected_type =
+        if let Some((_, type_)) = variable_declaration.optional_type_declaration {
+            let name_str = type_.text(&context.loaded_files);
+            let name = context.string_interner.create_or_get(name_str);
+            match binder.look_up_type_by_name(name) {
+                Some(it) => {
+                    binder.push_expected_type(it);
+                    true
+                }
+                None => {
+                    context
+                        .diagnostics
+                        .report_unknown_type(type_.location, name_str);
+                    false
+                }
+            }
+        } else {
+            false
+        };
     let value = bind_node(*variable_declaration.expression, binder, context);
+    if pushed_expected_type {
+        binder.drop_expected_type();
+    }
     let Some(variable) = binder.expect_register_variable_token(
         variable_declaration.name,
         value.type_.clone(),
