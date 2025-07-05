@@ -39,6 +39,13 @@ pub struct SlideStatement {
 }
 
 #[derive(Debug, Clone)]
+pub struct GlobalStatement {
+    pub global_keyword: Token,
+    pub colon: Token,
+    pub body: Vec<SyntaxNode>,
+}
+
+#[derive(Debug, Clone)]
 pub struct MemberAccess {
     pub base: Box<SyntaxNode>,
     pub period: Token,
@@ -160,6 +167,7 @@ pub enum SyntaxNodeKind {
     Error(bool),
     StylingStatement(StylingStatement),
     SlideStatement(SlideStatement),
+    GlobalStatement(GlobalStatement),
     ElementStatement(ElementStatement),
     ImportStatement(ImportStatement),
     TemplateStatement(TemplateStatement),
@@ -262,6 +270,21 @@ impl SyntaxNode {
             kind: SyntaxNodeKind::SlideStatement(SlideStatement {
                 slide_keyword,
                 name,
+                colon,
+                body,
+            }),
+            location,
+        }
+    }
+
+    fn global_statement(global_keyword: Token, colon: Token, body: Vec<SyntaxNode>) -> SyntaxNode {
+        let location = Location::combine(
+            global_keyword.location,
+            body.last().expect("not empty").location,
+        );
+        SyntaxNode {
+            kind: SyntaxNodeKind::GlobalStatement(GlobalStatement {
+                global_keyword,
                 colon,
                 body,
             }),
@@ -610,6 +633,12 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
                 debug_syntax_node(statement, files, format!("{indent}    "));
             }
         }
+        SyntaxNodeKind::GlobalStatement(global_statement) => {
+            println!("Global execution");
+            for statement in &global_statement.body {
+                debug_syntax_node(statement, files, format!("{indent}    "));
+            }
+        }
         SyntaxNodeKind::VariableReference(variable) => {
             println!("Variable {}", variable.text(files));
         }
@@ -798,6 +827,7 @@ fn parse_top_level_statement(parser: &mut Parser, context: &mut Context) -> Synt
         TokenKind::ElementKeyword => parse_element_statement(parser, context),
         TokenKind::TemplateKeyword => parse_template_statement(parser, context),
         TokenKind::ImportKeyword => parse_import_statement(parser, context),
+        TokenKind::GlobalKeyword => parse_global_statement(parser, context),
         _ => {
             context
                 .diagnostics
@@ -831,6 +861,22 @@ fn parse_import_statement(parser: &mut Parser, context: &mut Context) -> SyntaxN
     let path = SyntaxNode::typed_string(type_, string);
     let semicolon = parser.match_token(TokenKind::SingleChar(';'), &mut context.diagnostics);
     SyntaxNode::import_statement(import_keyword, path, semicolon)
+}
+
+fn parse_global_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let slide_keyword = parser.match_token(TokenKind::GlobalKeyword, &mut context.diagnostics);
+    let colon = parser.match_token(TokenKind::SingleChar(':'), &mut context.diagnostics);
+    let mut body = Vec::new();
+    while !is_start_of_top_level_statement(parser.current_token().kind) {
+        let position = parser.position();
+
+        body.push(parse_statement(parser, context));
+        if let Some(consumed) = parser.ensure_consume(position) {
+            body.push(SyntaxNode::error(consumed, true));
+        }
+    }
+
+    SyntaxNode::global_statement(slide_keyword, colon, body)
 }
 
 fn parse_element_statement(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
@@ -1158,6 +1204,7 @@ fn is_start_of_top_level_statement(kind: TokenKind) -> bool {
             | TokenKind::Eof
             | TokenKind::ElementKeyword
             | TokenKind::TemplateKeyword
+            | TokenKind::GlobalKeyword
     )
 }
 

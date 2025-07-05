@@ -73,7 +73,7 @@ pub fn evaluate_to_slide(
     Ok(())
 }
 
-fn evaluate_statement(
+pub(super) fn evaluate_statement(
     statement: BoundNode,
     evaluator: &mut Evaluator,
     context: &mut Context,

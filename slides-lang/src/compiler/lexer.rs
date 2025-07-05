@@ -12,6 +12,7 @@ pub enum TokenKind {
     ImportKeyword,
     TemplateKeyword,
     LetKeyword,
+    GlobalKeyword,
     Number,
     SingleChar(char),
     String,
@@ -137,6 +138,7 @@ impl Token {
                 "element" => TokenKind::ElementKeyword,
                 "import" => TokenKind::ImportKeyword,
                 "template" => TokenKind::TemplateKeyword,
+                "global" => TokenKind::GlobalKeyword,
                 _ => TokenKind::Identifier,
             };
         }

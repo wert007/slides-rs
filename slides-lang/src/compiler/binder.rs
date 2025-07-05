@@ -177,6 +177,12 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
                 debug_bound_node(statement, context, format!("{indent}    "));
             }
         }
+        BoundNodeKind::GlobalStatement(global_statement) => {
+            println!("Global Context",);
+            for statement in &global_statement.body {
+                debug_bound_node(statement, context, format!("{indent}    "));
+            }
+        }
         BoundNodeKind::VariableDeclaration(variable_declaration) => {
             println!(
                 "Variable Declaration {}: {}",
@@ -521,6 +527,11 @@ pub struct SlideStatement {
     pub name: VariableId,
     pub body: Vec<BoundNode>,
 }
+
+#[derive(Debug, Clone)]
+pub struct GlobalStatement {
+    pub body: Vec<BoundNode>,
+}
 #[derive(Debug, Clone)]
 
 pub struct VariableDeclaration {
@@ -656,6 +667,7 @@ pub enum BoundNodeKind {
     VariableReference(Variable),
     Literal(Value),
     SlideStatement(SlideStatement),
+    GlobalStatement(GlobalStatement),
     VariableDeclaration(VariableDeclaration),
     Dict(Vec<(VariableId, BoundNode)>),
     Array(Vec<BoundNode>),
@@ -805,6 +817,20 @@ impl BoundNode {
             base: Some(SyntaxNodeKind::SlideStatement(slide_statement)),
             location,
             kind: BoundNodeKind::SlideStatement(SlideStatement { name, body }),
+            type_: TypeId::VOID,
+            constant_value: None,
+        }
+    }
+
+    fn global_statement(
+        global_statement: parser::GlobalStatement,
+        location: Location,
+        body: Vec<BoundNode>,
+    ) -> BoundNode {
+        BoundNode {
+            base: Some(SyntaxNodeKind::GlobalStatement(global_statement)),
+            location,
+            kind: BoundNodeKind::GlobalStatement(GlobalStatement { body }),
             type_: TypeId::VOID,
             constant_value: None,
         }
@@ -1038,6 +1064,9 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
         }
         SyntaxNodeKind::SlideStatement(slide_statement) => {
             bind_slide_statement(slide_statement, statement.location, binder, context)
+        }
+        SyntaxNodeKind::GlobalStatement(global_statement) => {
+            bind_global_statement(global_statement, statement.location, binder, context)
         }
         SyntaxNodeKind::ElementStatement(element_statement) => {
             bind_element_statement(element_statement, statement.location, binder, context)
@@ -1753,6 +1782,23 @@ fn bind_slide_statement(
         return BoundNode::error(slide_statement.name.location);
     };
     BoundNode::slide_statement(slide_statement, location, name, statements)
+}
+
+fn bind_global_statement(
+    mut global_statement: parser::GlobalStatement,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    let mut statements = Vec::with_capacity(global_statement.body.len());
+    for statement in global_statement.body {
+        // TODO: Check if this global statement tries some shady things!
+        statements.push(bind_node(statement, binder, context));
+    }
+    let scope = binder.scopes.last().unwrap();
+    debug_scope("after global", &scope, &context);
+    global_statement.body = Vec::new();
+    BoundNode::global_statement(global_statement, location, statements)
 }
 
 fn bind_typed_string(

@@ -219,6 +219,9 @@ fn evaluate_statement(
         BoundNodeKind::SlideStatement(slide_statement) => {
             evaluate_slide_statement(slide_statement, evaluator, context)
         }
+        BoundNodeKind::GlobalStatement(global_statement) => {
+            evaluate_global_statement(global_statement, evaluator, context)
+        }
         BoundNodeKind::ElementStatement(element_statement) => {
             evaluate_element_statement(element_statement, statement.location, evaluator, context)
         }
@@ -362,6 +365,21 @@ fn evaluate_slide_statement(
         .expect("Should still be set after evaluate_to_slide");
 
     context.presentation.write().unwrap().add_slide(slide);
+    Ok(())
+}
+
+fn evaluate_global_statement(
+    global_statement: super::binder::GlobalStatement,
+    evaluator: &mut Evaluator,
+    context: &mut Context,
+) -> slides_rs_core::Result<()> {
+    for statement in global_statement.body {
+        slide::evaluate_statement(statement, evaluator, context)?;
+        if let Some(exception) = evaluator.exception.take() {
+            exception.print(&context.loaded_files);
+            return Ok(());
+        }
+    }
     Ok(())
 }
 

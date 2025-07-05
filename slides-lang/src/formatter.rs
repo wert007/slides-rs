@@ -353,6 +353,9 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::SlideStatement(slide_statement) => {
             format_slide_statement(slide_statement, formatter, context)
         }
+        SyntaxNodeKind::GlobalStatement(global_statement) => {
+            format_global_statement(global_statement, formatter, context)
+        }
         SyntaxNodeKind::Literal(token)
         | SyntaxNodeKind::VariableReference(token)
         | SyntaxNodeKind::FormatString(token) => {
@@ -810,6 +813,35 @@ fn format_slide_statement<W: Write + fmt::Debug>(
     formatter.ensure_new_line()?;
     formatter.indent += 4;
     for statement in slide_statement.body {
+        format_node(statement, formatter, context)?;
+    }
+    formatter.indent -= 4;
+    // formatter.ensure_empty_line()?;
+    Ok(())
+}
+
+fn format_global_statement<W: Write + fmt::Debug>(
+    global_statement: compiler::parser::GlobalStatement,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> Result<()> {
+    formatter.emit_token(
+        global_statement.global_keyword,
+        &context.loaded_files,
+        TokenConfig {
+            leading_blank_line: true,
+            trailing_space: true,
+            ..Default::default()
+        },
+    )?;
+    formatter.emit_token(
+        global_statement.colon,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    formatter.ensure_new_line()?;
+    formatter.indent += 4;
+    for statement in global_statement.body {
         format_node(statement, formatter, context)?;
     }
     formatter.indent -= 4;
