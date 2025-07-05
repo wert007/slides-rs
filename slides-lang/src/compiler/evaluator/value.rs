@@ -33,11 +33,15 @@ pub struct UserFunctionValue {
     pub return_type: TypeId,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct None {}
+
 summum! {
     #[allow(dead_code)]
     #[derive(Debug, Clone)]
     pub enum Value {
         Void(()),
+        None(None),
         Float(f64),
         Integer(i64),
         String(String),
@@ -71,9 +75,14 @@ summum! {
 }
 
 impl Value {
+    pub fn none() -> Self {
+        Value::None(None {})
+    }
+
     pub fn infer_type(&self) -> Type {
         match self {
             Value::Void(()) => Type::Void,
+            Value::None(_) => Type::None,
             Value::Float(_) => Type::Float,
             Value::Integer(_) => Type::Integer,
             Value::String(_) => Type::String,
@@ -137,6 +146,7 @@ impl Value {
 
     pub fn convert_to_string(self) -> String {
         match self {
+            Value::None(_) => String::new(),
             Value::String(string) => string,
             Value::Float(float) => float.to_string(),
             Value::Integer(int) => int.to_string(),

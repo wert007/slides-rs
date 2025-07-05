@@ -526,11 +526,7 @@ fn format_parameter<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::TRAILING_SPACE,
     )?;
-    formatter.emit_token(
-        parameter.type_,
-        &context.loaded_files,
-        TokenConfig::default(),
-    )?;
+    format_type_node(parameter.type_, formatter, context)?;
     if let Some(equals) = parameter.optional_equals {
         formatter.ensure_space()?;
         formatter.emit_token(equals, &context.loaded_files, TokenConfig::TRAILING_SPACE)?;
@@ -764,7 +760,7 @@ fn format_variable_declaration<W: Write + fmt::Debug>(
     )?;
     if let Some((colon, type_)) = variable_declaration.optional_type_declaration {
         formatter.emit_token(colon, &context.loaded_files, TokenConfig::TRAILING_SPACE)?;
-        formatter.emit_token(type_, &context.loaded_files, TokenConfig::default())?;
+        format_type_node(type_, formatter, context)?;
     }
     formatter.ensure_space()?;
     formatter.emit_token(
@@ -788,6 +784,27 @@ fn format_variable_declaration<W: Write + fmt::Debug>(
     )?;
     formatter.indent -= 4;
     formatter.ensure_new_line()?;
+    Ok(())
+}
+
+fn format_type_node<W: Write + fmt::Debug>(
+    type_: compiler::parser::TypeNode,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> Result<()> {
+    for (period, segment) in type_.path {
+        if let Some(period) = period {
+            formatter.emit_token(period, &context.loaded_files, TokenConfig::default())?;
+        }
+        formatter.emit_token(segment, &context.loaded_files, TokenConfig::default())?;
+    }
+    if let Some(question_mark_token) = type_.question_mark {
+        formatter.emit_token(
+            question_mark_token,
+            &context.loaded_files,
+            TokenConfig::default(),
+        )?;
+    }
     Ok(())
 }
 

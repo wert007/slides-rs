@@ -31,18 +31,19 @@ pub struct TypeId(usize);
 impl TypeId {
     pub const ERROR: TypeId = TypeId(0);
     pub const VOID: TypeId = TypeId(1);
-    pub const FLOAT: TypeId = TypeId(2);
-    pub const INTEGER: TypeId = TypeId(3);
-    pub const BOOL: TypeId = TypeId(4);
-    pub const STRING: TypeId = TypeId(5);
-    pub const DICT: TypeId = TypeId(6);
-    pub const PATH: TypeId = TypeId(7);
-    pub const STYLING: TypeId = TypeId(8);
-    pub const BACKGROUND: TypeId = TypeId(9);
-    pub const COLOR: TypeId = TypeId(10);
-    pub const STYLE_UNIT: TypeId = TypeId(16);
-    pub const ELEMENT: TypeId = TypeId(18);
-    pub const ANIMATION: TypeId = TypeId(27);
+    pub const NONE: TypeId = TypeId(2);
+    pub const FLOAT: TypeId = TypeId(3);
+    pub const INTEGER: TypeId = TypeId(4);
+    pub const BOOL: TypeId = TypeId(5);
+    pub const STRING: TypeId = TypeId(6);
+    pub const DICT: TypeId = TypeId(7);
+    pub const PATH: TypeId = TypeId(8);
+    pub const STYLING: TypeId = TypeId(9);
+    pub const BACKGROUND: TypeId = TypeId(10);
+    pub const COLOR: TypeId = TypeId(11);
+    pub const STYLE_UNIT: TypeId = TypeId(17);
+    pub const ELEMENT: TypeId = TypeId(19);
+    pub const ANIMATION: TypeId = TypeId(28);
 
     pub unsafe fn from_raw(raw: usize) -> Self {
         Self(raw)
@@ -227,6 +228,7 @@ impl TypeInterner {
     pub(crate) fn to_simple_string(&self, t: &Type, string_interner: &StringInterner) -> String {
         match t {
             Type::Error => "unknown".into(),
+            Type::None => "none".into(),
             Type::Void => "void".into(),
             Type::Float => "float".into(),
             Type::Integer => "int".into(),
@@ -365,6 +367,7 @@ pub enum Type {
     #[default]
     Error,
     Void,
+    None,
     Float,
     Integer,
     Bool,

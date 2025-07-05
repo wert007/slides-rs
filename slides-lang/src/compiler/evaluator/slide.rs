@@ -807,6 +807,7 @@ fn evaluate_conversion(
             value::Value::Integer(x) => value::Value::String(x.to_string()),
             value::Value::String(x) => value::Value::String(x),
             value::Value::Path(x) => value::Value::String(x.to_string_lossy().into_owned()),
+            value::Value::None(x) => value::Value::String(String::new()),
             _ => unreachable!("Impossible conversion"),
         },
         Type::DynamicDict => match base.value {

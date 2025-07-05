@@ -25,7 +25,7 @@ pub struct ExpressionStatement {
 pub struct VariableDeclaration {
     pub let_keyword: Token,
     pub name: Token,
-    pub optional_type_declaration: Option<(Token, Token)>,
+    pub optional_type_declaration: Option<(Token, TypeNode)>,
     pub equals: Token,
     pub expression: Box<SyntaxNode>,
     pub semicolon: Token,
@@ -118,10 +118,38 @@ pub struct PostInitialization {
 }
 
 #[derive(Debug, Clone)]
+pub struct TypeNode {
+    pub path: Vec<(Option<Token>, Token)>,
+    pub question_mark: Option<Token>,
+}
+impl TypeNode {
+    pub fn location(&self) -> Location {
+        self.question_mark.map(|q| q.location).unwrap_or_else(|| {
+            self.path
+                .last()
+                .expect("Needs to have at least one segment!")
+                .1
+                .location
+        })
+    }
+
+    pub fn text<'a>(&self, files: &'a Files) -> &'a str {
+        &files[self.location()]
+    }
+
+    fn new(path: Vec<(Option<Token>, Token)>, question_mark: Option<Token>) -> Self {
+        Self {
+            path,
+            question_mark,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Parameter {
     pub identifier: Token,
     pub colon: Token,
-    pub type_: Token,
+    pub type_: TypeNode,
     pub optional_equals: Option<Token>,
     pub optional_initializer: Option<Box<SyntaxNode>>,
 }
@@ -240,7 +268,7 @@ impl SyntaxNode {
     fn variable_declaration(
         let_keyword: Token,
         name: Token,
-        optional_type_declaration: Option<(Token, Token)>,
+        optional_type_declaration: Option<(Token, TypeNode)>,
         equals: Token,
         expression: SyntaxNode,
         semicolon: Token,
@@ -441,11 +469,11 @@ impl SyntaxNode {
     fn parameter(
         identifier: Token,
         colon: Token,
-        type_: Token,
+        type_: TypeNode,
         optional_equals: Option<Token>,
         optional_initializer: Option<SyntaxNode>,
     ) -> SyntaxNode {
-        let location = Location::combine(identifier.location, type_.location);
+        let location = Location::combine(identifier.location, type_.location());
         SyntaxNode {
             location,
             kind: SyntaxNodeKind::Parameter(Parameter {
@@ -996,7 +1024,6 @@ fn parse_assignment_statemnt(parser: &mut Parser, context: &mut Context) -> Synt
 fn parse_variable_declaration(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
     let let_keyword = parser.match_token(TokenKind::LetKeyword, &mut context.diagnostics);
     let name = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
-    dbg!(parser.current_token());
     let optional_type_declaration = if parser.current_token().kind == TokenKind::SingleChar(':') {
         let colon_token = parser.next_token();
         let type_ = parse_type(parser, context);
@@ -1018,8 +1045,21 @@ fn parse_variable_declaration(parser: &mut Parser, context: &mut Context) -> Syn
     )
 }
 
-fn parse_type(parser: &mut Parser, context: &mut Context) -> Token {
-    parser.match_token(TokenKind::Identifier, &mut context.diagnostics)
+fn parse_type(parser: &mut Parser, context: &mut Context) -> TypeNode {
+    let mut path = Vec::new();
+    let token = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+    path.push((None, token));
+    while parser.current_token().kind == TokenKind::SingleChar('.') {
+        let period = parser.next_token();
+        let token = parser.match_token(TokenKind::Identifier, &mut context.diagnostics);
+        path.push((Some(period), token));
+    }
+    let question_mark = if parser.current_token().kind == TokenKind::SingleChar('?') {
+        Some(parser.next_token())
+    } else {
+        None
+    };
+    TypeNode::new(path, question_mark)
 }
 
 fn parse_expression(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
@@ -1137,6 +1177,7 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
             }
         }
         TokenKind::String => SyntaxNode::literal(parser.next_token()),
+        TokenKind::NoneKeyword => SyntaxNode::literal(parser.next_token()),
         TokenKind::FormatString => SyntaxNode::format_string(parser.next_token()),
         TokenKind::SingleChar('{') => parse_dict(parser, context),
         TokenKind::SingleChar('[') => parse_array(parser, context),

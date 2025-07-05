@@ -13,6 +13,7 @@ pub enum TokenKind {
     TemplateKeyword,
     LetKeyword,
     GlobalKeyword,
+    NoneKeyword,
     Number,
     SingleChar(char),
     String,
@@ -139,6 +140,7 @@ impl Token {
                 "import" => TokenKind::ImportKeyword,
                 "template" => TokenKind::TemplateKeyword,
                 "global" => TokenKind::GlobalKeyword,
+                "none" => TokenKind::NoneKeyword,
                 _ => TokenKind::Identifier,
             };
         }
@@ -219,6 +221,7 @@ fn is_token(char: char) -> bool {
             | '*'
             | '|'
             | '&'
+            | '?'
     )
 }
 

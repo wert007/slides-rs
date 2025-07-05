@@ -1530,17 +1530,7 @@ fn bind_parameter_block(
         let Some(parameter) = parameter.kind.try_as_parameter() else {
             continue;
         };
-        let type_name_str = parameter.type_.text(&context.loaded_files);
-        let type_name = context.string_interner.create_or_get(type_name_str);
-        let type_ = match binder.look_up_type_by_name(type_name) {
-            Some(type_) => type_,
-            None => {
-                context
-                    .diagnostics
-                    .report_unknown_type(parameter.type_.location, type_name_str);
-                TypeId::ERROR
-            }
-        };
+        let type_ = bind_type_node(parameter.type_, binder, context);
         let variable = context
             .string_interner
             .create_or_get_variable(parameter.identifier.text(&context.loaded_files));
@@ -1737,20 +1727,9 @@ fn bind_variable_declaration(
 ) -> BoundNode {
     let pushed_expected_type =
         if let Some((_, type_)) = variable_declaration.optional_type_declaration {
-            let name_str = type_.text(&context.loaded_files);
-            let name = context.string_interner.create_or_get(name_str);
-            match binder.look_up_type_by_name(name) {
-                Some(it) => {
-                    binder.push_expected_type(it);
-                    true
-                }
-                None => {
-                    context
-                        .diagnostics
-                        .report_unknown_type(type_.location, name_str);
-                    false
-                }
-            }
+            let type_ = bind_type_node(type_, binder, context);
+            binder.push_expected_type(type_);
+            true
         } else {
             false
         };
@@ -1767,6 +1746,51 @@ fn bind_variable_declaration(
         return BoundNode::error(location);
     };
     BoundNode::variable_declaration(location, variable, value)
+}
+
+fn bind_type_node(type_: parser::TypeNode, binder: &mut Binder, context: &mut Context) -> TypeId {
+    let mut base = None;
+    for (_, segment) in type_.path {
+        let id_str = segment.text(&context.loaded_files);
+        let id = context.string_interner.create_or_get(id_str);
+        if let Some(base_id) = base {
+            let Some(library) = context
+                .type_interner
+                .resolve(base_id)
+                .clone()
+                .try_as_module()
+            else {
+                // TODO: Report error!
+                return TypeId::ERROR;
+            };
+            match binder.modules[library.0].try_get_type_by_name(id_str) {
+                Some(it) => {
+                    base = Some(it);
+                }
+                None => {
+                    context
+                        .diagnostics
+                        .report_unknown_type(segment.location, id_str);
+                    return TypeId::ERROR;
+                }
+            }
+        } else {
+            match binder.look_up_type_by_name(id) {
+                Some(it) => base = Some(it),
+                None => {
+                    context
+                        .diagnostics
+                        .report_unknown_type(segment.location, id_str);
+                    return TypeId::ERROR;
+                }
+            }
+        }
+    }
+    let mut base = base.expect("This should be set here");
+    if type_.question_mark.is_some() {
+        base = context.type_interner.get_or_intern(Type::Optional(base))
+    }
+    base
 }
 
 fn bind_slide_statement(
@@ -1935,6 +1959,15 @@ fn bind_conversion(
     if base.type_ == TypeId::ERROR || base.type_ == target || target == TypeId::ERROR {
         return base;
     }
+    if base.type_ == TypeId::NONE
+        && context
+            .type_interner
+            .resolve(target)
+            .try_as_optional_ref()
+            .is_some()
+    {
+        return BoundNode::conversion(base, target, conversion_kind);
+    }
     if let Type::Optional(inner) = context.type_interner.resolve(target) {
         let result = bind_conversion(base, *inner, conversion_kind, binder, context);
         return BoundNode::conversion(result, target, conversion_kind);
@@ -2084,7 +2117,11 @@ fn bind_conversion(
         },
         ConversionKind::ToString => match context.type_interner.resolve(base.type_) {
             Type::Error => return base,
-            Type::Float | Type::Integer | Type::Path => {}
+            Type::Float | Type::Integer | Type::Path | Type::Optional(TypeId::STRING) => {}
+            Type::Optional(inner) => {
+                let inner = bind_conversion(base, *inner, conversion_kind, binder, context);
+                return BoundNode::conversion(inner, target, conversion_kind);
+            }
             Type::String => return base,
             from => {
                 context.diagnostics.report_cannot_convert(
@@ -2149,6 +2186,7 @@ fn bind_literal(
             }
         }
         super::lexer::TokenKind::String => Value::parse_string_literal(text, true, true),
+        super::lexer::TokenKind::NoneKeyword => Value::none(),
         super::lexer::TokenKind::StyleUnitLiteral => {
             Value::StyleUnit(text.parse().expect("lexer filtered"))
         }
