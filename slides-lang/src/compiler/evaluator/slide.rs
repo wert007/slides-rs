@@ -73,7 +73,7 @@ pub fn evaluate_to_slide(
     Ok(())
 }
 
-fn evaluate_statement(
+pub(super) fn evaluate_statement(
     statement: BoundNode,
     evaluator: &mut Evaluator,
     context: &mut Context,
@@ -415,6 +415,13 @@ fn assign_to_slide_type(
                 .element_styling_mut()
                 .set_font_size(evaluator.ensure_unsigned_float(value));
         }
+        "font_weight" => {
+            base.as_label()
+                .write()
+                .unwrap()
+                .element_styling_mut()
+                .set_font_weight(evaluator.ensure_unsigned(value));
+        }
         "column_span" => {
             base.as_grid_entry().write().unwrap().column_span = evaluator.ensure_unsigned(value);
         }
@@ -525,6 +532,13 @@ fn execute_function(
                 .to_owned();
             execute_member_function(location, base, name, arguments, evaluator, context)
         }
+        BoundNodeKind::Literal(base_val) => evaluate_user_function(
+            base_val.as_user_function().clone(),
+            arguments,
+            base.location,
+            evaluator,
+            context,
+        ),
         _ => todo!("Add function handling!"),
     }
 }
