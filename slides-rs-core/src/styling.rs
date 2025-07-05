@@ -631,6 +631,7 @@ pub struct LabelStyling {
     text_align: TextAlign,
     font: Font,
     font_size: Option<f64>,
+    font_weight: Option<usize>,
 }
 
 impl LabelStyling {
@@ -641,6 +642,7 @@ impl LabelStyling {
             text_align: TextAlign::Unspecified,
             font: Font::Unspecified,
             font_size: None,
+            font_weight: None,
         })
     }
 
@@ -665,6 +667,10 @@ impl LabelStyling {
     pub fn set_font_size(&mut self, font_size: f64) {
         self.font_size = Some(font_size);
     }
+
+    pub fn set_font_weight(&mut self, font_weight: usize) {
+        self.font_weight = Some(font_weight);
+    }
 }
 
 impl ElementStyling<LabelStyling> {
@@ -688,6 +694,10 @@ impl ElementStyling<LabelStyling> {
 
     pub fn set_font_size(&mut self, font_size: f64) {
         self.specific.font_size = Some(font_size);
+    }
+
+    pub fn set_font_weight(&mut self, font_weight: usize) {
+        self.specific.font_weight = Some(font_weight);
     }
 }
 
@@ -724,6 +734,9 @@ impl ToCss for LabelStyling {
                 "    font-size: calc({font_size} * min(16 * 4dvh, 9 * 4dvw) / 16);"
             )
             .expect("infallible");
+        }
+        if let Some(font_weight) = self.font_weight {
+            writeln!(w, "    font-weight: {};", font_weight).expect("infallible");
         }
         writeln!(w, "}}\n")?;
 

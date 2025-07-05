@@ -415,6 +415,13 @@ fn assign_to_slide_type(
                 .element_styling_mut()
                 .set_font_size(evaluator.ensure_unsigned_float(value));
         }
+        "font_weight" => {
+            base.as_label()
+                .write()
+                .unwrap()
+                .element_styling_mut()
+                .set_font_weight(evaluator.ensure_unsigned(value));
+        }
         "column_span" => {
             base.as_grid_entry().write().unwrap().column_span = evaluator.ensure_unsigned(value);
         }
