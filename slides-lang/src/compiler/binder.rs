@@ -22,7 +22,7 @@ use super::{
 };
 use crate::{
     Context, Location, ModuleIndex, StringInterner, VariableId,
-    compiler::{lexer::Trivia, module},
+    compiler::{evaluator::value::UserFunctionValue, lexer::Trivia, module},
 };
 use thiserror::Error;
 
@@ -724,6 +724,27 @@ impl BoundNode {
         }
     }
 
+    pub fn fake_function_call(base: UserFunctionValue, arguments: Vec<Value>) -> BoundNode {
+        BoundNode {
+            base: None,
+            location: Location::zero(),
+            kind: BoundNodeKind::FunctionCall(FunctionCall {
+                base: Box::new(BoundNode::fake_literal(Value::UserFunction(base))),
+                arguments: arguments
+                    .into_iter()
+                    .map(|a| BoundNode::fake_literal(a))
+                    .collect(),
+                function_type: FunctionType {
+                    min_argument_count: 0,
+                    argument_types: Vec::new(),
+                    return_type: TypeId::VOID,
+                },
+            }),
+            type_: TypeId::ERROR,
+            constant_value: None,
+        }
+    }
+
     fn function_call(
         location: Location,
         base: BoundNode,
@@ -750,6 +771,16 @@ impl BoundNode {
             location: token.location,
             kind: BoundNodeKind::VariableReference(variable.clone()),
             type_: variable.type_.clone(),
+            constant_value: None,
+        }
+    }
+
+    pub fn fake_literal(value: Value) -> BoundNode {
+        BoundNode {
+            base: None,
+            location: Location::zero(),
+            kind: BoundNodeKind::Literal(value),
+            type_: TypeId::ERROR,
             constant_value: None,
         }
     }

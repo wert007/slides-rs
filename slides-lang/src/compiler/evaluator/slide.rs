@@ -525,6 +525,13 @@ fn execute_function(
                 .to_owned();
             execute_member_function(location, base, name, arguments, evaluator, context)
         }
+        BoundNodeKind::Literal(base_val) => evaluate_user_function(
+            base_val.as_user_function().clone(),
+            arguments,
+            base.location,
+            evaluator,
+            context,
+        ),
         _ => todo!("Add function handling!"),
     }
 }

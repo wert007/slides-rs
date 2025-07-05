@@ -11,7 +11,7 @@ use slides_rs_core::{
 };
 
 use super::binder::{BoundAst, BoundError, BoundNode, BoundNodeKind, StylingType, typing::TypeId};
-use crate::{Context, Location, VariableId};
+use crate::{Context, Location, VariableId, compiler::evaluator::value::UserFunctionValue};
 
 pub mod functions;
 mod slide;
@@ -94,6 +94,7 @@ pub struct Evaluator {
     slide: Option<Slide>,
     styling: Option<DynamicElementStyling>,
     exception: Option<Exception>,
+    default_template: Option<value::UserFunctionValue>,
 }
 impl Evaluator {
     fn new() -> Self {
@@ -102,6 +103,7 @@ impl Evaluator {
             slide: None,
             styling: None,
             exception: None,
+            default_template: None,
         }
     }
 
@@ -300,21 +302,31 @@ fn evaluate_template_statement(
     template_statement: super::binder::TemplateStatement,
     location: Location,
     evaluator: &mut Evaluator,
-    _context: &mut Context,
+    context: &mut Context,
 ) -> slides_rs_core::Result<()> {
     let parameters = template_statement.parameters;
-    evaluator.set_variable(
-        template_statement.name,
-        Value {
-            value: value::Value::UserFunction(value::UserFunctionValue {
-                has_implicit_slide_parameter: true,
-                parameters,
-                body: template_statement.body,
-                return_type: TypeId::VOID,
-            }),
-            location,
-        },
-    );
+    let template = value::UserFunctionValue {
+        has_implicit_slide_parameter: true,
+        parameters,
+        body: template_statement.body,
+        return_type: TypeId::VOID,
+    };
+    if context
+        .string_interner
+        .resolve_variable(template_statement.name)
+        == "default"
+    {
+        evaluator.default_template = Some(template);
+        // TODO: Apply to previous slides here?
+    } else {
+        evaluator.set_variable(
+            template_statement.name,
+            Value {
+                value: value::Value::UserFunction(template),
+                location,
+            },
+        );
+    }
     Ok(())
 }
 
@@ -331,11 +343,25 @@ fn evaluate_slide_statement(
     );
     evaluator.slide = Some(slide);
     slide::evaluate_to_slide(slide_statement.body, evaluator, context)?;
-    context
-        .presentation
-        .write()
-        .unwrap()
-        .add_slide(evaluator.slide.take().expect("there to be slide"));
+    if let Some(default_template) = &evaluator.default_template
+        && !evaluator
+            .slide
+            .as_ref()
+            .expect("should exist")
+            .skips_default_template
+    {
+        slide::evaluate_expression(
+            BoundNode::fake_function_call(default_template.clone(), vec![]),
+            evaluator,
+            context,
+        );
+    }
+    let slide = evaluator
+        .slide
+        .take()
+        .expect("Should still be set after evaluate_to_slide");
+
+    context.presentation.write().unwrap().add_slide(slide);
     Ok(())
 }
 

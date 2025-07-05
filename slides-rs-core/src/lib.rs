@@ -209,6 +209,7 @@ pub enum ExternText {
 #[derive(Debug, Clone)]
 pub struct Slide {
     pub index: usize,
+    pub skips_default_template: bool,
     name: Option<String>,
     elements: Vec<Element>,
     styling: ElementStyling<SlideStyling>,
@@ -220,6 +221,7 @@ impl Slide {
     pub fn new(index: usize) -> Self {
         Self {
             index,
+            skips_default_template: false,
             name: None,
             elements: Vec::new(),
             styling: SlideStyling::new(),
