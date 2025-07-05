@@ -1,7 +1,7 @@
 use std::{
     cell::RefCell,
     collections::HashSet,
-    fmt::Display,
+    fmt::{Debug, Display},
     sync::{Arc, RwLock, atomic::AtomicUsize},
 };
 
@@ -41,7 +41,7 @@ impl ElementId {
 
 impl Display for ElementId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        <usize as Display>::fmt(&self.0, f)
     }
 }
 
@@ -133,13 +133,17 @@ impl<T: WebRenderable + Clone> WebRenderable for Arc<RefCell<T>> {
     }
 }
 
-impl<T: WebRenderable + Clone> WebRenderable for Arc<RwLock<T>> {
+impl<T: WebRenderable + Clone + Debug> WebRenderable for Arc<RwLock<T>> {
     fn output_to_html<W: std::io::Write>(
         self,
         emitter: &mut PresentationEmitter<W>,
         ctx: WebRenderableContext,
     ) -> Result<()> {
-        self.get_cloned().unwrap().output_to_html(emitter, ctx)
+        Arc::try_unwrap(self)
+            .expect("I guess this should work?")
+            .into_inner()
+            .unwrap()
+            .output_to_html(emitter, ctx)
     }
 
     fn set_parent(&mut self, parent: ElementId) {

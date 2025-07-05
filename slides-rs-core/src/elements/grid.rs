@@ -101,7 +101,7 @@ impl WebRenderable for Grid {
             self.id.raw()
         )?;
         for (mut element, data) in self.children.into_iter().zip(self.element_grid_data) {
-            let grid_data = data.get_cloned().unwrap();
+            let grid_data = Arc::try_unwrap(data).unwrap().into_inner().unwrap();
             element.set_namespace(id.clone());
             // element.set_fallback_id(index.to_string());
 
