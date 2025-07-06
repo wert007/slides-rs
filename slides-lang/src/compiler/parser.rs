@@ -98,6 +98,20 @@ pub struct Array {
 }
 
 #[derive(Debug, Clone)]
+pub struct Parenthesized {
+    pub lparen: Token,
+    pub expression: Box<SyntaxNode>,
+    pub rparen: Token,
+}
+
+#[derive(Debug, Clone)]
+pub struct Lambda {
+    pub parameter: Box<SyntaxNode>,
+    pub arrow: Token,
+    pub body: Box<SyntaxNode>,
+}
+
+#[derive(Debug, Clone)]
 pub struct ArrayAccess {
     pub base: Box<SyntaxNode>,
     pub lbracket: Token,
@@ -210,6 +224,8 @@ pub enum SyntaxNodeKind {
     TypedString(TypedString),
     DictEntry(DictEntry),
     Dict(Dict),
+    Parenthesized(Parenthesized),
+    Lambda(Lambda),
     Array(Array),
     ArrayAccess(ArrayAccess),
     InferredMember(InferredMember),
@@ -447,6 +463,18 @@ impl SyntaxNode {
         }
     }
 
+    fn parenthesized(lparen: Token, expression: SyntaxNode, rparen: Token) -> SyntaxNode {
+        let location = Location::combine(lparen.location, rparen.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::Parenthesized(Parenthesized {
+                lparen,
+                expression: Box::new(expression),
+                rparen,
+            }),
+        }
+    }
+
     fn inferred_member(period: Token, member: Token) -> SyntaxNode {
         let location = Location::combine(period.location, member.location);
         SyntaxNode {
@@ -589,6 +617,18 @@ impl SyntaxNode {
             }),
         }
     }
+
+    fn lambda(parameter: SyntaxNode, arrow: Token, body: SyntaxNode) -> SyntaxNode {
+        let location = Location::combine(parameter.location, body.location);
+        SyntaxNode {
+            location,
+            kind: SyntaxNodeKind::Lambda(Lambda {
+                parameter: Box::new(parameter),
+                arrow,
+                body: Box::new(body),
+            }),
+        }
+    }
 }
 
 pub struct Ast {
@@ -674,7 +714,6 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
             println!("Variable {}", variable.text(files));
         }
         SyntaxNodeKind::FormatString(token) => println!("Format String {}", token.text(files)),
-
         SyntaxNodeKind::Literal(literal) => {
             println!("Literal {}", literal.text(files));
         }
@@ -763,10 +802,19 @@ fn debug_syntax_node(node: &SyntaxNode, files: &Files, indent: String) {
                 debug_syntax_node(entry, files, format!("{indent}    "));
             }
         }
+        SyntaxNodeKind::Parenthesized(parenthesized) => {
+            print!("\r");
+            debug_syntax_node(&parenthesized.expression, files, indent);
+        }
         SyntaxNodeKind::Binary(binary) => {
             println!("Binary {}", binary.operator.text(files));
             debug_syntax_node(&binary.lhs, files, format!("{indent}    "));
             debug_syntax_node(&binary.rhs, files, format!("{indent}    "));
+        }
+        SyntaxNodeKind::Lambda(lambda) => {
+            println!("Lambda");
+            debug_syntax_node(&lambda.parameter, files, format!("{indent}    "));
+            debug_syntax_node(&lambda.body, files, format!("{indent}  =>"));
         }
     }
 }
@@ -801,6 +849,15 @@ impl Parser {
     fn peek(&self) -> TokenKind {
         let next = (self.index + 1).min(self.tokens.len() - 1);
         self.tokens[next].kind
+    }
+
+    fn skip_until_and_peek(&self, needle: TokenKind) -> TokenKind {
+        for index in self.index + 1..self.tokens.len() {
+            if self.tokens[index].kind == needle {
+                return self.tokens[(index + 1).min(self.tokens.len() - 1)].kind;
+            }
+        }
+        TokenKind::Eof
     }
 
     fn position(&self) -> usize {
@@ -1181,6 +1238,16 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
         TokenKind::FormatString => SyntaxNode::format_string(parser.next_token()),
         TokenKind::SingleChar('{') => parse_dict(parser, context),
         TokenKind::SingleChar('[') => parse_array(parser, context),
+        TokenKind::SingleChar('(') => {
+            if parser.skip_until_and_peek(TokenKind::SingleChar(')'))
+                == TokenKind::TwoChars(['=', '>'])
+            {
+                parse_lambda(parser, context)
+            } else {
+                parse_parenthesized(parser, context)
+            }
+        }
+
         TokenKind::SingleChar('.') => parse_inferred_member(parser, context),
         _ => {
             context
@@ -1189,6 +1256,21 @@ fn parse_primary(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
             SyntaxNode::error(*parser.current_token(), false)
         }
     }
+}
+
+fn parse_lambda(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let parameter = parse_parameter_node(parser, context);
+    let arrow = parser.match_token(TokenKind::TwoChars(['=', '>']), &mut context.diagnostics);
+    let body = parse_expression(parser, context);
+    SyntaxNode::lambda(parameter, arrow, body)
+}
+
+fn parse_parenthesized(parser: &mut Parser, context: &mut Context) -> SyntaxNode {
+    let lparen = parser.match_token(TokenKind::SingleChar('('), &mut context.diagnostics);
+    let expression = parse_expression(parser, context);
+    let rparen = parser.match_token(TokenKind::SingleChar(')'), &mut context.diagnostics);
+    // debug_syntax_node(&expression, &context.loaded_files, String::new());
+    SyntaxNode::parenthesized(lparen, expression, rparen)
 }
 
 fn parse_inferred_member(parser: &mut Parser, context: &mut Context) -> SyntaxNode {

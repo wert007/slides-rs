@@ -461,6 +461,32 @@ impl Type {
                 .map(|t| type_interner.resolve(t).clone());
             return function.or(type_);
         }
+        if let Type::Optional(inner) = self {
+            let this = type_interner.get_or_intern(self.clone());
+            match member {
+                "map" => {
+                    let lambda = Type::Function(FunctionType {
+                        min_argument_count: 1,
+                        argument_types: vec![*inner],
+                        return_type: *inner,
+                    });
+                    let lambda = type_interner.get_or_intern(lambda);
+                    return Some(Type::Function(FunctionType {
+                        min_argument_count: 1,
+                        argument_types: vec![lambda],
+                        return_type: this,
+                    }));
+                }
+                "or" => {
+                    return Some(Type::Function(FunctionType {
+                        min_argument_count: 1,
+                        argument_types: vec![*inner],
+                        return_type: *inner,
+                    }));
+                }
+                _ => {}
+            }
+        }
         for m in globals::MEMBERS {
             if self.as_ref() != m.name {
                 continue;

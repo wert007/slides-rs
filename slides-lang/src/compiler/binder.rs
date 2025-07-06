@@ -87,6 +87,10 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
     match &statement.kind {
         BoundNodeKind::Empty(()) => println!("#Empty"),
         BoundNodeKind::Error(BoundError) => println!("#Error"),
+        BoundNodeKind::ReturnStatement(value) => {
+            println!("Return");
+            debug_bound_node(value, context, format!("{indent}    "));
+        }
         BoundNodeKind::StylingStatement(styling_statement) => {
             println!(
                 "Style {} for {:?}",
@@ -245,6 +249,11 @@ fn debug_bound_node(statement: &BoundNode, context: &Context, indent: String) {
             println!("Binary {}", binary.operator);
             debug_bound_node(&binary.lhs, context, format!("{indent}    "));
             debug_bound_node(&binary.rhs, context, format!("{indent}    "));
+        }
+        BoundNodeKind::Lambda(lambda) => {
+            println!("Lambda");
+            // TODO: Debug print parameters?
+            debug_bound_node(&lambda.body, context, format!("{indent}    "));
         }
     }
 }
@@ -649,6 +658,12 @@ pub struct Binary {
 }
 
 #[derive(Debug, Clone)]
+pub struct Lambda {
+    pub parameters: Vec<Parameter>,
+    pub body: Box<BoundNode>,
+}
+
+#[derive(Debug, Clone)]
 
 pub struct BoundError;
 
@@ -664,6 +679,7 @@ pub enum BoundNodeKind {
     ImportStatement(PathBuf),
     ArrayAccess(ArrayAccess),
     FunctionCall(FunctionCall),
+    ReturnStatement(Box<BoundNode>),
     VariableReference(Variable),
     Literal(Value),
     SlideStatement(SlideStatement),
@@ -675,6 +691,7 @@ pub enum BoundNodeKind {
     Conversion(Conversion),
     PostInitialization(PostInitialization),
     Binary(Binary),
+    Lambda(Lambda),
 }
 }
 #[derive(Debug, Clone)]
@@ -1021,6 +1038,34 @@ impl BoundNode {
             constant_value: None,
         }
     }
+
+    fn lambda(
+        location: Location,
+        parameters: Vec<Parameter>,
+        body: BoundNode,
+        type_: TypeId,
+    ) -> BoundNode {
+        BoundNode {
+            base: None,
+            location,
+            kind: BoundNodeKind::Lambda(Lambda {
+                parameters,
+                body: Box::new(body),
+            }),
+            type_,
+            constant_value: None,
+        }
+    }
+
+    fn return_statement(value: BoundNode) -> BoundNode {
+        BoundNode {
+            base: None,
+            location: value.location,
+            kind: BoundNodeKind::ReturnStatement(Box::new(value)),
+            type_: TypeId::VOID,
+            constant_value: None,
+        }
+    }
 }
 
 fn constant_conversion(value: Value, target: TypeId, _kind: ConversionKind) -> Option<Value> {
@@ -1059,6 +1104,10 @@ fn bind_ast(ast: parser::Ast, context: &mut Context) -> BoundAst {
 
 fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) -> BoundNode {
     let node = match statement.kind {
+        SyntaxNodeKind::Parenthesized(parenthesized) => {
+            bind_node(*parenthesized.expression, binder, context)
+        }
+        SyntaxNodeKind::Lambda(lambda) => bind_lambda(lambda, statement.location, binder, context),
         SyntaxNodeKind::StylingStatement(styling_statement) => {
             bind_styling_statement(styling_statement, statement.location, binder, context)
         }
@@ -1121,6 +1170,49 @@ fn bind_node(statement: SyntaxNode, binder: &mut Binder, context: &mut Context) 
     } else {
         node
     }
+}
+
+fn bind_lambda(
+    lambda: parser::Lambda,
+    location: Location,
+    binder: &mut Binder,
+    context: &mut Context,
+) -> BoundNode {
+    // let Some(expected_type) = binder.currently_expected_type() else {
+    //     // Needs more type information!
+    //     return BoundNode::error(location);
+    // };
+    // let Type::Function(function_type) = context.type_interner.resolve(expected_type) else {
+    //     // Must be a function, otherwise this makes zero sense.
+    //     return BoundNode::error(location);
+    // };
+
+    // dbg!(function_type);
+    // BoundNode::function_definition()
+    binder.create_scope();
+    let SyntaxNodeKind::ParameterBlock(parameters) = lambda.parameter.kind else {
+        panic!("Unreachable!");
+    };
+    let parameters = bind_parameter_block(parameters, location, binder, context);
+    // for parameter in parameters {
+    //     binder.expect_register_variable_id(parameter.id, type_, location, context);
+    // }
+    binder.push_expected_type(TypeId::ERROR);
+    let body = bind_node(*lambda.body, binder, context);
+    binder.drop_expected_type();
+    let type_ = Type::Function(FunctionType {
+        min_argument_count: parameters.len(),
+        argument_types: parameters
+            .iter()
+            .map(|p| binder.look_up_variable(p.id).unwrap().type_)
+            .collect(),
+        return_type: body.type_,
+    });
+    let body = BoundNode::return_statement(body);
+    let type_ = context.type_interner.get_or_intern(type_);
+    let scope = binder.drop_scope();
+    debug_scope("lambda", &scope, context);
+    BoundNode::lambda(location, parameters, body, type_)
 }
 
 fn bind_array_access(
