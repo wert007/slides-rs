@@ -16,6 +16,7 @@ pub enum TokenKind {
     NoneKeyword,
     Number,
     SingleChar(char),
+    TwoChars([char; 2]),
     String,
     FormatString,
     Error,
@@ -113,6 +114,18 @@ impl Token {
                 length: 0,
             },
             kind: TokenKind::SingleChar(char),
+            trivia,
+        }
+    }
+
+    fn two_chars_token(file: FileId, start: usize, chars: [char; 2], trivia: Trivia) -> Token {
+        Token {
+            location: Location {
+                file,
+                start,
+                length: 0,
+            },
+            kind: TokenKind::TwoChars(chars),
             trivia,
         }
     }
@@ -250,6 +263,7 @@ pub(crate) fn lex_source(location: Location, context: &mut Context) -> Vec<Token
         OneLineFormatString(usize),
         EscapedMultiLineString,
         LineComment,
+        SymbolToken(char),
         // Whitespace,
     }
     let mut current_token: Option<Token> = None;
@@ -389,6 +403,7 @@ pub(crate) fn lex_source(location: Location, context: &mut Context) -> Vec<Token
                     is_empty_line = false;
                 }
                 single_char_token if is_token(single_char_token) => {
+                    state = State::SymbolToken(single_char_token);
                     finish_token(index, current_token.take());
                     current_token = Some(Token::single_char_token(
                         file,
@@ -499,6 +514,23 @@ pub(crate) fn lex_source(location: Location, context: &mut Context) -> Vec<Token
                 }
                 iter.next();
             }
+            State::SymbolToken(previous) => match [previous, char] {
+                ['=', '>'] => {
+                    let file = current_token.unwrap().location.file;
+                    let start = current_token.unwrap().location.start;
+                    current_token = Some(Token::two_chars_token(
+                        file,
+                        start,
+                        [previous, char],
+                        current_trivia,
+                    ));
+                    state = State::Init;
+                    iter.next();
+                }
+                _ => {
+                    state = State::Init;
+                }
+            },
         }
     }
 

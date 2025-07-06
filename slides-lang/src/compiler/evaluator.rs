@@ -95,6 +95,7 @@ pub struct Evaluator {
     styling: Option<DynamicElementStyling>,
     exception: Option<Exception>,
     default_template: Option<value::UserFunctionValue>,
+    return_value: Option<Value>,
 }
 impl Evaluator {
     fn new() -> Self {
@@ -104,6 +105,7 @@ impl Evaluator {
             styling: None,
             exception: None,
             default_template: None,
+            return_value: None,
         }
     }
 

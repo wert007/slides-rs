@@ -98,6 +98,11 @@ pub(super) fn evaluate_statement(
             // }
             Ok(())
         }
+        BoundNodeKind::ReturnStatement(inner) => {
+            let value = evaluate_expression(*inner, evaluator, context);
+            evaluator.return_value = Some(value);
+            Ok(())
+        }
         BoundNodeKind::VariableDeclaration(variable_declaration) => {
             evaluate_variable_declaration(variable_declaration, evaluator, context)
         }
@@ -208,7 +213,10 @@ pub(super) fn evaluate_expression(
         BoundNodeKind::Binary(binary) => {
             evaluate_binary(binary, expression.location, evaluator, context)
         }
-        _ => unreachable!("Only expressions can be evaluated!"),
+        BoundNodeKind::Lambda(lambda) => {
+            evaluate_lambda(lambda, expression.location, evaluator, context)
+        }
+        err => unreachable!("Only expressions can be evaluated! {err:#?}"),
     };
     if let Some(mut element) = value.value.clone().try_convert_to_element() {
         if element.parent().is_none() {
@@ -217,6 +225,24 @@ pub(super) fn evaluate_expression(
         }
     }
     value
+}
+
+fn evaluate_lambda(
+    lambda: binder::Lambda,
+    location: Location,
+    _evaluator: &mut Evaluator,
+    _context: &mut Context,
+) -> Value {
+    println!("LAMBDA");
+    Value {
+        location,
+        value: value::Value::UserFunction(value::UserFunctionValue {
+            has_implicit_slide_parameter: false,
+            parameters: lambda.parameters,
+            return_type: lambda.body.type_,
+            body: vec![*lambda.body],
+        }),
+    }
 }
 
 fn evaluate_array_access(
@@ -549,8 +575,31 @@ fn execute_member_function(
     name: String,
     mut arguments: Vec<Value>,
     evaluator: &mut Evaluator,
-    _context: &mut Context,
+    context: &mut Context,
 ) -> Value {
+    match name.as_str() {
+        "map" => {
+            return if base.value.is_none() {
+                base.clone()
+            } else {
+                let result = execute_function(
+                    BoundNode::fake_literal(arguments.swap_remove(0).value),
+                    vec![base.clone()],
+                    evaluator,
+                    context,
+                );
+                result
+            };
+        }
+        "or" => {
+            return if base.value.is_none() {
+                arguments.swap_remove(0)
+            } else {
+                base
+            };
+        }
+        _ => {}
+    }
     match base.value {
         value::Value::Grid(base) => match name.as_str() {
             "add" => {
@@ -684,6 +733,10 @@ fn evaluate_user_function(
     }
 
     let scope = evaluator.drop_scope();
+    if let Some(return_value) = evaluator.return_value.take() {
+        return return_value;
+    }
+
     let type_name = context
         .type_interner
         .resolve(user_function.return_type)

@@ -385,6 +385,10 @@ fn format_node<W: Write + fmt::Debug>(
         SyntaxNodeKind::DictEntry(dict_entry) => format_dict_entry(dict_entry, formatter, context),
         SyntaxNodeKind::Dict(dict) => format_dict(dict, formatter, context),
         SyntaxNodeKind::Array(array) => format_array(array, formatter, context),
+        SyntaxNodeKind::Parenthesized(parenthesized) => {
+            format_parenthesized(parenthesized, formatter, context)
+        }
+        SyntaxNodeKind::Lambda(lambda) => format_lambda(lambda, formatter, context),
         SyntaxNodeKind::InferredMember(_inferred_member) => todo!(),
         SyntaxNodeKind::PostInitialization(post_initialization) => {
             format_post_initialization(post_initialization, formatter, context)
@@ -489,6 +493,52 @@ fn format_array<W: Write + fmt::Debug>(
         &context.loaded_files,
         TokenConfig::default(),
     )?;
+    Ok(())
+}
+
+fn format_parenthesized<W: Write + fmt::Debug>(
+    parenthesized: compiler::parser::Parenthesized,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> std::result::Result<(), std::io::Error> {
+    // let split = formatter.available_space()
+    //     < calculate_minimum_length(
+    //         Location::combine(parenthesized.lparen.location, parenthesized.rparen.location),
+    //         &context.loaded_files,
+    //     );
+    formatter.emit_token(
+        parenthesized.lparen,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    // if !split {
+    //     formatter.ensure_space()?;
+    // }
+    format_node(*parenthesized.expression, formatter, context)?;
+    // if split {
+    //     formatter.ensure_new_line()?;
+    // } else {
+    //     formatter.ensure_space()?;
+    // }
+    formatter.emit_token(
+        parenthesized.rparen,
+        &context.loaded_files,
+        TokenConfig::default(),
+    )?;
+    Ok(())
+}
+
+fn format_lambda<W: Write + fmt::Debug>(
+    lambda: compiler::parser::Lambda,
+    formatter: &mut Formatter<W>,
+    context: &mut Context,
+) -> std::result::Result<(), std::io::Error> {
+    format_node(*lambda.parameter, formatter, context)?;
+    formatter.ensure_space()?;
+
+    formatter.emit_token(lambda.arrow, &context.loaded_files, TokenConfig::default())?;
+    formatter.ensure_space()?;
+    format_node(*lambda.body, formatter, context)?;
     Ok(())
 }
 
